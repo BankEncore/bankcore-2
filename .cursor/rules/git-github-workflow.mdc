@@ -1,17 +1,18 @@
 ---
-description: Git safety and GitHub workflow conventions
+description: GitHub workflow enforcement (issue-first, branch-first)
 alwaysApply: true
 ---
 
-# Git And GitHub Workflow
+# Required Workflow
 
-- Default to short-lived branches for non-trivial work.
-- Use direct commits to `main` only for very small docs, setup, Cursor, or repo-metadata changes.
-- Never create a commit unless the user explicitly asks for one.
-- Never push unless the user explicitly asks for it.
+- For any non-trivial change, follow: **Issue → Branch → Validate → Commit → Push → PR**.
+- Non-trivial = any app/runtime, dependency, CI/build/deploy, migration, posting/subledger/GL change, or >3 files (excluding docs/metadata-only edits).
+- Branch naming: `feature/<issue>-<topic>`, `fix/<issue>-<topic>`, `chore/<issue>-<topic>`, `docs/<issue>-<topic>`, `refactor/<issue>-<topic>`, `test/<issue>-<topic>`.
+- PR must include: linked issue, summary, exact validation commands, migration/data impact, financial-risk notes, rollback notes, UI screenshots if applicable.
+
+# Safety Rules
+
+- Never commit unless explicitly requested.
+- Never push unless explicitly requested.
 - Never force-push `main`.
-- Prefer branch names like `feature/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>`, `refactor/<topic>`, or `test/<topic>`.
-- Prefer commit messages in the form `type(scope): summary`.
-- For meaningful code changes, use a branch and pull request.
-- Before opening a pull request, summarize the change, test plan, and any migration or financial-logic risk.
-- Keep repo workflow guidance aligned with `docs/github_workflow.md`.
+- Direct-to-`main` only for tiny docs/metadata edits and only when explicitly requested.

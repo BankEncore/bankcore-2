@@ -1,12 +1,9 @@
 ---
-description: Branch policy for docs and repo metadata
+description: Docs/metadata fast-path policy
 globs: "{docs/**/*.md,.cursor/rules/**/*.mdc,.cursor/skills/**/SKILL.md,.github/**/*.yml,.github/**/*.md,README.md,.gitignore,.gitattributes}"
 alwaysApply: false
 ---
 
-# Docs And Repo Metadata Workflow
-
-- Small maintenance in docs, Cursor rules, Cursor skills, and `.github` metadata may stay on `main` if the user wants the hybrid fast path.
-- If the change expands beyond small maintenance, switch back to the default branch-first workflow.
-- Even for metadata changes, do not commit or push unless the user explicitly asks.
-- Keep documentation, PR templates, and Cursor guidance consistent with `docs/github_workflow.md`.
+- Docs/metadata edits may use direct-to-main only if explicitly requested.
+- If change affects behavior (CI/build/release/automation), treat as non-trivial and use issue + branch + PR.
+- Never commit/push unless explicitly requested.
