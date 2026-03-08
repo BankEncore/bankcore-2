@@ -38,3 +38,5 @@ bundle exec rails test
 ## GitHub
 
 Repository: [BankEncore/bankcore-2](https://github.com/BankEncore/bankcore-2)
+
+Pull requests should follow `.github/pull_request_template.md` and the workflow guidance in `docs/github_workflow.md`.
