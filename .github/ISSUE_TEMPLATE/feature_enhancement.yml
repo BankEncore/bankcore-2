@@ -1,0 +1,64 @@
+name: Feature / Enhancement
+description: Propose a new capability, roadmap item, or meaningful improvement.
+title: "feature: "
+labels:
+  - feature
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: What outcome do we want?
+      placeholder: Add a governed teller cash deposit workflow using the existing posting engine.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this matters
+      description: Explain the user, operational, or architectural value.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What is included in this work?
+      placeholder: |
+        - Add ...
+        - Update ...
+        - Expose ...
+    validations:
+      required: true
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of scope
+      description: What is explicitly not part of this work?
+      placeholder: |
+        - No teller cash counts
+        - No recurring schedules
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Concrete conditions for completion.
+      placeholder: |
+        - User can ...
+        - Service validates ...
+        - Tests cover ...
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / dependencies
+      description: Note docs, services, migrations, or policy dependencies.
+  - type: textarea
+    id: related_docs
+    attributes:
+      label: Related docs
+      description: Link roadmap or reference docs if applicable.
+      placeholder: |
+        - docs/00_initial_core_references/implementation_order.md
+        - docs/00_initial_core_references/posting_engine_rules.md

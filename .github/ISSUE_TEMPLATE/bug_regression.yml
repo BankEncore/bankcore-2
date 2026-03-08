@@ -1,0 +1,59 @@
+name: Bug / Regression
+description: Report a bug, broken behavior, or regression in the application or workflow.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the problem.
+      placeholder: The transaction preview page crashes when...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the smallest repeatable sequence.
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Risk / impact
+      description: Describe user impact, operational risk, or financial control impact.
+      placeholder: Blocks reversals above the override threshold.
+  - type: textarea
+    id: references
+    attributes:
+      label: Related files or flows
+      description: Optional paths, logs, URLs, or related issues.
+      placeholder: |
+        - app/controllers/transactions_controller.rb
+        - docs/00_initial_core_references/posting_lifecycle.md
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test coverage needed
+      description: What automated or manual checks should prevent this in the future?
+      placeholder: Add a controller regression test covering...
