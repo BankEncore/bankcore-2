@@ -13,6 +13,6 @@ class CreateFeeAssessments < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :fee_assessments, [:account_id, :assessed_on]
+    add_index :fee_assessments, [ :account_id, :assessed_on ]
   end
 end

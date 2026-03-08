@@ -16,7 +16,7 @@ class BalanceRefreshServiceTest < ActiveSupport::TestCase
       business_date: @business_date
     )
 
-    BalanceRefreshService.refresh!(account_ids: [@account.id])
+    BalanceRefreshService.refresh!(account_ids: [ @account.id ])
 
     @account.reload
     balance = @account.account_balances.first
@@ -60,7 +60,7 @@ class BalanceRefreshServiceTest < ActiveSupport::TestCase
       effective_on: @business_date
     )
 
-    BalanceRefreshService.refresh!(account_ids: [@account.id])
+    BalanceRefreshService.refresh!(account_ids: [ @account.id ])
 
     balance = @account.account_balances.first
     assert_equal 10_000, balance.posted_balance_cents

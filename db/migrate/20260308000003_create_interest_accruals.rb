@@ -12,6 +12,6 @@ class CreateInterestAccruals < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :interest_accruals, [:account_id, :accrual_date]
+    add_index :interest_accruals, [ :account_id, :accrual_date ]
   end
 end

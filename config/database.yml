@@ -13,13 +13,13 @@ default: &default
   adapter: mysql2
   encoding: utf8mb4
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: sysdba
-  password: Katikoan123
-  socket: /var/run/mysqld/mysqld.sock
+  username: <%= ENV.fetch("BANKCORE_DB_USERNAME", "sysdba") %>
+  password: <%= ENV.fetch("BANKCORE_DB_PASSWORD", "") %>
 
 development:
   <<: *default
   database: bank_core_2_development
+  socket: <%= ENV.fetch("BANKCORE_DB_SOCKET", "/var/run/mysqld/mysqld.sock") %>
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".
@@ -27,6 +27,8 @@ development:
 test:
   <<: *default
   database: bank_core_2_test
+  host: <%= ENV.fetch("BANKCORE_DB_HOST", "127.0.0.1") %>
+  port: <%= ENV.fetch("BANKCORE_DB_PORT", 3306) %>
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is

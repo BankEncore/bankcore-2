@@ -6,7 +6,7 @@ class BalanceRefreshService
   end
 
   def self.rebuild!(account_id:)
-    new(account_ids: [account_id]).rebuild!
+    new(account_ids: [ account_id ]).rebuild!
   end
 
   def initialize(account_ids:)
@@ -41,7 +41,7 @@ class BalanceRefreshService
 
   def upsert_balance(account_id, balance_cents)
     holds_cents = active_holds_cents(account_id)
-    available_cents = [balance_cents - holds_cents, 0].max
+    available_cents = [ balance_cents - holds_cents, 0 ].max
 
     balance = AccountBalance.find_or_initialize_by(account_id: account_id)
     balance.assign_attributes(

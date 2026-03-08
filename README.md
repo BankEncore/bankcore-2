@@ -13,6 +13,11 @@ The system centers financial truth in the posting engine:
 Typical bootstrap:
 
 ```bash
+cat <<'EOF' > .env
+BANKCORE_DB_USERNAME=sysdba
+BANKCORE_DB_PASSWORD=your-local-mysql-password
+EOF
+
 bundle install
 npm install
 bin/rails db:setup
@@ -24,7 +29,12 @@ bin/dev
 Run the Rails test suite with:
 
 ```bash
-bundle exec rails test
+cat <<'EOF' > .env
+BANKCORE_DB_USERNAME=sysdba
+BANKCORE_DB_PASSWORD=your-local-mysql-password
+EOF
+
+bundle exec rails db:test:prepare test
 ```
 
 ## Core References
