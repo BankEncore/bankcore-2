@@ -1,0 +1,62 @@
+name: Hardening / Control Gap
+description: Track a financial safety, governance, immutability, idempotency, or audit control gap.
+title: "hardening: "
+labels:
+  - hardening
+  - financial-controls
+body:
+  - type: textarea
+    id: gap
+    attributes:
+      label: Control gap
+      description: Describe the specific hardening or control gap.
+      placeholder: Posted financial rows can still be mutated after commit.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this matters
+      description: Explain the financial, audit, operational, or data-integrity risk.
+    validations:
+      required: true
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Current behavior
+      description: What does the system do today?
+    validations:
+      required: true
+  - type: textarea
+    id: desired_behavior
+    attributes:
+      label: Desired behavior
+      description: What should the system do instead?
+    validations:
+      required: true
+  - type: textarea
+    id: affected_areas
+    attributes:
+      label: Affected services / models
+      description: List the main code paths involved.
+      placeholder: |
+        - app/services/posting_engine.rb
+        - app/models/posting_batch.rb
+        - app/services/reversal_service.rb
+  - type: textarea
+    id: tests
+    attributes:
+      label: Test requirements
+      description: What regression coverage should be added?
+      placeholder: Add rollback coverage for...
+    validations:
+      required: true
+  - type: textarea
+    id: related_docs
+    attributes:
+      label: Related docs
+      description: Link reference docs, audits, or prior issues.
+      placeholder: |
+        - docs/00_initial_core_references/posting_lifecycle.md
+        - docs/00_initial_core_references/posting_engine_rules.md
+        - docs/progress/posting_compliance_matrix.md

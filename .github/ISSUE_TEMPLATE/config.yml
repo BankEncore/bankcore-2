@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: GitHub Workflow
+    url: https://github.com/BankEncore/bankcore-2/blob/main/docs/github_workflow.md
+    about: Review the repository workflow for branches, commits, pushes, and pull requests.
+  - name: Posting Compliance Matrix
+    url: https://github.com/BankEncore/bankcore-2/blob/main/docs/progress/posting_compliance_matrix.md
+    about: Review known posting lifecycle and posting engine hardening gaps before filing a control-related issue.
