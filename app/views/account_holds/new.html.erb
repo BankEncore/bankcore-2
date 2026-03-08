@@ -1,0 +1,46 @@
+<% content_for :title, "Place Hold - BankCORE" %>
+
+<div class="w-full max-w-md">
+  <%= link_to "← Back to Account", account_path(@account), class: "link link-primary mb-4 inline-block" %>
+
+  <div class="card bg-base-200 shadow-sm">
+    <div class="card-body">
+      <h1 class="card-title text-xl mb-4">Place Hold on <%= @account.account_number %></h1>
+
+      <% if flash[:alert].present? %>
+        <div class="alert alert-error mb-4">
+          <span><%= flash[:alert] %></span>
+        </div>
+      <% end %>
+
+      <%= form_with url: account_account_holds_path(@account), method: :post, local: true, class: "space-y-4" do |f| %>
+        <div class="form-control w-full">
+          <label class="label" for="amount">
+            <span class="label-text">Amount (USD)</span>
+          </label>
+          <input type="number" name="amount" id="amount" step="0.01" min="0.01" class="input input-bordered w-full" placeholder="0.00" required>
+        </div>
+        <div class="form-control w-full">
+          <label class="label" for="hold_type">
+            <span class="label-text">Hold Type</span>
+          </label>
+          <select name="hold_type" id="hold_type" class="select select-bordered w-full">
+            <option value="manual">Manual</option>
+            <option value="legal">Legal</option>
+            <option value="regulatory">Regulatory</option>
+          </select>
+        </div>
+        <div class="form-control w-full">
+          <label class="label" for="reason_code">
+            <span class="label-text">Reason (optional)</span>
+          </label>
+          <input type="text" name="reason_code" id="reason_code" class="input input-bordered w-full" placeholder="e.g. court_order">
+        </div>
+        <div class="flex gap-2 pt-4">
+          <button type="submit" class="btn btn-primary">Place Hold</button>
+          <%= link_to "Cancel", account_path(@account), class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

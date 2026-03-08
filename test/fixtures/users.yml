@@ -1,0 +1,9 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  username: testuser
+  display_name: Test User
+  email: test@example.com
+  status: active
+  primary_branch: one
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

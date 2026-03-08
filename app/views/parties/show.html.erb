@@ -1,0 +1,64 @@
+<% content_for :title, "Party #{@party.party_number} - BankCORE" %>
+
+<div class="w-full">
+  <%= link_to "← Back to Parties", parties_path, class: "link link-primary mb-4 inline-block" %>
+
+  <div class="card bg-base-200 shadow-sm mb-6">
+    <div class="card-body">
+      <h1 class="card-title text-xl">Party <%= @party.party_number %></h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <span class="text-base-content/60">Display Name</span>
+          <p class="font-medium"><%= @party.display_name %></p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Type</span>
+          <p class="font-medium"><%= @party.party_type %></p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Status</span>
+          <p>
+            <span class="badge badge-<%= @party.status == 'active' ? 'success' : 'neutral' %>">
+              <%= @party.status %>
+            </span>
+          </p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Primary Branch</span>
+          <p class="font-medium"><%= @party.primary_branch ? "#{@party.primary_branch.branch_code} — #{@party.primary_branch.name}" : "—" %></p>
+        </div>
+      </div>
+      <div class="card-actions mt-4">
+        <%= link_to "Edit", edit_party_path(@party), class: "btn btn-outline btn-sm" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-base-200 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-lg mb-4">Linked Accounts</h2>
+      <% if @account_owners.any? %>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Role</th>
+              <th>Primary</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @account_owners.each do |ao| %>
+              <tr>
+                <td><%= link_to ao.account.account_number, account_path(ao.account), class: "link link-primary" %></td>
+                <td><%= ao.role_type.presence || "—" %></td>
+                <td><%= ao.is_primary ? "Yes" : "No" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-base-content/60">No linked accounts.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

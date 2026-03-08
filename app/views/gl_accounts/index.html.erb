@@ -1,0 +1,50 @@
+<% content_for :title, "GL Accounts - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Chart of Accounts</h1>
+      <p class="workspace-subtitle">Reference ledger accounts used by posting templates, journal projection, and back-office review workflows.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">GL Register</h2>
+        <p class="mt-1 text-sm text-base-content/65">Active general ledger accounts in numeric order.</p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @gl_accounts.size %> Accounts</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>GL Number</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Normal Balance</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @gl_accounts.each do |gl| %>
+            <tr>
+              <td class="ui-mono"><%= gl.gl_number %></td>
+              <td><%= gl.name %></td>
+              <td><%= gl.category %></td>
+              <td><%= gl.normal_balance %></td>
+              <td><span class="<%= status_pill_class(gl.status) %>"><%= gl.status %></span></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @gl_accounts.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No GL accounts. Run `db:seed`.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

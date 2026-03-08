@@ -1,0 +1,24 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  posting_batch: one
+  leg_type: debit
+  ledger_scope: gl
+  gl_account: one
+  account:
+  amount_cents: 10000
+  currency_code: USD
+  position: 0
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+two:
+  posting_batch: one
+  leg_type: credit
+  ledger_scope: account
+  gl_account:
+  account: one
+  amount_cents: 10000
+  currency_code: USD
+  position: 1
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

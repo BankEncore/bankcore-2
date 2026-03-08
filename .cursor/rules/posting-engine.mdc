@@ -1,0 +1,17 @@
+---
+description: Posting engine implementation patterns
+globs: "**/posting*.rb"
+alwaysApply: false
+---
+
+# Posting Engine Rules
+
+- PostingBatch is the canonical financial event container
+- PostingLegs target accounts or gl_accounts; each leg is debit or credit
+- Status flow: draft → validated → posted (or reversed)
+- Consult `docs/00_initial_core_references/posting_templates.md` for leg patterns
+- account_transactions and journal_entries derive from posting_legs, not the reverse
+
+## Template-Driven Posting
+
+Transaction codes reference posting templates. The engine generates legs from the template, not ad-hoc logic.

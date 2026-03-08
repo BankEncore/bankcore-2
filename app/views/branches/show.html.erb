@@ -1,0 +1,64 @@
+<% content_for :title, "Branch #{@branch.branch_code} - BankCORE" %>
+
+<div class="w-full">
+  <%= link_to "← Back to Branches", branches_path, class: "link link-primary mb-4 inline-block" %>
+
+  <div class="card bg-base-200 shadow-sm mb-6">
+    <div class="card-body">
+      <h1 class="card-title text-xl">Branch <%= @branch.branch_code %></h1>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div>
+          <span class="text-base-content/60">Name</span>
+          <p class="font-medium"><%= @branch.name %></p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Status</span>
+          <p>
+            <span class="badge badge-<%= @branch.status == 'active' ? 'success' : 'neutral' %>">
+              <%= @branch.status %>
+            </span>
+          </p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Timezone</span>
+          <p class="font-medium"><%= @branch.timezone_name.presence || "—" %></p>
+        </div>
+        <div>
+          <span class="text-base-content/60">Accounts</span>
+          <p class="font-medium"><%= @branch.accounts.count %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-base-200 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-lg mb-4">Accounts</h2>
+      <% if @accounts.any? %>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Account</th>
+              <th>Type</th>
+              <th>Balance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @accounts.each do |account| %>
+              <% balance = account.account_balances.first %>
+              <tr>
+                <td class="font-mono"><%= account.account_number %></td>
+                <td><%= account.account_type %></td>
+                <td class="font-mono"><%= number_to_currency((balance&.posted_balance_cents || 0) / 100.0) %></td>
+                <td><%= link_to "View", account_path(account), class: "btn btn-ghost btn-xs" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-base-content/60">No accounts at this branch.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

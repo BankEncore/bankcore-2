@@ -1,0 +1,73 @@
+<% content_for :title, "Override Request ##{@override_request.id} - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Override Requests", override_requests_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Override Review</h1>
+      <p class="workspace-subtitle">Supervisor control point for governed exceptions with explicit reason, transaction linkage, and approval outcome.</p>
+    </div>
+  </div>
+
+  <% if @override_request.status == "pending" %>
+    <section class="ui-override-box mb-6">
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="<%= status_pill_class(@override_request.status) %>"><%= @override_request.status %></span>
+          <span class="text-sm font-medium text-base-content">Review and resolve this request before the controlled operation proceeds.</span>
+        </div>
+        <p class="text-sm text-base-content/80">Approval and denial remain explicit actions and will preserve a complete audit trail.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Override Request <span class="ui-mono">#<%= @override_request.id %></span></h2>
+        <p class="mt-1 text-sm text-base-content/65">Request metadata, reason, and linked operational context.</p>
+      </div>
+      <span class="<%= status_pill_class(@override_request.status) %>"><%= @override_request.status %></span>
+    </div>
+
+    <div class="ui-panel-body">
+      <div class="ui-kv-grid">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Request Type</div>
+          <div class="ui-kv-value"><%= @override_request.request_type %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Requested By</div>
+          <div class="ui-kv-value"><%= @override_request.requested_by&.display_name || @override_request.requested_by&.username || "—" %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Approved By</div>
+          <div class="ui-kv-value"><%= @override_request.approved_by&.display_name || @override_request.approved_by&.username || "—" %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Branch</div>
+          <div class="ui-kv-value"><%= @override_request.branch&.branch_code || "—" %></div>
+        </div>
+        <div class="ui-kv-row lg:col-span-2">
+          <div class="ui-kv-label">Reason</div>
+          <div class="ui-kv-value"><%= @override_request.reason_text.presence || "—" %></div>
+        </div>
+        <% if @override_request.operational_transaction_id.present? %>
+          <div class="ui-kv-row lg:col-span-2">
+            <div class="ui-kv-label">Transaction</div>
+            <div class="ui-kv-value">
+              <%= link_to "View Transaction ##{@override_request.operational_transaction_id}", transaction_path(@override_request.operational_transaction_id), class: "link link-primary ui-mono" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @override_request.status == "pending" %>
+        <div class="ui-actionbar mt-5">
+          <%= button_to "Approve", approve_override_request_path(@override_request), method: :post, form: { data: { turbo_confirm: "Approve this override request?" } }, class: "btn btn-success" %>
+          <%= button_to "Deny", deny_override_request_path(@override_request), method: :post, form: { data: { turbo_confirm: "Deny this override request?" } }, class: "btn btn-error btn-outline" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

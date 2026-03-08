@@ -1,0 +1,79 @@
+<% content_for :title, "Request Override - BankCORE" %>
+
+<div class="w-full max-w-3xl">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", @transaction ? transaction_path(@transaction) : override_requests_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Request Override</h1>
+      <p class="workspace-subtitle">Create an auditable exception request with the reason and transaction context needed for supervisor review.</p>
+    </div>
+  </div>
+
+  <section class="ui-override-box mb-6">
+    <div class="space-y-2">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="<%= status_pill_class('pending') %>">Approval Path</span>
+        <span class="text-sm font-medium text-base-content">Override requests are explicit control records and must be approved before the governed action can proceed.</span>
+      </div>
+      <% if @transaction %>
+        <p class="text-sm text-base-content/80">This request is linked to Transaction <span class="ui-mono">#<%= @transaction.id %></span> (<%= @transaction.transaction_type %>).</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Override Request Form</h2>
+        <p class="mt-1 text-sm text-base-content/65">Provide a concise, reviewable explanation for the exception.</p>
+      </div>
+    </div>
+
+    <div class="ui-panel-body">
+      <% if flash[:alert].present? %>
+        <div class="ui-panel-critical mb-4">
+          <div class="ui-panel-body py-3">
+            <div class="flex items-start gap-3">
+              <span class="<%= status_pill_class('error') %>">Alert</span>
+              <p class="text-sm text-base-content"><%= flash[:alert] %></p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <%= form_with url: override_requests_path, method: :post, local: true, class: "space-y-5" do |f| %>
+        <%= hidden_field_tag :request_type, params[:request_type] || "reversal" %>
+        <%= hidden_field_tag :operational_transaction_id, @transaction&.id %>
+        <%= hidden_field_tag :branch_id, @transaction&.branch_id %>
+
+        <section class="ui-form-section">
+          <div class="grid gap-4 lg:grid-cols-2">
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Request Type</div>
+              <div class="ui-kv-value"><%= params[:request_type] || "reversal" %></div>
+            </div>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Linked Transaction</div>
+              <div class="ui-kv-value ui-mono"><%= @transaction ? "##{@transaction.id}" : "—" %></div>
+            </div>
+          </div>
+
+          <div class="form-control w-full">
+            <label class="label" for="reason_text">
+              <span class="label-text text-sm font-medium">Reason (required)</span>
+            </label>
+            <textarea name="reason_text" id="reason_text" class="textarea textarea-bordered w-full" rows="4" placeholder="Explain why this override is needed..." required><%= params[:reason_text] %></textarea>
+          </div>
+        </section>
+
+        <div class="ui-confirm-strip">
+          <p class="max-w-xl text-sm text-base-content/70">Submitting this form creates an auditable approval request; it does not silently bypass the control.</p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+            <%= link_to "Cancel", @transaction ? transaction_path(@transaction) : override_requests_path, class: "btn btn-ghost" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

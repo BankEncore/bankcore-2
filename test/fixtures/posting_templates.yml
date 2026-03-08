@@ -1,0 +1,16 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+adj_credit:
+  transaction_code: adj_credit
+  name: Manual Account Credit
+  description: Debit 5190, Credit customer account
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+adj_debit:
+  transaction_code: adj_debit
+  name: Manual Account Debit
+  description: Debit customer account, Credit 1180
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

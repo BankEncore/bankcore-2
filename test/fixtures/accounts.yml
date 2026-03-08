@@ -1,0 +1,10 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  account_number: "1001"
+  account_type: dda
+  branch: one
+  currency_code: USD
+  status: active
+  opened_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

@@ -1,0 +1,73 @@
+<% content_for :title, "Transactions - BankCORE" %>
+
+<div class="w-full">
+  <% posted_count = @transactions.count { |txn| txn.status == "posted" } %>
+  <% reversed_count = @transactions.count { |txn| txn.status == "reversed" } %>
+
+  <div class="workspace-header">
+    <div>
+      <h1 class="workspace-title">Transactions</h1>
+      <p class="workspace-subtitle">Operational queue of recent transactions with lifecycle state, branch context, and quick access to detailed posting review.</p>
+    </div>
+    <%= link_to "New Transaction", new_transaction_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-3 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Recent Queue</div>
+      <div class="ui-metric-value ui-mono"><%= @transactions.size %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Posted</div>
+      <div class="ui-metric-value ui-mono"><%= posted_count %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Reversed</div>
+      <div class="ui-metric-value ui-mono"><%= reversed_count %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Transaction Queue</h2>
+        <p class="mt-1 text-sm text-base-content/65">Recent operational transactions ordered by latest activity.</p>
+      </div>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Reference</th>
+            <th>Status</th>
+            <th>Branch</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if @transactions.any? %>
+            <% @transactions.each do |txn| %>
+              <tr>
+                <td class="ui-mono"><%= txn.business_date&.strftime("%Y-%m-%d") %></td>
+                <td><%= txn.transaction_type %></td>
+                <td class="ui-mono"><%= txn.reference_number.presence || "—" %></td>
+                <td><span class="<%= status_pill_class(txn.status) %>"><%= txn.status %></span></td>
+                <td><%= txn.branch&.branch_code %></td>
+                <td><%= link_to "View", transaction_path(txn), class: "link link-primary text-sm" %></td>
+              </tr>
+            <% end %>
+          <% else %>
+            <tr>
+              <td colspan="6" class="py-8 text-center text-sm text-base-content/60">
+                No transactions yet. <%= link_to "Create your first transaction", new_transaction_path, class: "link link-primary" %>.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

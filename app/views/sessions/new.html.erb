@@ -1,0 +1,23 @@
+<% content_for :title, "Sign In - BankCORE" %>
+
+<div class="w-full max-w-md mx-auto mt-16">
+  <div class="card bg-base-200 shadow-xl">
+    <div class="card-body">
+      <h1 class="card-title text-2xl justify-center mb-4">Sign In</h1>
+
+      <%= form_with url: login_path, method: :post, local: true, class: "space-y-4" do |f| %>
+        <div class="form-control">
+          <%= label_tag :username, "Username", class: "label" %>
+          <%= text_field_tag :username, params[:username], class: "input input-bordered w-full", placeholder: "Username", autofocus: true, autocomplete: "username" %>
+        </div>
+        <div class="form-control">
+          <%= label_tag :password, "Password", class: "label" %>
+          <%= password_field_tag :password, nil, class: "input input-bordered w-full", placeholder: "Password", autocomplete: "current-password" %>
+        </div>
+        <div class="form-control mt-6">
+          <%= submit_tag "Sign In", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

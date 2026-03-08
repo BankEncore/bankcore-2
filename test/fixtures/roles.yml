@@ -1,0 +1,7 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  code: back_office
+  name: Back Office
+  description: Can post manual transactions
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

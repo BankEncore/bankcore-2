@@ -1,0 +1,58 @@
+<% content_for :title, "Interest Accruals - BankCORE" %>
+
+<div class="w-full">
+  <% account_filter = params[:account_id].presence %>
+
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Interest Accruals</h1>
+      <p class="workspace-subtitle">Accrued interest events posted through the ledger-first accrual workflow.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Accrual Register</h2>
+        <p class="mt-1 text-sm text-base-content/65"><%= account_filter ? "Filtered to account ##{account_filter}." : "Recent accrual activity across interest-bearing accounts." %></p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @interest_accruals.size %> Rows</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Account</th>
+            <th>Accrual Date</th>
+            <th class="text-right">Amount</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @interest_accruals.each do |ia| %>
+            <tr>
+              <td class="ui-mono"><%= ia.id %></td>
+              <td><%= link_to ia.account.account_number, account_path(ia.account), class: "link link-primary ui-mono" %></td>
+              <td class="ui-mono"><%= ia.accrual_date&.strftime("%Y-%m-%d") %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(ia.amount_cents / 100.0) %></td>
+              <td><span class="<%= status_pill_class(ia.status) %>"><%= ia.status %></span></td>
+              <td>
+                <% if ia.posting_batch&.operational_transaction_id.present? %>
+                  <%= link_to "Txn", transaction_path(ia.posting_batch.operational_transaction_id), class: "btn btn-ghost btn-xs" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @interest_accruals.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No interest accruals.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

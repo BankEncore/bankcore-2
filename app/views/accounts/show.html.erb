@@ -1,0 +1,180 @@
+<% content_for :title, "Account #{@account.account_number} - BankCORE" %>
+
+<div class="w-full">
+  <% holds_total_cents = @active_holds.sum(&:amount_cents) %>
+
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Accounts", accounts_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Account Review</h1>
+      <p class="workspace-subtitle">Customer account summary with balance, ownership, hold state, and recent posting activity.</p>
+    </div>
+  </div>
+
+  <section class="account-summary-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Account <span class="ui-mono"><%= @account.account_number %></span></h2>
+        <p class="mt-1 text-sm text-base-content/65"><%= @account.branch&.branch_code %> — <%= @account.branch&.name %> · <%= @account.account_type %></p>
+      </div>
+      <span class="<%= status_pill_class(@account.status) %>"><%= @account.status %></span>
+    </div>
+
+    <div class="ui-panel-body">
+      <div class="grid gap-4 lg:grid-cols-[2fr_1fr_1fr]">
+        <div class="space-y-2">
+          <div class="ui-kv-label">Available Balance</div>
+          <div class="ui-balance-value"><%= number_to_currency((@balance&.available_balance_cents || 0) / 100.0) %></div>
+          <p class="text-sm text-base-content/65">Available funds reflect current active holds and the latest posted subledger state.</p>
+        </div>
+
+        <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Posted Balance</div>
+            <div class="ui-kv-value ui-mono"><%= number_to_currency((@balance&.posted_balance_cents || 0) / 100.0) %></div>
+          </div>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Active Holds</div>
+            <div class="ui-kv-value ui-mono"><%= number_to_currency(holds_total_cents / 100.0) %></div>
+          </div>
+        </div>
+
+        <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Branch</div>
+            <div class="ui-kv-value"><%= @account.branch&.branch_code %></div>
+          </div>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Account Type</div>
+            <div class="ui-kv-value"><%= @account.account_type %></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ui-actionbar mt-5">
+        <%= link_to "New Transaction", new_transaction_path(account_id: @account.id), class: "btn btn-primary btn-sm" %>
+        <%= link_to "Place Hold", new_account_account_hold_path(@account), class: "btn btn-outline btn-sm" %>
+        <%= link_to "Fee History", fee_assessments_path(account_id: @account.id), class: "btn btn-ghost btn-sm" %>
+        <%= link_to "Accrual History", interest_accruals_path(account_id: @account.id), class: "btn btn-ghost btn-sm" %>
+      </div>
+    </div>
+  </section>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Transactions</h2>
+        <p class="mt-1 text-sm text-base-content/65">Recent account-facing posting activity derived from the posting engine.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <% if @transactions.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th class="text-right">Debit</th>
+              <th class="text-right">Credit</th>
+              <th class="text-right">Balance</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @transactions.each do |atx| %>
+              <tr>
+                <td class="ui-mono"><%= (atx.posted_at || atx.created_at)&.strftime("%Y-%m-%d") %></td>
+                <td><%= atx.posting_batch&.transaction_code %></td>
+                <td><%= atx.description.presence || "—" %></td>
+                <td class="ui-mono text-right"><%= atx.direction == "debit" ? number_to_currency(atx.amount_cents / 100.0) : "—" %></td>
+                <td class="ui-mono text-right"><%= atx.direction == "credit" ? number_to_currency(atx.amount_cents / 100.0) : "—" %></td>
+                <td class="ui-mono text-right"><%= atx.running_balance_cents.present? ? number_to_currency(atx.running_balance_cents / 100.0) : "—" %></td>
+                <td>
+                  <%= link_to "View", transaction_path(atx.posting_batch&.operational_transaction_id), class: "link link-primary link-hover text-sm" if atx.posting_batch&.operational_transaction_id.present? %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No transactions yet.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Account Owners</h2>
+        <p class="mt-1 text-sm text-base-content/65">Current ownership links used for customer/account relationship context.</p>
+      </div>
+      <%= link_to "Add Owner", new_account_account_owner_path(@account), class: "btn btn-outline btn-sm" %>
+    </div>
+    <div class="ui-panel-body">
+      <% if @account.account_owners.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Party</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @account.account_owners.each do |ao| %>
+              <tr>
+                <td><%= link_to ao.party.display_name, party_path(ao.party), class: "link link-primary" %></td>
+                <td><%= ao.role_type.presence || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No owners linked.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Active Holds</h2>
+        <p class="mt-1 text-sm text-base-content/65">Operational holds that currently reduce the available balance.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <% if @active_holds.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Reason</th>
+              <th>Effective</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @active_holds.each do |hold| %>
+              <tr>
+                <td><%= hold.hold_type %></td>
+                <td class="ui-mono"><%= number_to_currency(hold.amount_cents / 100.0) %></td>
+                <td><%= hold.reason_code %></td>
+                <td class="ui-mono"><%= hold.effective_on&.strftime("%Y-%m-%d") %></td>
+                <td>
+                  <%= button_to "Release",
+                      release_account_hold_path(hold),
+                      method: :post,
+                      form: { data: { turbo_confirm: "Release this hold?" } },
+                      class: "btn btn-error btn-outline btn-xs" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No active holds.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

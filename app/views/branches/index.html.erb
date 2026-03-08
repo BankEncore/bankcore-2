@@ -1,0 +1,40 @@
+<% content_for :title, "Branches - BankCORE" %>
+
+<div class="w-full">
+  <%= link_to "← Back", root_path, class: "link link-primary mb-4 inline-block" %>
+
+  <h1 class="text-2xl font-bold mb-6">Branches</h1>
+
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Accounts</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @branches.each do |branch| %>
+          <tr>
+            <td class="font-mono"><%= branch.branch_code %></td>
+            <td><%= branch.name %></td>
+            <td>
+              <span class="badge badge-<%= branch.status == 'active' ? 'success' : 'neutral' %>">
+                <%= branch.status %>
+              </span>
+            </td>
+            <td><%= branch.accounts.count %></td>
+            <td><%= link_to "View", branch_path(branch), class: "btn btn-ghost btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @branches.empty? %>
+    <p class="text-base-content/60 mt-4">No branches.</p>
+  <% end %>
+</div>

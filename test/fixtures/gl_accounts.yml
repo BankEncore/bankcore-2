@@ -1,0 +1,126 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  gl_number: "5190"
+  name: Adjustment / Correction Expense
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+two:
+  gl_number: "1180"
+  name: Suspense / Adjustment Receivable
+  category: asset
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  gl_number: "4510"
+  name: Deposit Service Charges
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+four:
+  gl_number: "5130"
+  name: Interest Expense – Savings / MMDA
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+five:
+  gl_number: "2510"
+  name: Accrued Interest Payable – Deposits
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  gl_number: "4510"
+  name: Deposit Service Charges
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+four:
+  gl_number: "5130"
+  name: Interest Expense – Savings / MMDA
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+five:
+  gl_number: "2510"
+  name: Accrued Interest Payable – Deposits
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  gl_number: "4510"
+  name: Deposit Service Charges
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+four:
+  gl_number: "5130"
+  name: Interest Expense Savings
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+five:
+  gl_number: "2510"
+  name: Accrued Interest Payable
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  gl_number: "4510"
+  name: Deposit Service Charges
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+four:
+  gl_number: "5130"
+  name: Interest Expense – Savings / MMDA
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+five:
+  gl_number: "2510"
+  name: Accrued Interest Payable – Deposits
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

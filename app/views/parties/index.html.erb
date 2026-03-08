@@ -1,0 +1,45 @@
+<% content_for :title, "Parties - BankCORE" %>
+
+<div class="w-full">
+  <%= link_to "← Back", root_path, class: "link link-primary mb-4 inline-block" %>
+
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold">Parties</h1>
+    <%= link_to "New Party", new_party_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="table table-zebra">
+      <thead>
+        <tr>
+          <th>Party #</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Branch</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @parties.each do |party| %>
+          <tr>
+            <td class="font-mono"><%= party.party_number %></td>
+            <td><%= party.display_name %></td>
+            <td><%= party.party_type %></td>
+            <td>
+              <span class="badge badge-<%= party.status == 'active' ? 'success' : 'neutral' %>">
+                <%= party.status %>
+              </span>
+            </td>
+            <td><%= party.primary_branch&.branch_code || "—" %></td>
+            <td><%= link_to "View", party_path(party), class: "btn btn-ghost btn-sm" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @parties.empty? %>
+    <p class="text-base-content/60 mt-4">No parties yet. <%= link_to "Create one", new_party_path, class: "link link-primary" %>.</p>
+  <% end %>
+</div>

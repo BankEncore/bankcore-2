@@ -1,0 +1,53 @@
+<%= form_with model: @party, local: true, class: "space-y-4" do |f| %>
+  <% if @party.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @party.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-control w-full">
+    <label class="label" for="party_party_number">
+      <span class="label-text">Party Number</span>
+    </label>
+    <%= f.text_field :party_number, class: "input input-bordered w-full", placeholder: "e.g. P001", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="party_display_name">
+      <span class="label-text">Display Name</span>
+    </label>
+    <%= f.text_field :display_name, class: "input input-bordered w-full", placeholder: "Customer name", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="party_party_type">
+      <span class="label-text">Party Type</span>
+    </label>
+    <%= f.select :party_type, Bankcore::Enums::PARTY_TYPES.map { |t| [t.titleize, t] }, {}, class: "select select-bordered w-full", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="party_primary_branch_id">
+      <span class="label-text">Primary Branch (optional)</span>
+    </label>
+    <%= f.collection_select :primary_branch_id, Branch.order(:branch_code), :id, :name, { include_blank: "— None —" }, class: "select select-bordered w-full" %>
+  </div>
+
+  <% if @party.persisted? %>
+    <div class="form-control w-full">
+      <label class="label" for="party_status">
+        <span class="label-text">Status</span>
+      </label>
+      <%= f.select :status, Bankcore::Enums::STATUSES.map { |s| [s.titleize, s] }, {}, class: "select select-bordered w-full" %>
+    </div>
+  <% end %>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", @party.persisted? ? party_path(@party) : parties_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

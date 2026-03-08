@@ -1,0 +1,25 @@
+<% if flash[:notice].present? || flash[:alert].present? %>
+  <div class="mb-6 space-y-3" data-turbo-temporary>
+    <% if flash[:notice].present? %>
+      <div class="ui-panel">
+        <div class="ui-panel-body py-3">
+          <div class="flex items-start gap-3">
+            <span class="<%= status_pill_class('success') %>">Notice</span>
+            <p class="text-sm text-base-content"><%= flash[:notice] %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if flash[:alert].present? %>
+      <div class="ui-panel-critical">
+        <div class="ui-panel-body py-3">
+          <div class="flex items-start gap-3">
+            <span class="<%= status_pill_class('error') %>">Alert</span>
+            <p class="text-sm text-base-content"><%= flash[:alert] %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

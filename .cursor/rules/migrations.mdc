@@ -1,0 +1,23 @@
+---
+description: Database migration conventions for BankCORE
+globs: "db/migrate/**/*.rb"
+alwaysApply: false
+---
+
+# Migration Rules
+
+## Naming
+
+- Descriptive names: `create_posting_batches`, `add_status_to_posting_batches`
+- One logical change per migration
+
+## Financial Tables
+
+- Use `NOT NULL` for required fields (amount, account_id, etc.)
+- Add `CHECK` constraints for balance invariants where practical
+- Consider `immutable` patterns for posted records (e.g. no UPDATE/DELETE on posted rows)
+
+## Indexes
+
+- Index foreign keys and status columns used in queries
+- Composite indexes for common filter combinations (e.g. account_id + posted_at)

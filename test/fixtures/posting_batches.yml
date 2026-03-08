@@ -1,0 +1,22 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  operational_transaction: one
+  transaction_code: ADJ_CREDIT
+  business_date: 2026-03-07
+  status: posted
+  posted_at: 2026-03-07 12:00:00
+  idempotency_key: PB-001
+  posting_reference: REF-001
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+two:
+  operational_transaction: two
+  transaction_code: ADJ_DEBIT
+  business_date: 2026-03-07
+  status: posted
+  posted_at: 2026-03-07 12:00:00
+  idempotency_key: PB-002
+  posting_reference: REF-002
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

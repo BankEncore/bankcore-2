@@ -1,0 +1,12 @@
+<% content_for :title, "Edit Party #{@party.party_number} - BankCORE" %>
+
+<div class="w-full max-w-md">
+  <%= link_to "← Back to Party", party_path(@party), class: "link link-primary mb-4 inline-block" %>
+
+  <div class="card bg-base-200 shadow-sm">
+    <div class="card-body">
+      <h1 class="card-title text-xl mb-4">Edit Party <%= @party.party_number %></h1>
+      <%= render "form" %>
+    </div>
+  </div>
+</div>

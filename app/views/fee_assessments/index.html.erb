@@ -1,0 +1,60 @@
+<% content_for :title, "Fee Assessments - BankCORE" %>
+
+<div class="w-full">
+  <% account_filter = params[:account_id].presence %>
+
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Fee Assessments</h1>
+      <p class="workspace-subtitle">Posted fee activity for review, investigation, and account-level follow-up.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Fee Assessment Register</h2>
+        <p class="mt-1 text-sm text-base-content/65"><%= account_filter ? "Filtered to account ##{account_filter}." : "Recent fee postings across customer accounts." %></p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @fee_assessments.size %> Rows</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Account</th>
+            <th>Fee Type</th>
+            <th class="text-right">Amount</th>
+            <th>Assessed On</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @fee_assessments.each do |fa| %>
+            <tr>
+              <td class="ui-mono"><%= fa.id %></td>
+              <td><%= link_to fa.account.account_number, account_path(fa.account), class: "link link-primary ui-mono" %></td>
+              <td><%= fa.fee_type&.name || fa.fee_type&.code || "—" %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(fa.amount_cents / 100.0) %></td>
+              <td class="ui-mono"><%= fa.assessed_on&.strftime("%Y-%m-%d") %></td>
+              <td><span class="<%= status_pill_class(fa.status) %>"><%= fa.status %></span></td>
+              <td>
+                <% if fa.posting_batch&.operational_transaction_id.present? %>
+                  <%= link_to "Txn", transaction_path(fa.posting_batch.operational_transaction_id), class: "btn btn-ghost btn-xs" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @fee_assessments.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No fee assessments.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

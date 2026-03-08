@@ -1,0 +1,72 @@
+Original Sort,domain,table,phase,Fields,Purpose
+1,cif,parties,p1,11,Master party record for any person or organization known to the institution.
+7,cif,cards,p1,0,Registry of debit/ATM cards issued or tracked by the institution.
+8,cif,card_links,p1,9,Links cards to parties and/or accounts.
+11,accounts,accounts,p1,12,Master financial account record.
+12,accounts,account_owners,p1,9,Links parties to accounts with defined ownership or authority roles.
+13,accounts,deposit_accounts,p1,8,Deposit-specific account attributes.
+14,accounts,loan_accounts,p1,12,Loan-specific account attributes.
+15,accounts,account_balances,p1,8,Point-in-time cached balances used for operational reads.
+16,accounts,account_holds,p1,11,Restrictive or funds-availability holds against an account.
+19,accounts,account_transactions,p1,13,Customer-facing account activity subledger.
+21,ops_txn,transaction_lines,p1,10,Line-level operational detail within a transaction.
+25,posting_subledger,posting_batches,p1,9,Canonical financial event container for balanced posting.
+26,posting_subledger,posting_legs,p1,12,Balanced debit/credit lines belonging to a posting batch.
+28,general_ledger,gl_accounts,p1,9,Chart of accounts for bank-wide accounting.
+29,general_ledger,journal_entries,p1,8,Accounting journal entry header.
+30,general_ledger,journal_entry_lines,p1,11,Debit/credit accounting lines for the GL journal entry.
+34,teller_branch_cash,branches,p1,9,Branch master table.
+35,teller_branch_cash,cash_locations,p1,8,"Branch vaults, teller drawers, tills, transit cash, or suspense cash locations."
+36,teller_branch_cash,teller_sessions,p1,11,Teller open/close cash responsibility session.
+37,teller_branch_cash,cash_movements,p1,13,"Records physical cash in/out between drawer, vault, customer, or transit."
+41,teller_branch_cash,workstations,p1,7,Tracks physical or logical teller/branch workstations.
+42,external_settlement_clearing,clearing_items,p1,11,Base registry for externally-originated or clearing-related items.
+43,external_settlement_clearing,check_items,p1,10,"Check-level item detail for deposits, cashing, or clearing."
+44,external_settlement_clearing,ach_items,p1,11,ACH debit/credit items entered manually or imported for settlement.
+45,external_settlement_clearing,card_settlements,p1,10,Card network settlement items recorded internally.
+49,fees_interest_controls,fee_types,p1,8,Catalog of known fee types.
+51,fees_interest_controls,fee_assessments,p1,12,Actual fee charges assessed against transactions or accounts.
+56,security_rbac,users,p1,8,Employee/system user records.
+57,security_rbac,roles,p1,6,RBAC role definitions.
+59,security_rbac,role_permissions,p1,4,Assigns permissions to roles.
+60,security_rbac,user_roles,p1,7,Assigns roles to users.
+2,cif,party_people,p2,10,Person-specific attributes for an individual party.
+3,cif,party_organizations,p2,7,Organization-specific attributes for business/entity parties.
+4,cif,party_contacts,p2,11,"Phones, emails, mailing channels, and related contact preferences."
+5,cif,party_identifiers,p2,11,"Masked references to tax IDs, government IDs, and verification status."
+6,cif,party_relationships,p2,9,"Relates parties to other parties, such as beneficial owner, spouse, guarantor, signer, trustee, or household member."
+9,cif,advisories,p2,15,"Manual notes, alerts, flags, or record-level advisories associated to parties and/or accounts."
+10,accounts,account_products,p2,11,Product catalog defining default rules for deposit and loan products.
+17,accounts,account_limits,p2,8,"Account-specific overrides for overdraft, cash limits, or daily transaction caps."
+18,accounts,account_status_events,p2,8,Historical lifecycle transitions for accounts.
+20,ops_txn,transactions,p2,16,"General operational transaction header across teller, back-office, clearing, and fee/interest flows."
+22,ops_txn,transaction_items,p2,9,"Instrument-level detail such as checks, denominations, fee items, or non-cash instruments."
+23,ops_txn,transaction_references,p2,5,"Stores idempotency keys, external references, network references, and alternate lookup keys."
+24,ops_txn,transaction_exceptions,p2,10,"Captures policy exceptions, override-required conditions, and transaction-level control events."
+27,posting_subledger,posting_links,p2,6,"Cross-reference table connecting posting batches to operational artifacts, holds, fees, and settlement objects."
+31,general_ledger,gl_mappings,p2,11,Maps source transaction types or product families to GL accounts.
+32,general_ledger,gl_batches,p2,9,End-of-day summary batch for export to enterprise GL or control reporting.
+33,general_ledger,gl_batch_lines,p2,9,Aggregated GL totals within an end-of-day batch.
+38,teller_branch_cash,vault_transfers,p2,11,Specialized dual-control vault transfer records.
+39,teller_branch_cash,cash_counts,p2,9,Denomination-level counts for drawers and vaults.
+40,teller_branch_cash,cash_variances,p2,10,Over/short exceptions and resolution records.
+46,external_settlement_clearing,wire_items,p2,9,Wire-in and wire-out items handled internally.
+47,external_settlement_clearing,settlement_batches,p2,9,Groups manually entered or imported settlement items by date/source.
+50,fees_interest_controls,fee_rules,p2,13,Event-driven or scheduled rules for fee assessment.
+52,fees_interest_controls,interest_rules,p2,11,Product or account-level rules for interest accrual and posting.
+53,fees_interest_controls,interest_accruals,p2,9,Daily or periodic accrual rows for deposit or loan interest.
+54,fees_interest_controls,funds_availability_holds,p2,6,Specialized hold schedule rows for deposit availability plans.
+55,fees_interest_controls,override_requests,p2,12,Lifecycle of supervisor override requests.
+58,security_rbac,permissions,p2,6,Explicit permission registry if normalized separately.
+61,security_rbac,user_branch_access,p2,8,Explicit multi-branch access entitlement table.
+62,security_rbac,sessions,p2,9,Authentication/refresh token session registry.
+63,security_rbac,mfa_events,p2,7,PIN/MFA challenge and verification records.
+64,audit_business_date_settings,audit_events,p2,12,Immutable who/what/when/why event log.
+65,audit_business_date_settings,business_dates,p2,9,Tracks branch-level business date state and close status.
+66,audit_business_date_settings,holidays,p2,6,Holiday calendar used in business-date and funds-availability logic.
+70,audit_business_date_settings,statement_runs,p2,8,Statement generation job runs by cycle/date/account group.
+71,audit_business_date_settings,statements,p2,11,Durable storage of customer statements.
+48,external_settlement_clearing,reconciliation_exceptions,p3,9,Tracks unmatched or suspense settlement items.
+67,audit_business_date_settings,settings_catalog,p3,9,Registry of supported runtime settings and metadata.
+68,audit_business_date_settings,settings_values,p3,10,Scoped runtime configuration values.
+69,audit_business_date_settings,export_jobs,p3,10,"Tracks GL exports, audit exports, statement exports, and related generated artifacts."

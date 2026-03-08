@@ -1,0 +1,7 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  business_date: 2026-03-07
+  status: open
+  opened_at: 2026-03-07 00:00:00
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

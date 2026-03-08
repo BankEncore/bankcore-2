@@ -1,0 +1,56 @@
+<% content_for :title, "Audit Events - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Audit Events</h1>
+      <p class="workspace-subtitle">Immutable operational event history supporting review, exception tracing, and accountability workflows.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Audit Timeline</h2>
+        <p class="mt-1 text-sm text-base-content/65">Recent audit emissions with event type, action, target, and accounting day context.</p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @audit_events.size %> Events</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Occurred</th>
+            <th>Event Type</th>
+            <th>Action</th>
+            <th>Target</th>
+            <th>Business Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @audit_events.each do |ev| %>
+            <tr>
+              <td class="ui-mono"><%= ev.occurred_at&.strftime("%Y-%m-%d %H:%M:%S") %></td>
+              <td><%= ev.event_type %></td>
+              <td><%= ev.action %></td>
+              <td class="ui-mono">
+                <% if ev.target_type.present? && ev.target_id.present? %>
+                  <%= ev.target_type %> #<%= ev.target_id %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td class="ui-mono"><%= ev.business_date&.strftime("%Y-%m-%d") || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @audit_events.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No audit events.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

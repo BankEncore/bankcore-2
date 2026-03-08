@@ -1,0 +1,25 @@
+---
+description: Financial invariants and posting rules for BankCORE
+alwaysApply: true
+---
+
+# BankCORE Financial Invariants
+
+When implementing or reviewing financial logic:
+
+1. **Balanced Posting**: Reject any commit where SUM(debit_legs.amount) != SUM(credit_legs.amount)
+2. **Immutability**: Never UPDATE or DELETE posted records; use reversals
+3. **Atomicity**: Wrap posting in a transaction; rollback entirely on failure
+4. **No Direct Balance Updates**: `account_balances` is a projection; update only via posting engine
+5. **Idempotency**: Use unique request keys; duplicate retries return original result
+
+## Reversal Pattern
+
+Corrections create a new inverse PostingBatch linked to the original. Never mutate the original.
+
+## Ledger Boundaries
+
+- Operational Layer → "what happened" (transactions)
+- Posting Engine → "how it affects money" (posting_batches, posting_legs)
+- Subledger → "how it affects customer" (account_transactions)
+- GL Layer → "how it affects bank accounting" (journal_entries)

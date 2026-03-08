@@ -1,0 +1,38 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+adj_credit_debit:
+  posting_template: adj_credit
+  gl_account: one
+  leg_type: debit
+  account_source: fixed_gl
+  description: Debit adjustment expense
+  position: 0
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+adj_credit_credit:
+  posting_template: adj_credit
+  leg_type: credit
+  account_source: customer_account
+  description: Credit customer account
+  position: 1
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+adj_debit_debit:
+  posting_template: adj_debit
+  leg_type: debit
+  account_source: customer_account
+  description: Debit customer account
+  position: 0
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+adj_debit_credit:
+  posting_template: adj_debit
+  gl_account: two
+  leg_type: credit
+  account_source: fixed_gl
+  description: Credit suspense receivable
+  position: 1
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

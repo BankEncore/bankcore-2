@@ -1,0 +1,57 @@
+/* BankCORE Authority + Modernity - https://coolors.co/0f766e-115e59-1e3a8a-d4a017-1e293b-323c4d-f8fafc */
+
+/* CSS HEX */
+--blue-spruce: #0f766eff;
+--stormy-teal: #115e59ff;
+--french-blue: #1e3a8aff;
+--goldenrod: #d4a017ff;
+--deep-space-blue: #1e293bff;
+--charcoal-blue: #323c4dff;
+--bright-snow: #f8fafcff;
+
+/* CSS HSL */
+--blue-spruce: hsla(175, 77%, 26%, 1);
+--stormy-teal: hsla(176, 69%, 22%, 1);
+--french-blue: hsla(224, 64%, 33%, 1);
+--goldenrod: hsla(43, 80%, 46%, 1);
+--deep-space-blue: hsla(217, 33%, 17%, 1);
+--charcoal-blue: hsla(218, 21%, 25%, 1);
+--bright-snow: hsla(210, 40%, 98%, 1);
+
+/* SCSS HEX */
+$blue-spruce: #0f766eff;
+$stormy-teal: #115e59ff;
+$french-blue: #1e3a8aff;
+$goldenrod: #d4a017ff;
+$deep-space-blue: #1e293bff;
+$charcoal-blue: #323c4dff;
+$bright-snow: #f8fafcff;
+
+/* SCSS HSL */
+$blue-spruce: hsla(175, 77%, 26%, 1);
+$stormy-teal: hsla(176, 69%, 22%, 1);
+$french-blue: hsla(224, 64%, 33%, 1);
+$goldenrod: hsla(43, 80%, 46%, 1);
+$deep-space-blue: hsla(217, 33%, 17%, 1);
+$charcoal-blue: hsla(218, 21%, 25%, 1);
+$bright-snow: hsla(210, 40%, 98%, 1);
+
+/* SCSS RGB */
+$blue-spruce: rgba(15, 118, 110, 1);
+$stormy-teal: rgba(17, 94, 89, 1);
+$french-blue: rgba(30, 58, 138, 1);
+$goldenrod: rgba(212, 160, 23, 1);
+$deep-space-blue: rgba(30, 41, 59, 1);
+$charcoal-blue: rgba(50, 60, 77, 1);
+$bright-snow: rgba(248, 250, 252, 1);
+
+/* SCSS Gradient */
+$gradient-top: linear-gradient(0deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-right: linear-gradient(90deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-bottom: linear-gradient(180deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-left: linear-gradient(270deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-top-right: linear-gradient(45deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-bottom-right: linear-gradient(135deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-top-left: linear-gradient(225deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-bottom-left: linear-gradient(315deg, #0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);
+$gradient-radial: radial-gradient(#0f766eff, #115e59ff, #1e3a8aff, #d4a017ff, #1e293bff, #323c4dff, #f8fafcff);

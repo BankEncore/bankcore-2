@@ -1,0 +1,25 @@
+---
+description: Rails 8 conventions and project structure
+globs: "**/*.rb"
+alwaysApply: false
+---
+
+# Rails Conventions
+
+## Structure
+
+- Follow Rails 8 conventions (Omakase-style via rubocop-rails-omakase)
+- Use standard MVC; keep models thin, logic in services where appropriate
+- Financial logic belongs in services, not controllers or models
+
+## Naming
+
+- Models: singular (PostingBatch, AccountTransaction)
+- Tables: plural snake_case (posting_batches, account_transactions)
+- Services: `*Service` suffix (e.g. PostingService, ReversalService)
+
+## Financial Code
+
+- Never put posting logic in controllers; use a service object
+- Wrap posting commits in `ActiveRecord::Base.transaction`
+- Use `raise ActiveRecord::Rollback` on validation failure, not `return`

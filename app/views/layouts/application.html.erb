@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Bank Core 2" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Bank Core 2">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "tailwind", "inter-font", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body data-theme="bankcore">
+    <% page_title = (content_for(:title).presence || "BankCORE").sub(/ - BankCORE\z/, "") %>
+    <% if current_user %>
+      <div class="app-shell">
+        <aside class="app-sidebar">
+          <div class="app-sidebar-brand">
+            <%= link_to root_path, class: "block" do %>
+              <div class="text-xl font-bold tracking-tight text-white">Bank<span class="text-primary">CORE</span></div>
+              <div class="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Operational Workstation</div>
+            <% end %>
+          </div>
+
+          <nav class="app-sidebar-nav">
+            <div class="app-sidebar-section">
+              <div class="app-sidebar-label">Primary Workspace</div>
+              <%= link_to transactions_path, class: app_nav_link_class(transactions_path) do %>
+                <span>Transactions</span>
+              <% end %>
+              <%= link_to business_dates_path, class: app_nav_link_class(business_dates_path) do %>
+                <span>Business Dates</span>
+              <% end %>
+              <%= link_to override_requests_path, class: app_nav_link_class(override_requests_path) do %>
+                <span>Overrides</span>
+              <% end %>
+            </div>
+
+            <div class="app-sidebar-section">
+              <div class="app-sidebar-label">Customer Operations</div>
+              <%= link_to accounts_path, class: app_nav_link_class(accounts_path) do %>
+                <span>Accounts</span>
+              <% end %>
+              <%= link_to new_account_path, class: app_nav_link_class(new_account_path) do %>
+                <span>New Account</span>
+              <% end %>
+              <%= link_to parties_path, class: app_nav_link_class(parties_path) do %>
+                <span>Parties</span>
+              <% end %>
+              <%= link_to branches_path, class: app_nav_link_class(branches_path) do %>
+                <span>Branches</span>
+              <% end %>
+            </div>
+
+            <div class="app-sidebar-section">
+              <div class="app-sidebar-label">Back Office Review</div>
+              <%= link_to gl_accounts_path, class: app_nav_link_class(gl_accounts_path) do %>
+                <span>GL Accounts</span>
+              <% end %>
+              <%= link_to fee_assessments_path, class: app_nav_link_class(fee_assessments_path) do %>
+                <span>Fee Assessments</span>
+              <% end %>
+              <%= link_to interest_accruals_path, class: app_nav_link_class(interest_accruals_path) do %>
+                <span>Interest Accruals</span>
+              <% end %>
+              <%= link_to audit_events_path, class: app_nav_link_class(audit_events_path) do %>
+                <span>Audit Events</span>
+              <% end %>
+            </div>
+          </nav>
+
+          <div class="app-sidebar-footer">
+            <div class="font-semibold text-slate-300">Kernel Status</div>
+            <div class="mt-1">Posting engine and back-office controls available.</div>
+          </div>
+        </aside>
+
+        <div class="workspace-main">
+          <header class="app-topbar">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div class="text-lg font-semibold tracking-tight text-base-content"><%= page_title %></div>
+                <div class="mt-1 text-sm text-base-content/60">Ledger-first back-office workspace with governed operational controls.</div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <%= link_to "New Transaction", new_transaction_path, class: "btn btn-primary btn-sm" %>
+                <%= link_to "New Account", new_account_path, class: "btn btn-outline btn-sm" %>
+                <%= button_to "Logout", logout_path, method: :delete, class: "btn btn-ghost btn-sm" %>
+              </div>
+            </div>
+
+            <div class="workspace-statusbar">
+              <span class="business-date-badge">Business Date <%= current_business_date %></span>
+              <span class="<%= status_pill_class(current_business_state) %>"><%= current_business_state %></span>
+              <span>Workspace: Back Office</span>
+              <span>Operator: <strong class="text-base-content"><%= workspace_user_label %></strong></span>
+              <span>Branch: <strong class="text-base-content"><%= workspace_branch_label %></strong></span>
+            </div>
+          </header>
+
+          <main class="workspace-content">
+            <%= render "shared/flash" %>
+            <%= yield %>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <main class="mx-auto min-h-screen max-w-md px-5 py-10">
+        <%= render "shared/flash" %>
+        <%= yield %>
+      </main>
+    <% end %>
+  </body>
+</html>

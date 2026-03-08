@@ -1,0 +1,112 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+adj_credit:
+  code: ADJ_CREDIT
+  description: Manual account credit
+  reversal_code: ADJ_DEBIT
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+adj_debit:
+  code: ADJ_DEBIT
+  description: Manual account debit
+  reversal_code: ADJ_CREDIT
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+fee_post:
+  code: FEE_POST
+  description: Fee assessment
+  reversal_code: FEE_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_accrual:
+  code: INT_ACCRUAL
+  description: Interest accrual
+  reversal_code: INT_ACCRUAL_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_post:
+  code: INT_POST
+  description: Interest posting
+  reversal_code: INT_POST_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+fee_post:
+  code: FEE_POST
+  description: Fee assessment
+  reversal_code: FEE_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_accrual:
+  code: INT_ACCRUAL
+  description: Interest accrual
+  reversal_code: INT_ACCRUAL_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_post:
+  code: INT_POST
+  description: Interest posting
+  reversal_code: INT_POST_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+fee_post:
+  code: FEE_POST
+  description: Fee assessment
+  reversal_code: FEE_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_accrual:
+  code: INT_ACCRUAL
+  description: Interest accrual
+  reversal_code: INT_ACCRUAL_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_post:
+  code: INT_POST
+  description: Interest posting
+  reversal_code: INT_POST_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+fee_post:
+  code: FEE_POST
+  description: Fee assessment
+  reversal_code: FEE_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_accrual:
+  code: INT_ACCRUAL
+  description: Interest accrual
+  reversal_code: INT_ACCRUAL_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+int_post:
+  code: INT_POST
+  description: Interest posting
+  reversal_code: INT_POST_REVERSAL
+  active: true
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

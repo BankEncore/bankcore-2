@@ -1,0 +1,17 @@
+---
+description: Git safety and GitHub workflow conventions
+alwaysApply: true
+---
+
+# Git And GitHub Workflow
+
+- Default to short-lived branches for non-trivial work.
+- Use direct commits to `main` only for very small docs, setup, Cursor, or repo-metadata changes.
+- Never create a commit unless the user explicitly asks for one.
+- Never push unless the user explicitly asks for it.
+- Never force-push `main`.
+- Prefer branch names like `feature/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>`, `refactor/<topic>`, or `test/<topic>`.
+- Prefer commit messages in the form `type(scope): summary`.
+- For meaningful code changes, use a branch and pull request.
+- Before opening a pull request, summarize the change, test plan, and any migration or financial-logic risk.
+- Keep repo workflow guidance aligned with `docs/github_workflow.md`.

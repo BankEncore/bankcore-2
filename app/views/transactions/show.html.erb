@@ -1,0 +1,144 @@
+<% content_for :title, "Transaction ##{@transaction.id} - BankCORE" %>
+
+<div class="w-full">
+  <% batch_total_cents = @posting_legs.sum(&:amount_cents) %>
+  <% reversible = @posting_batch.present? && @posting_batch.status == "posted" && @posting_batch.reversal_batch.blank? %>
+
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Transactions", transactions_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Transaction Review</h1>
+      <p class="workspace-subtitle">Inspect the operational transaction, verify lifecycle state, and review the balanced posting batch before any controlled reversal action.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-4 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Transaction</div>
+      <div class="ui-metric-value ui-mono">#<%= @transaction.id %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Status</div>
+      <div class="mt-2"><span class="<%= status_pill_class(@transaction.status) %>"><%= @transaction.status %></span></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Reference</div>
+      <div class="ui-metric-value ui-mono"><%= @transaction.reference_number.presence || "—" %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Batch Amount</div>
+      <div class="ui-metric-value ui-mono"><%= number_to_currency(batch_total_cents / 100.0) %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Operational Details</h2>
+        <p class="mt-1 text-sm text-base-content/65">Core metadata for the posted banking transaction and its related posting batch.</p>
+      </div>
+
+      <% if reversible %>
+        <div class="flex items-center gap-2">
+          <%= button_to "Reverse Transaction",
+              reverse_transaction_path(@transaction),
+              method: :post,
+              form: { data: { turbo_confirm: "Are you sure you want to reverse this transaction? This cannot be undone." } },
+              class: "btn btn-error btn-outline btn-sm" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="ui-panel-body">
+      <div class="ui-kv-grid">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Transaction Type</div>
+          <div class="ui-kv-value"><%= @transaction.transaction_type %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Business Date</div>
+          <div class="ui-kv-value ui-mono"><%= @transaction.business_date&.strftime("%Y-%m-%d") %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Branch</div>
+          <div class="ui-kv-value"><%= @transaction.branch&.branch_code %> — <%= @transaction.branch&.name %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Posted At</div>
+          <div class="ui-kv-value ui-mono"><%= @transaction.posted_at&.strftime("%Y-%m-%d %H:%M") || "—" %></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <% if reversible && batch_total_cents >= Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS %>
+    <section class="ui-override-box mb-6">
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="<%= status_pill_class('pending') %>">Override Threshold</span>
+          <span class="text-sm font-medium text-base-content">Reversals at or above <span class="ui-mono"><%= number_to_currency(Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS / 100.0) %></span> require supervisor approval.</span>
+        </div>
+        <p class="text-sm text-base-content/80">If no approved override exists, the reversal flow will redirect to the explicit approval request screen instead of bypassing the control.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @posting_batch.present? %>
+    <section class="journal-batch-panel">
+      <div class="ui-panel-header">
+        <div>
+          <h2 class="text-lg font-semibold text-base-content">Posting Batch Review</h2>
+          <p class="mt-1 text-sm text-base-content/65">Journal-level inspection of the customer-facing and GL-facing posting legs derived from this transaction.</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="<%= status_pill_class(@posting_batch.status) %>"><%= @posting_batch.status %></span>
+          <span class="ui-status-pill ui-status-pill-neutral">Batch #<%= @posting_batch.id %></span>
+        </div>
+      </div>
+
+      <div class="ui-panel-body">
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Pos</th>
+              <th>Leg</th>
+              <th>Ledger</th>
+              <th>Target</th>
+              <th class="text-right">Debit</th>
+              <th class="text-right">Credit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @posting_legs.each do |leg| %>
+              <tr>
+                <td class="ui-mono text-sm text-base-content/60"><%= leg.position %></td>
+                <td><span class="<%= leg_type_pill_class(leg.leg_type) %>"><%= leg.leg_type %></span></td>
+                <td>
+                  <span class="<%= status_pill_class(leg.ledger_scope == "gl" ? "neutral" : "active") %>"><%= leg.ledger_scope == "gl" ? "GL" : "Account" %></span>
+                </td>
+                <td>
+                  <% if leg.account_id.present? %>
+                    <div class="font-medium text-base-content">Customer Account</div>
+                    <div class="ui-mono text-sm text-base-content/70"><%= leg.account&.account_number %></div>
+                  <% else %>
+                    <div class="font-medium text-base-content">GL Account</div>
+                    <div class="ui-mono text-sm text-base-content/70"><%= leg.gl_account&.gl_number %> — <%= leg.gl_account&.name %></div>
+                  <% end %>
+                </td>
+                <td class="ui-mono text-right"><%= leg.leg_type == "debit" ? number_to_currency(leg.amount_cents / 100.0) : "—" %></td>
+                <td class="ui-mono text-right"><%= leg.leg_type == "credit" ? number_to_currency(leg.amount_cents / 100.0) : "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4">Batch Total</td>
+              <td class="ui-mono text-right"><%= number_to_currency(@posting_legs.select { |leg| leg.leg_type == "debit" }.sum(&:amount_cents) / 100.0) %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(@posting_legs.select { |leg| leg.leg_type == "credit" }.sum(&:amount_cents) / 100.0) %></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+  <% end %>
+</div>

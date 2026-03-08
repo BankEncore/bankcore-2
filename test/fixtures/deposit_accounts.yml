@@ -1,0 +1,8 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+one:
+  account: one
+  deposit_type: dda
+  interest_bearing: false
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

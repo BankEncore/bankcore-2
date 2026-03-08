@@ -1,0 +1,24 @@
+---
+description: Tailwind + DaisyUI theme usage for BankCORE
+globs: "**/*.erb"
+alwaysApply: false
+---
+
+# UI Theme Rules
+
+## Theme
+
+- Primary theme name: `bankcore`
+- DaisyUI provides tokens; product identity comes from custom theme values
+- Dark shell, light workspace (not fully dark)
+
+## Semantic Tokens
+
+- `primary` → commit actions, selected nav
+- `success` → posted, in-balance, complete
+- `warning` → pending review, override needed
+- `error` → invalid, failed, out-of-balance
+
+## Reference
+
+See `docs/00_initial_core_references/tailwind_daisyui_theme_spec.md` for full token mapping and class guidance.

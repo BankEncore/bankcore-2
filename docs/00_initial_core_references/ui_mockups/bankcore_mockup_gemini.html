@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankEncore | Teller Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains+Mono', monospace; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <nav class="bg-slate-900 text-white p-4 shadow-lg">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <span class="text-xl font-bold tracking-tight text-blue-400">BankCORE</span>
+                <span class="border-l border-slate-700 h-6"></span>
+                <span class="text-sm font-medium text-slate-300">Branch 001 - Main St.</span>
+            </div>
+            <div class="flex items-center space-x-6 text-sm">
+                <div class="text-right">
+                    <p class="text-xs text-slate-400 uppercase">Business Date</p>
+                    <p class="font-bold">March 07, 2026</p>
+                </div>
+                <div class="bg-slate-800 px-3 py-1 rounded border border-slate-700">
+                    <p class="text-xs text-slate-400">User</p>
+                    <p class="font-semibold">T. Anderson (ID: 4492)</p>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-6">
+        
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-800">Teller Workspace</h2>
+                <p class="text-slate-500">Manage active sessions and process customer transactions.</p>
+            </div>
+            
+            <div class="bg-white border-t-4 border-green-500 p-4 rounded-lg shadow-sm w-64">
+                <div class="flex justify-between items-start mb-1">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Drawer Balance</span>
+                    <span class="bg-green-100 text-green-700 text-[10px] px-1.5 py-0.5 rounded font-bold">IN BALANCE</span>
+                </div>
+                <p class="text-3xl font-bold text-slate-900 mono">$12,450.00</p>
+                <div class="mt-2 flex justify-between text-xs text-slate-500">
+                    <span>Opening: $10,000</span>
+                    <button class="text-blue-600 hover:underline">Reconcile</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-8">
+            
+            <div class="col-span-4 space-y-6">
+                <section class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase mb-4">Account Inquiry</h3>
+                    <div class="relative">
+                        <input type="text" placeholder="Scan check or enter Account #" 
+                               class="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                        <svg class="w-5 h-5 text-slate-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                </section>
+
+                <section class="bg-blue-600 rounded-xl shadow-md overflow-hidden text-white">
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-6">
+                            <div>
+                                <h4 class="text-lg font-bold">Sarah J. Miller</h4>
+                                <p class="text-blue-200 text-sm mono">ACT-8829-0012</p>
+                            </div>
+                            <span class="bg-blue-500 text-xs px-2 py-1 rounded">Preferred</span>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <p class="text-xs text-blue-300 uppercase font-semibold">Available Balance</p>
+                                <p class="text-4xl font-bold mono">$4,822.41</p>
+                            </div>
+                            <div class="flex justify-between text-sm bg-blue-700/50 p-3 rounded-lg">
+                                <div>
+                                    <p class="text-blue-300 text-xs">Posted Balance</p>
+                                    <p class="font-semibold mono">$5,122.41</p>
+                                </div>
+                                <div class="text-right text-yellow-300">
+                                    <p class="text-blue-300 text-xs">Total Holds</p>
+                                    <p class="font-semibold mono">($300.00)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-blue-800 p-3 text-center text-xs font-medium">
+                        <button class="hover:text-white text-blue-300 transition-colors">View Transaction History →</button>
+                    </div>
+                </section>
+            </div>
+
+            <div class="col-span-8">
+                <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <header class="border-b border-slate-100 bg-slate-50/50 px-8 py-4">
+                        <h3 class="font-bold text-slate-700">New Transaction Entry</h3>
+                    </header>
+                    
+                    <div class="p-8">
+                        <form id="txn-form">
+                            <div class="grid grid-cols-2 gap-8 mb-8">
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-bold text-slate-600">Transaction Type</label>
+                                    <select class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none appearance-none bg-white">
+                                        <option>Cash Deposit</option>
+                                        <option selected>Cash Withdrawal</option>
+                                        <option>Account Transfer</option>
+                                        <option>Check Cashing</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-2 text-right">
+                                    <label class="block text-sm font-bold text-slate-600 text-left">Amount (USD)</label>
+                                    <div class="relative">
+                                        <span class="absolute left-4 top-3 text-slate-400 font-bold">$</span>
+                                        <input type="number" id="txn-amount" value="10500.00" 
+                                               class="w-full pl-8 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mono text-xl font-bold">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="override-box" class="mb-8 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg flex items-start space-x-4">
+                                <div class="p-2 bg-amber-100 rounded-full text-amber-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-amber-800">Supervisor Override Required</h4>
+                                    <p class="text-sm text-amber-700 mb-2">Withdrawal amount exceeds your personal limit ($5,000.00). An approval request will be sent to Branch Supervisor.</p>
+                                    <input type="text" placeholder="Note to supervisor (optional)" class="text-xs w-full p-2 border border-amber-200 rounded outline-none">
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-6 border-t border-slate-100">
+                                <p class="text-xs text-slate-400 max-w-sm">
+                                    Confirming this transaction will create a balanced posting batch in the subledger and update cash responsibility.
+                                </p>
+                                <div class="space-x-4 flex">
+                                    <button type="button" class="px-6 py-3 font-semibold text-slate-500 hover:text-slate-800 transition-colors">Cancel</button>
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-10 py-3 rounded-lg shadow-lg shadow-blue-200 transition-all transform active:scale-95">
+                                        Request & Post
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Simple mock for the Supervisor Override logic
+        const amountInput = document.getElementById('txn-amount');
+        const overrideBox = document.getElementById('override-box');
+
+        amountInput.addEventListener('input', (e) => {
+            const val = parseFloat(e.target.value);
+            if (val > 5000) {
+                overrideBox.classList.remove('hidden');
+            } else {
+                overrideBox.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

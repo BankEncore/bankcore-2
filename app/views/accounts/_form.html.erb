@@ -1,0 +1,57 @@
+<%= form_with model: @account, local: true, class: "space-y-4" do |f| %>
+  <% if @account.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @account.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-control w-full">
+    <label class="label" for="account_account_number">
+      <span class="label-text">Account Number</span>
+    </label>
+    <%= f.text_field :account_number, class: "input input-bordered w-full font-mono", placeholder: "e.g. 1001", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="account_account_type">
+      <span class="label-text">Account Type</span>
+    </label>
+    <%= f.select :account_type, Bankcore::ACCOUNT_TYPES.map { |t| [t.upcase, t] }, {}, class: "select select-bordered w-full", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="account_branch_id">
+      <span class="label-text">Branch</span>
+    </label>
+    <%= f.collection_select :branch_id, @branches, :id, :name, { include_blank: "— Select branch —" }, class: "select select-bordered w-full", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="account_currency_code">
+      <span class="label-text">Currency</span>
+    </label>
+    <%= f.text_field :currency_code, class: "input input-bordered w-full", placeholder: "USD", required: true %>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="account_primary_party_id">
+      <span class="label-text">Primary Owner (optional)</span>
+    </label>
+    <%= f.select :primary_party_id,
+        options_from_collection_for_select(@parties, :id, :display_name, f.object.primary_party_id),
+        { include_blank: "— None —" },
+        class: "select select-bordered w-full" %>
+    <label class="label">
+      <span class="label-text-alt">Add an owner later from the account page if needed</span>
+    </label>
+  </div>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit "Create Account", class: "btn btn-primary" %>
+    <%= link_to "Cancel", accounts_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

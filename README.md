@@ -1,0 +1,40 @@
+# BankCORE
+
+BankCORE is a posting-first core banking platform built on Rails 8.1, MySQL, Hotwire, TailwindCSS, and DaisyUI.
+
+The system centers financial truth in the posting engine:
+
+- operational events describe what happened
+- posting batches and legs describe how money moves
+- account and GL views are derived projections
+
+## Local Setup
+
+Typical bootstrap:
+
+```bash
+bundle install
+npm install
+bin/rails db:setup
+bin/dev
+```
+
+## Tests
+
+Run the Rails test suite with:
+
+```bash
+bundle exec rails test
+```
+
+## Core References
+
+- `docs/00_initial_core_references/implementation_order.md`
+- `docs/00_initial_core_references/posting_engine_rules.md`
+- `docs/00_initial_core_references/posting_lifecycle.md`
+- `docs/00_initial_core_references/posting_templates.md`
+- `docs/github_workflow.md`
+
+## GitHub
+
+Repository: [BankEncore/bankcore-2](https://github.com/BankEncore/bankcore-2)

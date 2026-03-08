@@ -1,0 +1,48 @@
+<% content_for :title, "Business Date #{@business_date.business_date} - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Business Dates", business_dates_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Business Date Review</h1>
+      <p class="workspace-subtitle">Inspect one accounting day, its open or closed state, and the transaction volume attached to it.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Business Date <span class="ui-mono"><%= @business_date.business_date.strftime("%Y-%m-%d") %></span></h2>
+        <p class="mt-1 text-sm text-base-content/65">Date-level status and posting activity context.</p>
+      </div>
+      <span class="<%= status_pill_class(@business_date.status) %>"><%= @business_date.status %></span>
+    </div>
+
+    <div class="ui-panel-body">
+      <div class="ui-kv-grid">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Transactions</div>
+          <div class="ui-kv-value ui-mono"><%= @transaction_count %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Opened At</div>
+          <div class="ui-kv-value ui-mono"><%= @business_date.opened_at&.strftime("%Y-%m-%d %H:%M") || "—" %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Closed At</div>
+          <div class="ui-kv-value ui-mono"><%= @business_date.closed_at&.strftime("%Y-%m-%d %H:%M") || "—" %></div>
+        </div>
+      </div>
+
+      <% if @business_date.status == Bankcore::Enums::BUSINESS_DATE_OPEN %>
+        <div class="ui-actionbar mt-5">
+          <%= button_to "Close & Advance to Next Day",
+              close_business_date_path(@business_date),
+              method: :post,
+              form: { data: { turbo_confirm: "Close this business date and open the next? This cannot be undone." } },
+              class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>

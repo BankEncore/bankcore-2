@@ -1,0 +1,259 @@
+<% content_for :title, "New Transaction - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Transactions", transactions_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Manual Transaction Entry</h1>
+      <p class="workspace-subtitle">Capture a governed back-office transaction, preview the balanced posting legs, and commit only after review.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-6 xl:grid-cols-12">
+    <div class="space-y-6 xl:col-span-4">
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Transaction Context</h2>
+        </div>
+        <div class="ui-panel-body">
+          <div class="space-y-4">
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Business Date</div>
+              <div class="ui-kv-value ui-mono"><%= @business_date&.strftime("%Y-%m-%d") %></div>
+            </div>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Operator</div>
+              <div class="ui-kv-value"><%= workspace_user_label %></div>
+            </div>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Selected Account</div>
+              <div id="selected_account_context" class="ui-kv-value">Waiting for account selection</div>
+            </div>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Workflow Mode</div>
+              <div id="transaction_guidance" class="ui-kv-value">Choose a transaction code to load the required account controls.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="ui-panel-muted">
+        <div class="ui-panel-header">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Posting Rules</h2>
+        </div>
+        <div class="ui-panel-body space-y-3 text-sm text-base-content/75">
+          <p>All entries fail closed if the posting batch is unbalanced, a ledger target is missing, or the business date is not open.</p>
+          <p>Preview before commit if you want to inspect the derived debit and credit legs before posting.</p>
+        </div>
+      </section>
+
+      <section class="ui-override-box">
+        <div class="space-y-2">
+          <div class="text-sm font-semibold text-base-content">Exception Handling</div>
+          <p class="text-sm text-base-content/80">Override workflows remain explicit and auditable. Controlled actions such as governed reversals are routed through the approval path instead of silently bypassing validation.</p>
+        </div>
+      </section>
+    </div>
+
+    <div class="xl:col-span-8">
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div>
+            <h2 class="text-lg font-semibold text-base-content">Transaction Definition</h2>
+            <p class="mt-1 text-sm text-base-content/65">Enter the transaction details, then preview or post the resulting batch.</p>
+          </div>
+        </div>
+
+        <div class="ui-panel-body">
+          <% if flash[:alert].present? %>
+            <div class="ui-panel-critical mb-4">
+              <div class="ui-panel-body py-3">
+                <div class="flex items-start gap-3">
+                  <span class="<%= status_pill_class('error') %>">Validation</span>
+                  <p class="text-sm text-base-content"><%= flash[:alert] %></p>
+                </div>
+              </div>
+            </div>
+          <% end %>
+
+          <%= form_with url: transactions_path, method: :post, local: true, class: "space-y-5" do |f| %>
+            <section class="ui-form-section">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Posting Instruction</h3>
+              </div>
+
+              <div class="grid gap-4 lg:grid-cols-2">
+                <div class="form-control w-full">
+                  <label class="label" for="transaction_code">
+                    <span class="label-text text-sm font-medium">Transaction Type</span>
+                  </label>
+                  <select name="transaction_code" id="transaction_code" class="select select-bordered w-full" required>
+                    <option value="">— Select type —</option>
+                    <% @transaction_codes.each do |tc| %>
+                      <option value="<%= tc.code %>" <%= "selected" if params[:transaction_code] == tc.code %>><%= tc.code %> — <%= tc.description %></option>
+                    <% end %>
+                  </select>
+                </div>
+
+                <div class="form-control w-full">
+                  <label class="label" for="amount">
+                    <span class="label-text text-sm font-medium">Amount (USD)</span>
+                  </label>
+                  <input type="number" name="amount" id="amount" step="0.01" min="0" value="<%= params[:amount] %>" class="input input-bordered w-full ui-mono text-lg" placeholder="0.00" required>
+                </div>
+              </div>
+            </section>
+
+            <section class="ui-form-section">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Account Routing</h3>
+              </div>
+
+              <div id="account_fields" class="form-control w-full">
+                <label class="label" for="account_id">
+                  <span class="label-text text-sm font-medium">Account</span>
+                </label>
+                <select name="account_id" id="account_id" class="select select-bordered w-full ui-mono" data-preselected-account="<%= @preselected_account_id || params[:account_id] %>">
+                  <option value="">— Select account —</option>
+                  <% @accounts.each do |acc| %>
+                    <option value="<%= acc.id %>" <%= "selected" if (@preselected_account_id.to_i == acc.id || params[:account_id].to_i == acc.id) %>><%= acc.account_number %> — <%= acc.status %></option>
+                  <% end %>
+                </select>
+              </div>
+
+              <div id="transfer_fields" class="hidden grid gap-4 lg:grid-cols-2">
+                <div class="form-control w-full">
+                  <label class="label" for="source_account_id">
+                    <span class="label-text text-sm font-medium">From Account</span>
+                  </label>
+                  <select name="source_account_id" id="source_account_id" class="select select-bordered w-full ui-mono">
+                    <option value="">— Select account —</option>
+                    <% @accounts.each do |acc| %>
+                      <option value="<%= acc.id %>" <%= "selected" if params[:source_account_id].to_i == acc.id %>><%= acc.account_number %></option>
+                    <% end %>
+                  </select>
+                </div>
+
+                <div class="form-control w-full">
+                  <label class="label" for="destination_account_id">
+                    <span class="label-text text-sm font-medium">To Account</span>
+                  </label>
+                  <select name="destination_account_id" id="destination_account_id" class="select select-bordered w-full ui-mono">
+                    <option value="">— Select account —</option>
+                    <% @accounts.each do |acc| %>
+                      <option value="<%= acc.id %>" <%= "selected" if params[:destination_account_id].to_i == acc.id %>><%= acc.account_number %></option>
+                    <% end %>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section class="ui-form-section">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Control Metadata</h3>
+              </div>
+
+              <div class="form-control w-full">
+                <label class="label" for="idempotency_key">
+                  <span class="label-text text-sm font-medium">Idempotency Key</span>
+                </label>
+                <input type="text" name="idempotency_key" id="idempotency_key" value="<%= params[:idempotency_key] %>" class="input input-bordered w-full ui-mono" placeholder="e.g. manual-20260307-001">
+              </div>
+            </section>
+
+            <div class="ui-review-banner">
+              Preview lets you inspect the planned ledger impact before commit. Posting immediately will create the operational transaction and the balanced posting batch in one controlled step.
+            </div>
+
+            <div class="ui-confirm-strip">
+              <p class="max-w-2xl text-sm text-base-content/70">Commit actions are deliberate. Posting will fail closed if any target, amount, or business-date validation does not pass.</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <button type="submit" name="preview" value="1" class="btn btn-outline">Preview Posting</button>
+                <button type="submit" class="btn btn-primary">Post Transaction</button>
+                <%= link_to "Cancel", transactions_path, class: "btn btn-ghost" %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('transaction_code');
+    const accountFields = document.getElementById('account_fields');
+    const transferFields = document.getElementById('transfer_fields');
+    const accountSelect = document.getElementById('account_id');
+    const sourceSelect = document.getElementById('source_account_id');
+    const destSelect = document.getElementById('destination_account_id');
+    const selectedAccountContext = document.getElementById('selected_account_context');
+    const guidance = document.getElementById('transaction_guidance');
+
+    const TRANSFER_TYPES = ['XFER_INTERNAL'];
+    const GL_ONLY_TYPES = ['INT_ACCRUAL'];
+
+    function selectedText(select) {
+      const option = select.options[select.selectedIndex];
+      return option && option.value ? option.text : null;
+    }
+
+    function updateContext(code) {
+      if (TRANSFER_TYPES.includes(code)) {
+        const fromAccount = selectedText(sourceSelect);
+        const toAccount = selectedText(destSelect);
+        selectedAccountContext.textContent = [fromAccount, toAccount].filter(Boolean).join(' → ') || 'Select both transfer accounts';
+        guidance.textContent = 'Internal transfer mode. Both source and destination accounts are required before preview or post.';
+      } else if (GL_ONLY_TYPES.includes(code)) {
+        selectedAccountContext.textContent = 'No customer account required';
+        guidance.textContent = 'GL-only posting mode. Customer account routing is intentionally disabled for this transaction code.';
+      } else {
+        selectedAccountContext.textContent = selectedText(accountSelect) || 'Waiting for account selection';
+        guidance.textContent = code ? 'Customer account mode. One active account will receive the debit or credit leg.' : 'Choose a transaction code to load the required account controls.';
+      }
+    }
+
+    function updateFields() {
+      const code = typeSelect.value;
+      if (TRANSFER_TYPES.includes(code)) {
+        accountFields.classList.add('hidden');
+        transferFields.classList.remove('hidden');
+        accountSelect.removeAttribute('required');
+        accountSelect.value = '';
+        sourceSelect.setAttribute('required', 'required');
+        destSelect.setAttribute('required', 'required');
+      } else if (GL_ONLY_TYPES.includes(code)) {
+        accountFields.classList.add('hidden');
+        transferFields.classList.add('hidden');
+        accountSelect.removeAttribute('required');
+        accountSelect.value = '';
+        sourceSelect.removeAttribute('required');
+        destSelect.removeAttribute('required');
+        sourceSelect.value = '';
+        destSelect.value = '';
+      } else {
+        accountFields.classList.remove('hidden');
+        transferFields.classList.add('hidden');
+        accountSelect.setAttribute('required', 'required');
+        sourceSelect.removeAttribute('required');
+        destSelect.removeAttribute('required');
+        sourceSelect.value = '';
+        destSelect.value = '';
+      }
+
+      updateContext(code);
+    }
+
+    typeSelect.addEventListener('change', updateFields);
+    accountSelect.addEventListener('change', () => updateContext(typeSelect.value));
+    sourceSelect.addEventListener('change', () => updateContext(typeSelect.value));
+    destSelect.addEventListener('change', () => updateContext(typeSelect.value));
+
+    const preselectedId = accountSelect.dataset.preselectedAccount;
+    if (preselectedId) {
+      accountSelect.value = preselectedId;
+    }
+    updateFields();
+  });
+</script>

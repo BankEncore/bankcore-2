@@ -1,0 +1,34 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Note: Use branch_id explicitly because "transactions" table name can conflict with
+# Rails' association resolution for the "branch" association.
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+
+one:
+  transaction_type: ADJ_CREDIT
+  channel: teller
+  branch_id: <%= ActiveRecord::FixtureSet.identify(:one, :branches) %>
+  status: draft
+  reference_number: TXN-001
+  external_reference:
+  business_date: 2026-03-07
+  initiated_at: 2026-03-07 23:45:32
+  posted_at:
+  created_by_id:
+  approved_by_id:
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+two:
+  transaction_type: ADJ_DEBIT
+  channel: teller
+  branch_id: <%= ActiveRecord::FixtureSet.identify(:two, :branches) %>
+  status: posted
+  reference_number: TXN-002
+  external_reference:
+  business_date: 2026-03-07
+  initiated_at: 2026-03-07 23:45:32
+  posted_at: 2026-03-07 23:45:32
+  created_by_id:
+  approved_by_id:
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

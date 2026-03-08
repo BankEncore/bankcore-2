@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BankCORE | Back-Office Ops</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains+Mono', monospace; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex">
+
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col border-r border-slate-800">
+        <div class="p-6 border-b border-slate-800">
+            <h1 class="text-xl font-bold text-white tracking-tight">Bank<span class="text-blue-500">CORE</span></h1>
+            <p class="text-[10px] text-slate-500 uppercase font-bold mt-1">Ledger-First MVP</p>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+            <a href="#" class="flex items-center space-x-3 p-3 bg-blue-600 text-white rounded-lg font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span>GL Summary</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 hover:bg-slate-800 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>EOD Orchestrator</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 hover:bg-slate-800 rounded-lg transition-colors">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                <span>Manual Adjustments</span>
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 text-[10px] text-slate-500">
+            System Status: <span class="text-green-500 font-bold">KERNEL ACTIVE</span>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col">
+        
+        <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-8">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">Current Business Date</span>
+                    <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded">MAR 07, 2026</span>
+                </div>
+                <div class="h-4 w-px bg-slate-200"></div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase">System Status</span>
+                    <span class="flex items-center text-xs font-bold text-green-600">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span> OPEN
+                    </span>
+                </div>
+            </div>
+            <button class="bg-slate-900 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-slate-800 transition-all">
+                Run EOD Process
+            </button>
+        </header>
+
+        <div class="p-8 overflow-y-auto">
+            
+            <div class="grid grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Total Assets</p>
+                    <p class="text-2xl font-bold text-slate-800 mono">$42,850,210.45</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Total Liabilities</p>
+                    <p class="text-2xl font-bold text-slate-800 mono">$41,120,505.12</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Fee Income (YTD)</p>
+                    <p class="text-2xl font-bold text-green-600 mono">$12,450.00</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1">Interest Expense (YTD)</p>
+                    <p class="text-2xl font-bold text-red-600 mono">($8,920.40)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-8 mb-8">
+                <div class="col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <h3 class="font-bold text-slate-700">Journal Batch Entry</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 px-2 py-1 rounded">AUTO-BALANCING ENABLED</span>
+                    </div>
+                    <div class="p-6">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-slate-400 uppercase text-[10px] tracking-wider">
+                                    <th class="pb-4">GL Account / Customer Account</th>
+                                    <th class="pb-4">Description</th>
+                                    <th class="pb-4 text-right">Debit</th>
+                                    <th class="pb-4 text-right">Credit</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr>
+                                    <td class="py-3">
+                                        <p class="font-bold text-slate-800">1100-001 | Cash in Vault</p>
+                                        <p class="text-[10px] text-slate-400 italic">Asset Account</p>
+                                    </td>
+                                    <td class="py-3 text-slate-500">Initial Settlement Funding</td>
+                                    <td class="py-3 text-right mono text-slate-800">$5,000.00</td>
+                                    <td class="py-3 text-right mono text-slate-300">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3">
+                                        <p class="font-bold text-slate-800">2200-501 | Clearing Suspense</p>
+                                        <p class="text-[10px] text-slate-400 italic">Liability Account</p>
+                                    </td>
+                                    <td class="py-3 text-slate-500">Offset for batch 9982</td>
+                                    <td class="py-3 text-right mono text-slate-300">--</td>
+                                    <td class="py-3 text-right mono text-slate-800">$5,000.00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="bg-slate-50">
+                                    <td colspan="2" class="py-4 px-4 font-bold text-slate-500">Batch Total</td>
+                                    <td class="py-4 text-right mono font-bold text-slate-800">$5,000.00</td>
+                                    <td class="py-4 text-right mono font-bold text-slate-800">$5,000.00</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                        <div class="mt-6 flex justify-end">
+                            <button class="bg-blue-600 text-white font-bold px-8 py-2 rounded-lg shadow-lg shadow-blue-100">Post Batch</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <h3 class="font-bold text-slate-700 mb-6">Kernel Heartbeat</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="bg-green-100 p-2 rounded-full text-green-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Interest Accrual Engine</p>
+                                <p class="text-xs text-slate-500">Last Run: Today, 00:01 AM</p>
+                                <p class="text-xs font-medium text-blue-600 mt-1">Processed 4,201 accounts</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="bg-green-100 p-2 rounded-full text-green-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">Monthly Maintenance Fees</p>
+                                <p class="text-xs text-slate-500">Status: Scheduled (Apr 01)</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <div class="bg-amber-100 p-2 rounded-full text-amber-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-slate-800">ACH Inbound Settlement</p>
+                                <p class="text-xs text-slate-500">Next Cutoff: 2:00 PM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>
