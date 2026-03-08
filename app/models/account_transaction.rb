@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class AccountTransaction < ApplicationRecord
+  include PostedRecordImmutable
+
   belongs_to :account
   belongs_to :posting_batch
 
@@ -16,4 +18,10 @@ class AccountTransaction < ApplicationRecord
   validates :posting_batch_id, presence: true
   validates :amount_cents, presence: true, numericality: { only_integer: true }
   validates :direction, presence: true, inclusion: { in: %w[debit credit] }
+
+  private
+
+  def posted_record_immutable?
+    posting_batch.status == Bankcore::Enums::STATUS_POSTED
+  end
 end

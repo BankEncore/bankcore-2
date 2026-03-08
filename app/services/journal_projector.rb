@@ -14,7 +14,10 @@ class JournalProjector
 
     JournalEntry.transaction do
       journal_entry = create_journal_entry
-      create_journal_lines(journal_entry)
+      create_journal_lines(
+        journal_entry,
+        @posting_batch.posting_legs.where(ledger_scope: Bankcore::Enums::LEDGER_SCOPE_GL)
+      )
     end
   end
 
@@ -23,15 +26,14 @@ class JournalProjector
   def create_journal_entry
     JournalEntry.create!(
       posting_batch_id: @posting_batch.id,
-      reference_number: "JE-#{@posting_batch.id}",
+      reference_number: @posting_batch.posting_reference,
       status: Bankcore::Enums::STATUS_POSTED,
       business_date: @posting_batch.business_date,
       posted_at: @posting_batch.posted_at
     )
   end
 
-  def create_journal_lines(journal_entry)
-    gl_legs = @posting_batch.posting_legs.where(ledger_scope: Bankcore::Enums::LEDGER_SCOPE_GL)
+  def create_journal_lines(journal_entry, gl_legs)
     branch_id = resolve_branch_id
 
     gl_legs.each_with_index do |leg, idx|

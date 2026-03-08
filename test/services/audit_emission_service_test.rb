@@ -6,7 +6,7 @@ class AuditEmissionServiceTest < ActiveSupport::TestCase
   test "emit! creates audit event" do
     assert_difference "AuditEvent.count", 1 do
       AuditEmissionService.emit!(
-        event_type: "posting_succeeded",
+        event_type: "posting_committed",
         action: "post",
         target: posting_batches(:one),
         metadata: { transaction_code: "ADJ_CREDIT" }
@@ -14,7 +14,7 @@ class AuditEmissionServiceTest < ActiveSupport::TestCase
     end
 
     event = AuditEvent.last
-    assert_equal "posting_succeeded", event.event_type
+    assert_equal "posting_committed", event.event_type
     assert_equal "post", event.action
     assert_equal "PostingBatch", event.target_type
     assert event.target_id.present?
@@ -23,7 +23,7 @@ class AuditEmissionServiceTest < ActiveSupport::TestCase
 
   test "emit! with optional params" do
     AuditEmissionService.emit!(
-      event_type: "reversal_created",
+      event_type: "reversal_committed",
       action: "reverse",
       target: nil,
       actor: nil,
@@ -32,7 +32,7 @@ class AuditEmissionServiceTest < ActiveSupport::TestCase
     )
 
     event = AuditEvent.last
-    assert_equal "reversal_created", event.event_type
+    assert_equal "reversal_committed", event.event_type
     assert_equal Date.current, event.business_date
   end
 

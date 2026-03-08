@@ -14,7 +14,7 @@ class PostingFlowTest < ActiveSupport::TestCase
     batch = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",
       account_id: @account.id,
-      amount_cents: 10_000,
+      amount_cents: 4_000,
       business_date: @business_date
     )
 
@@ -30,7 +30,7 @@ class PostingFlowTest < ActiveSupport::TestCase
     @account.reload
     balance = @account.account_balances.first
     assert balance, "Account balance should exist"
-    assert_equal 10_000, balance.posted_balance_cents
+    assert_equal 4_000, balance.posted_balance_cents
 
     # 4. Reverse
     reversal_batch = ReversalService.reverse!(posting_batch: batch)

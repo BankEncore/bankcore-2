@@ -9,7 +9,7 @@ class ReversalServiceTest < ActiveSupport::TestCase
     @batch = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",
       account_id: @account.id,
-      amount_cents: 7500,
+      amount_cents: 4000,
       business_date: @business_date
     )
   end
@@ -52,14 +52,15 @@ class ReversalServiceTest < ActiveSupport::TestCase
   end
 
   test "reverse! with override_request uses override" do
+    high_value_batch = high_value_batch()
     override = OverrideRequest.create!(
       request_type: "reversal",
       status: "approved",
-      operational_transaction_id: @batch.operational_transaction_id,
+      operational_transaction_id: high_value_batch.operational_transaction_id,
       branch_id: @account.branch_id
     )
 
-    reversal_batch = ReversalService.reverse!(posting_batch: @batch, override_request: override)
+    reversal_batch = ReversalService.reverse!(posting_batch: high_value_batch, override_request: override)
 
     assert reversal_batch.persisted?
     override.reload
@@ -74,5 +75,49 @@ class ReversalServiceTest < ActiveSupport::TestCase
     replay_batch = ReversalService.reverse!(posting_batch: @batch, idempotency_key: key)
 
     assert_equal reversal_batch.id, replay_batch.id
+  end
+
+  test "raises when high-value reversal lacks override approval" do
+    error = assert_raises(ReversalService::OverrideRequiredError) do
+      ReversalService.reverse!(posting_batch: high_value_batch())
+    end
+
+    assert_match(/require supervisor approval/i, error.message)
+  end
+
+  test "uses an existing approved override from service policy" do
+    high_value_batch = high_value_batch()
+    override = OverrideRequest.create!(
+      request_type: "reversal",
+      status: "approved",
+      operational_transaction_id: high_value_batch.operational_transaction_id,
+      branch_id: @account.branch_id
+    )
+
+    reversal_batch = ReversalService.reverse!(posting_batch: high_value_batch)
+
+    assert reversal_batch.persisted?
+    override.reload
+    assert_equal "used", override.status
+  end
+
+  test "emits reversal requested and committed audit events" do
+    assert_difference "AuditEvent.count", 4 do
+      ReversalService.reverse!(posting_batch: @batch)
+    end
+
+    events = AuditEvent.order(:id).last(4).map(&:event_type)
+    assert_equal [ "reversal_requested", "posting_requested", "posting_committed", "reversal_committed" ], events
+  end
+
+  private
+
+  def high_value_batch
+    PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS,
+      business_date: @business_date
+    )
   end
 end

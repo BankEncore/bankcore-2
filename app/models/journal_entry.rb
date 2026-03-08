@@ -2,6 +2,7 @@
 
 class JournalEntry < ApplicationRecord
   include Bankcore::Enums
+  include PostedRecordImmutable
 
   belongs_to :posting_batch
   has_many :journal_entry_lines, dependent: :destroy
@@ -9,4 +10,10 @@ class JournalEntry < ApplicationRecord
   validates :posting_batch_id, presence: true
   validates :status, presence: true, inclusion: { in: Bankcore::Enums::POSTING_STATUSES }
   validates :business_date, presence: true
+
+  private
+
+  def posted_record_immutable?
+    status == STATUS_POSTED
+  end
 end

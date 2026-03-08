@@ -22,7 +22,7 @@ class AccountProjector
         posting_batch_id: @posting_batch.id,
         amount_cents: leg.amount_cents,
         direction: leg.leg_type,
-        description: "#{@posting_batch.transaction_code} ##{@posting_batch.id}",
+        description: [ @posting_batch.transaction_code, @posting_batch.posting_reference ].compact.join(" "),
         business_date: @posting_batch.business_date,
         posted_at: @posting_batch.posted_at
       )

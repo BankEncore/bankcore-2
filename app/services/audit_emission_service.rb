@@ -3,9 +3,15 @@
 class AuditEmissionService
   include Bankcore::Enums
 
-  EVENT_POSTING_SUCCEEDED = "posting_succeeded"
+  EVENT_POSTING_REQUESTED = "posting_requested"
+  EVENT_POSTING_COMMITTED = "posting_committed"
   EVENT_POSTING_FAILED = "posting_failed"
-  EVENT_REVERSAL_CREATED = "reversal_created"
+  EVENT_REVERSAL_REQUESTED = "reversal_requested"
+  EVENT_REVERSAL_COMMITTED = "reversal_committed"
+  EVENT_OVERRIDE_REQUESTED = "override_requested"
+  EVENT_OVERRIDE_APPROVED = "override_approved"
+  EVENT_OVERRIDE_DENIED = "override_denied"
+  EVENT_OVERRIDE_USED = "override_used"
   EVENT_FEE_ASSESSED = "fee_assessed"
   EVENT_INTEREST_ACCRUED = "interest_accrued"
   EVENT_INTEREST_POSTED = "interest_posted"
