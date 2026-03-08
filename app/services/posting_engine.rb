@@ -78,7 +78,7 @@ class PostingEngine
   def build_leg(template_leg)
     account_id = resolve_account_id(template_leg.account_source)
     gl_account_id = template_leg.gl_account_id || @gl_account_id
-    ledger_scope = [ACCOUNT_SOURCE_CUSTOMER, ACCOUNT_SOURCE_SOURCE, ACCOUNT_SOURCE_DESTINATION].include?(template_leg.account_source) ? LEDGER_SCOPE_ACCOUNT : LEDGER_SCOPE_GL
+    ledger_scope = [ ACCOUNT_SOURCE_CUSTOMER, ACCOUNT_SOURCE_SOURCE, ACCOUNT_SOURCE_DESTINATION ].include?(template_leg.account_source) ? LEDGER_SCOPE_ACCOUNT : LEDGER_SCOPE_GL
 
     # PostingLeg requires exactly one of gl_account or account
     final_account_id = ledger_scope == LEDGER_SCOPE_ACCOUNT ? account_id : nil

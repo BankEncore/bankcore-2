@@ -13,6 +13,6 @@ class CreateAccountHolds < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :account_holds, [:account_id, :status]
+    add_index :account_holds, [ :account_id, :status ]
   end
 end

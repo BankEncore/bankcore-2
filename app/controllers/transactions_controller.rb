@@ -92,7 +92,14 @@ class TransactionsController < ApplicationController
     )
     @transaction_code = params[:transaction_code]
     @amount_cents = amount_cents
-    @params_for_confirm = params.permit(:transaction_code, :account_id, :source_account_id, :destination_account_id, :amount, :idempotency_key)
+    @params_for_confirm = {
+      transaction_code: params[:transaction_code],
+      account_id: params[:account_id].presence,
+      source_account_id: params[:source_account_id].presence,
+      destination_account_id: params[:destination_account_id].presence,
+      amount: params[:amount],
+      idempotency_key: params[:idempotency_key].presence
+    }.compact
     render :preview
   rescue PostingEngine::PostingError, PostingValidator::ValidationError => e
     @transaction_codes = TransactionCode.where(active: true).order(:code)

@@ -39,7 +39,7 @@ class BusinessDateEodService
 
   def validate!(current)
     pending = BankingTransaction.where(business_date: current.business_date)
-      .where.not(status: [STATUS_POSTED, STATUS_REVERSED])
+      .where.not(status: [ STATUS_POSTED, STATUS_REVERSED ])
 
     return if pending.none?
 

@@ -24,17 +24,17 @@ module Bankcore
     ].freeze
 
     # Posting batch / transaction statuses
-    POSTING_STATUSES = [STATUS_DRAFT, STATUS_VALIDATED, STATUS_POSTED, STATUS_REVERSED].freeze
+    POSTING_STATUSES = [ STATUS_DRAFT, STATUS_VALIDATED, STATUS_POSTED, STATUS_REVERSED ].freeze
 
     # Leg types for posting_legs
     LEG_TYPE_DEBIT = "debit"
     LEG_TYPE_CREDIT = "credit"
-    LEG_TYPES = [LEG_TYPE_DEBIT, LEG_TYPE_CREDIT].freeze
+    LEG_TYPES = [ LEG_TYPE_DEBIT, LEG_TYPE_CREDIT ].freeze
 
     # Ledger scope: where the leg posts
     LEDGER_SCOPE_ACCOUNT = "account"
     LEDGER_SCOPE_GL = "gl"
-    LEDGER_SCOPES = [LEDGER_SCOPE_ACCOUNT, LEDGER_SCOPE_GL].freeze
+    LEDGER_SCOPES = [ LEDGER_SCOPE_ACCOUNT, LEDGER_SCOPE_GL ].freeze
 
     # Account source for posting template legs
     ACCOUNT_SOURCE_CUSTOMER = "customer_account"
@@ -67,17 +67,17 @@ module Bankcore
     # Normal balance for GL accounts
     NORMAL_BALANCE_DEBIT = "debit"
     NORMAL_BALANCE_CREDIT = "credit"
-    NORMAL_BALANCES = [NORMAL_BALANCE_DEBIT, NORMAL_BALANCE_CREDIT].freeze
+    NORMAL_BALANCES = [ NORMAL_BALANCE_DEBIT, NORMAL_BALANCE_CREDIT ].freeze
 
     # Business date status
     BUSINESS_DATE_OPEN = "open"
     BUSINESS_DATE_CLOSED = "closed"
-    BUSINESS_DATE_STATUSES = [BUSINESS_DATE_OPEN, BUSINESS_DATE_CLOSED].freeze
+    BUSINESS_DATE_STATUSES = [ BUSINESS_DATE_OPEN, BUSINESS_DATE_CLOSED ].freeze
 
     # Party types
     PARTY_TYPE_PERSON = "person"
     PARTY_TYPE_ORGANIZATION = "organization"
-    PARTY_TYPES = [PARTY_TYPE_PERSON, PARTY_TYPE_ORGANIZATION].freeze
+    PARTY_TYPES = [ PARTY_TYPE_PERSON, PARTY_TYPE_ORGANIZATION ].freeze
 
     # Override request status
     OVERRIDE_STATUS_PENDING = "pending"
@@ -107,11 +107,11 @@ module Bankcore
     HOLD_TYPE_MANUAL = "manual"
     HOLD_TYPE_LEGAL = "legal"
     HOLD_TYPE_REGULATORY = "regulatory"
-    HOLD_TYPES = [HOLD_TYPE_MANUAL, HOLD_TYPE_LEGAL, HOLD_TYPE_REGULATORY].freeze
+    HOLD_TYPES = [ HOLD_TYPE_MANUAL, HOLD_TYPE_LEGAL, HOLD_TYPE_REGULATORY ].freeze
 
     # Account hold status
     HOLD_STATUS_ACTIVE = "active"
     HOLD_STATUS_RELEASED = "released"
-    HOLD_STATUSES = [HOLD_STATUS_ACTIVE, HOLD_STATUS_RELEASED].freeze
+    HOLD_STATUSES = [ HOLD_STATUS_ACTIVE, HOLD_STATUS_RELEASED ].freeze
   end
 end

@@ -42,7 +42,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   test "create with primary party creates account owner" do
     branch = branches(:one)
     party = parties(:one)
-    assert_difference ["Account.count", "AccountOwner.count"], 1 do
+    assert_difference [ "Account.count", "AccountOwner.count" ], 1 do
       post accounts_url, params: {
         account: {
           account_number: "2002",
