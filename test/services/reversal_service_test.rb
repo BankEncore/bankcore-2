@@ -66,4 +66,13 @@ class ReversalServiceTest < ActiveSupport::TestCase
     assert override.used_at.present?
     assert_equal "used", override.status
   end
+
+  test "idempotent reversal retry returns existing reversal batch" do
+    key = "reversal-idem-#{SecureRandom.hex(8)}"
+
+    reversal_batch = ReversalService.reverse!(posting_batch: @batch, idempotency_key: key)
+    replay_batch = ReversalService.reverse!(posting_batch: @batch, idempotency_key: key)
+
+    assert_equal reversal_batch.id, replay_batch.id
+  end
 end

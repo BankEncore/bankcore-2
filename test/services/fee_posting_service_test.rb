@@ -53,6 +53,59 @@ class FeePostingServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "duplicate idempotency key reuses batch without duplicate assessment" do
+    key = "fee-idem-#{SecureRandom.hex(8)}"
+
+    batch1 = FeePostingService.assess!(
+      account_id: @account.id,
+      fee_type_id: @fee_type.id,
+      amount_cents: 2500,
+      business_date: @business_date,
+      idempotency_key: key
+    )
+
+    assert_no_difference "FeeAssessment.count" do
+      batch2 = FeePostingService.assess!(
+        account_id: @account.id,
+        fee_type_id: @fee_type.id,
+        amount_cents: 2500,
+        business_date: @business_date,
+        idempotency_key: key
+      )
+
+      assert_equal batch1.id, batch2.id
+    end
+  end
+
+  test "idempotency rejects conflicting fee_type reuse" do
+    other_fee_type = FeeType.create!(
+      code: "OTHER_FEE",
+      name: "Other Fee",
+      default_amount_cents: 1000,
+      gl_account_id: @fee_type.gl_account_id,
+      status: Bankcore::Enums::STATUS_ACTIVE
+    )
+    key = "fee-idem-#{SecureRandom.hex(8)}"
+
+    FeePostingService.assess!(
+      account_id: @account.id,
+      fee_type_id: @fee_type.id,
+      amount_cents: 2500,
+      business_date: @business_date,
+      idempotency_key: key
+    )
+
+    assert_raises(PostingEngine::IdempotencyConflictError) do
+      FeePostingService.assess!(
+        account_id: @account.id,
+        fee_type_id: other_fee_type.id,
+        amount_cents: 2500,
+        business_date: @business_date,
+        idempotency_key: key
+      )
+    end
+  end
+
   private
 
   def ensure_fee_post_template!

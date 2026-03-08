@@ -17,7 +17,12 @@ class ReversalService
 
   def reverse!
     raise ReversalError, "Batch is not posted" unless @posting_batch.status == STATUS_POSTED
-    raise ReversalError, "Batch already reversed" if @posting_batch.reversal_batch.present?
+
+    if @posting_batch.reversal_batch.present?
+      return @posting_batch.reversal_batch if idempotent_replay?
+
+      raise ReversalError, "Batch already reversed"
+    end
 
     reversal_code = TransactionCode.find_by(code: @posting_batch.transaction_code)&.reversal_code
     raise ReversalError, "No reversal code for #{@posting_batch.transaction_code}" if reversal_code.blank?
@@ -57,5 +62,9 @@ class ReversalService
       gl_account_id: legs.find { |l| l.gl_account_id.present? }&.gl_account_id
     )
     batch
+  end
+
+  def idempotent_replay?
+    @idempotency_key.present? && @posting_batch.reversal_batch.idempotency_key == @idempotency_key
   end
 end

@@ -27,17 +27,20 @@ class FeePostingService
       amount_cents: amount,
       business_date: @business_date,
       idempotency_key: @idempotency_key,
-      gl_account_id: fee_type.gl_account_id
+      gl_account_id: fee_type.gl_account_id,
+      idempotency_context: {
+        service: "fee_posting",
+        fee_type_id: @fee_type_id
+      }
     )
 
-    FeeAssessment.create!(
-      account_id: @account_id,
-      fee_type_id: @fee_type_id,
-      posting_batch_id: batch.id,
-      amount_cents: amount,
-      assessed_on: @business_date,
-      status: Bankcore::Enums::STATUS_POSTED
-    )
+    FeeAssessment.find_or_create_by!(posting_batch_id: batch.id) do |assessment|
+      assessment.account_id = @account_id
+      assessment.fee_type_id = @fee_type_id
+      assessment.amount_cents = amount
+      assessment.assessed_on = @business_date
+      assessment.status = Bankcore::Enums::STATUS_POSTED
+    end
 
     batch
   end

@@ -71,6 +71,29 @@ class PostingEngineTest < ActiveSupport::TestCase
     assert_equal batch1.id, batch2.id
   end
 
+  test "idempotency rejects conflicting payload reuse" do
+    key = "idem-#{SecureRandom.hex(8)}"
+    PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: 2500,
+      business_date: @business_date,
+      idempotency_key: key
+    )
+
+    error = assert_raises(PostingEngine::IdempotencyConflictError) do
+      PostingEngine.post!(
+        transaction_code: "ADJ_CREDIT",
+        account_id: @account.id,
+        amount_cents: 5000,
+        business_date: @business_date,
+        idempotency_key: key
+      )
+    end
+
+    assert_match "different request", error.message
+  end
+
   test "raises when no template exists" do
     assert_raises(PostingEngine::PostingError) do
       PostingEngine.post!(

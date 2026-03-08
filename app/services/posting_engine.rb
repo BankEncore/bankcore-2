@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+require "digest"
+
 class PostingEngine
   include Bankcore::Enums
 
   class PostingError < StandardError; end
+  class IdempotencyConflictError < PostingError; end
 
   def self.post!(**params)
     new(**params).post!
@@ -15,7 +18,7 @@ class PostingEngine
 
   def initialize(transaction_code:, account_id: nil, source_account_id: nil, destination_account_id: nil,
                  amount_cents:, business_date: nil, idempotency_key: nil, created_by_id: nil,
-                 gl_account_id: nil, reversal_of_batch_id: nil)
+                 gl_account_id: nil, reversal_of_batch_id: nil, idempotency_context: nil)
     @transaction_code = transaction_code
     @account_id = account_id
     @source_account_id = source_account_id
@@ -26,15 +29,22 @@ class PostingEngine
     @created_by_id = created_by_id
     @gl_account_id = gl_account_id
     @reversal_of_batch_id = reversal_of_batch_id
+    @idempotency_context = idempotency_context
   end
 
   def post!
-    return existing_batch if idempotent_duplicate?
+    existing_batch = matching_idempotent_batch
+    return existing_batch if existing_batch.present?
 
     ActiveRecord::Base.transaction do
       build_and_validate_legs!
       create_posted_records!
     end
+  rescue ActiveRecord::RecordNotUnique
+    existing_batch = matching_idempotent_batch
+    return existing_batch if existing_batch.present?
+
+    raise
   end
 
   def preview!
@@ -52,14 +62,15 @@ class PostingEngine
 
   private
 
-  def idempotent_duplicate?
+  def matching_idempotent_batch
     return false if @idempotency_key.blank?
 
-    PostingBatch.exists?(idempotency_key: @idempotency_key, status: STATUS_POSTED)
-  end
+    batch = PostingBatch.find_by(idempotency_key: @idempotency_key, status: STATUS_POSTED)
+    return false unless batch
+    return batch if idempotency_payload_matches?(batch)
 
-  def existing_batch
-    PostingBatch.find_by!(idempotency_key: @idempotency_key, status: STATUS_POSTED)
+    raise IdempotencyConflictError,
+      "Idempotency key #{@idempotency_key} has already been used for a different request"
   end
 
   def build_and_validate_legs!
@@ -122,8 +133,8 @@ class PostingEngine
       business_date: @business_date,
       posted_at: Time.current,
       transaction_code: @transaction_code,
-      idempotency_key: @idempotency_key,
-      reversal_of_batch_id: @reversal_of_batch_id
+      reversal_of_batch_id: @reversal_of_batch_id,
+      **idempotency_attributes
     )
 
     @legs.each_with_index do |leg, idx|
@@ -159,5 +170,61 @@ class PostingEngine
   def resolve_branch_id
     account = Account.find_by(id: @account_id || @source_account_id || @destination_account_id)
     account&.branch_id || Branch.first&.id
+  end
+
+  def idempotency_attributes
+    return {} if @idempotency_key.blank?
+
+    {
+      idempotency_key: @idempotency_key,
+      idempotency_fingerprint: idempotency_fingerprint,
+      idempotency_payload_json: idempotency_payload_json
+    }
+  end
+
+  def idempotency_payload_matches?(batch)
+    return true if batch.idempotency_fingerprint.blank?
+
+    batch.idempotency_fingerprint == idempotency_fingerprint
+  end
+
+  def idempotency_fingerprint
+    @idempotency_fingerprint ||= Digest::SHA256.hexdigest(idempotency_payload_json)
+  end
+
+  def idempotency_payload_json
+    @idempotency_payload_json ||= JSON.generate(canonicalize_value(semantic_idempotency_payload))
+  end
+
+  def semantic_idempotency_payload
+    payload = {
+      transaction_code: @transaction_code,
+      account_id: @account_id,
+      source_account_id: @source_account_id,
+      destination_account_id: @destination_account_id,
+      amount_cents: @amount_cents,
+      business_date: @business_date&.to_date&.iso8601,
+      gl_account_id: @gl_account_id,
+      reversal_of_batch_id: @reversal_of_batch_id
+    }
+    payload[:context] = @idempotency_context if @idempotency_context.present?
+    payload.compact
+  end
+
+  def canonicalize_value(value)
+    case value
+    when Hash
+      value.keys.sort_by(&:to_s).each_with_object({}) do |key, result|
+        result[key.to_s] = canonicalize_value(value[key])
+      end
+    when Array
+      value.map { |item| canonicalize_value(item) }
+    when Date
+      value.iso8601
+    when Time, ActiveSupport::TimeWithZone
+      value.iso8601
+    else
+      value
+    end
   end
 end

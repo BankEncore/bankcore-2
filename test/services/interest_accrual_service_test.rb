@@ -5,6 +5,14 @@ require "test_helper"
 class InterestAccrualServiceTest < ActiveSupport::TestCase
   def setup
     @account = accounts(:one)
+    @other_account = Account.create!(
+      account_number: "2002",
+      account_type: @account.account_type,
+      branch: @account.branch,
+      currency_code: @account.currency_code,
+      status: Bankcore::Enums::STATUS_ACTIVE,
+      opened_on: @account.opened_on
+    )
     @accrual_date = business_dates(:one).business_date
     ensure_int_accrual_template!
   end
@@ -30,6 +38,48 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
         account_id: @account.id,
         amount_cents: -100,
         accrual_date: @accrual_date
+      )
+    end
+  end
+
+  test "duplicate idempotency key reuses batch without duplicate accrual" do
+    key = "accrual-idem-#{SecureRandom.hex(8)}"
+
+    batch1 = InterestAccrualService.accrue!(
+      account_id: @account.id,
+      amount_cents: 150,
+      accrual_date: @accrual_date,
+      idempotency_key: key
+    )
+
+    assert_no_difference "InterestAccrual.count" do
+      batch2 = InterestAccrualService.accrue!(
+        account_id: @account.id,
+        amount_cents: 150,
+        accrual_date: @accrual_date,
+        idempotency_key: key
+      )
+
+      assert_equal batch1.id, batch2.id
+    end
+  end
+
+  test "idempotency rejects conflicting accrual account reuse" do
+    key = "accrual-idem-#{SecureRandom.hex(8)}"
+
+    InterestAccrualService.accrue!(
+      account_id: @account.id,
+      amount_cents: 150,
+      accrual_date: @accrual_date,
+      idempotency_key: key
+    )
+
+    assert_raises(PostingEngine::IdempotencyConflictError) do
+      InterestAccrualService.accrue!(
+        account_id: @other_account.id,
+        amount_cents: 150,
+        accrual_date: @accrual_date,
+        idempotency_key: key
       )
     end
   end

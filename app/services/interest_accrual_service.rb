@@ -23,16 +23,19 @@ class InterestAccrualService
       account_id: nil,
       amount_cents: @amount_cents,
       business_date: @accrual_date,
-      idempotency_key: @idempotency_key
+      idempotency_key: @idempotency_key,
+      idempotency_context: {
+        service: "interest_accrual",
+        account_id: @account_id
+      }
     )
 
-    InterestAccrual.create!(
-      account_id: @account_id,
-      accrual_date: @accrual_date,
-      amount_cents: @amount_cents,
-      posting_batch_id: batch.id,
-      status: Bankcore::Enums::STATUS_POSTED
-    )
+    InterestAccrual.find_or_create_by!(posting_batch_id: batch.id) do |accrual|
+      accrual.account_id = @account_id
+      accrual.accrual_date = @accrual_date
+      accrual.amount_cents = @amount_cents
+      accrual.status = Bankcore::Enums::STATUS_POSTED
+    end
 
     batch
   end

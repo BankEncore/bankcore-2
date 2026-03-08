@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_08_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_08_191000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -246,7 +246,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_08_130000) do
   create_table "posting_batches", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.date "business_date", null: false
     t.datetime "created_at", null: false
+    t.string "idempotency_fingerprint"
     t.string "idempotency_key"
+    t.text "idempotency_payload_json"
     t.bigint "operational_transaction_id"
     t.datetime "posted_at"
     t.string "posting_reference"
