@@ -1,6 +1,34 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/container-queries";
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "bankcore";
+  default: true;
+  --color-primary: #1e3a8a;
+  --color-primary-content: #ffffff;
+  --color-secondary: #115e59;
+  --color-secondary-content: #ffffff;
+  --color-accent: #0f766e;
+  --color-accent-content: #ffffff;
+  --color-neutral: #1e293b;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #f8fafc;
+  --color-base-200: #f1f5f9;
+  --color-base-300: #e2e8f0;
+  --color-base-content: #1e293b;
+  --color-info: #1e3a8a;
+  --color-info-content: #ffffff;
+  --color-success: #0f766e;
+  --color-success-content: #ffffff;
+  --color-warning: #d4a017;
+  --color-warning-content: #1e293b;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+}
 
 @layer base {
   body {
