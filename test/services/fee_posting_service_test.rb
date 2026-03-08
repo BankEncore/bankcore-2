@@ -106,7 +106,32 @@ class FeePostingServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "rolls back posting when fee assessment linkage fails" do
+    assert_no_difference [ "BankingTransaction.count", "PostingBatch.count", "PostingLeg.count", "FeeAssessment.count" ] do
+      error = assert_raises(RuntimeError) do
+        with_stubbed_class_method(FeeAssessment, :find_or_create_by!, ->(*) { raise "fee linkage failed" }) do
+          FeePostingService.assess!(
+            account_id: @account.id,
+            fee_type_id: @fee_type.id,
+            amount_cents: 2500,
+            business_date: @business_date
+          )
+        end
+      end
+
+      assert_equal "fee linkage failed", error.message
+    end
+  end
+
   private
+
+  def with_stubbed_class_method(klass, method_name, replacement)
+    original = klass.method(method_name)
+    klass.define_singleton_method(method_name, &replacement)
+    yield
+  ensure
+    klass.define_singleton_method(method_name, original)
+  end
 
   def ensure_fee_post_template!
     return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "FEE_POST" })

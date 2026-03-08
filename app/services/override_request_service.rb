@@ -44,7 +44,7 @@ class OverrideRequestService
   def request!
     raise OverrideError, "Invalid request type" unless OVERRIDE_TYPES.include?(@request_type)
 
-    OverrideRequest.create!(
+    override_request = OverrideRequest.create!(
       request_type: @request_type,
       status: OVERRIDE_STATUS_PENDING,
       requested_by_id: @requested_by_id,
@@ -53,6 +53,18 @@ class OverrideRequestService
       reason_text: @reason_text,
       expires_at: @expires_at
     )
+
+    AuditEmissionService.emit!(
+      event_type: AuditEmissionService::EVENT_OVERRIDE_REQUESTED,
+      action: "request",
+      target: override_request,
+      business_date: BusinessDateService.current,
+      metadata: {
+        request_type: override_request.request_type,
+        operational_transaction_id: override_request.operational_transaction_id
+      }.compact
+    )
+    override_request
   end
 
   def approve!
@@ -63,6 +75,7 @@ class OverrideRequestService
       status: OVERRIDE_STATUS_APPROVED,
       approved_by_id: @approved_by_id
     )
+    emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_APPROVED, "approve")
     @override_request
   end
 
@@ -73,6 +86,7 @@ class OverrideRequestService
       status: OVERRIDE_STATUS_DENIED,
       approved_by_id: @approved_by_id
     )
+    emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_DENIED, "deny")
     @override_request
   end
 
@@ -82,10 +96,24 @@ class OverrideRequestService
     raise OverrideError, "Override has expired" if expired?(@override_request)
 
     @override_request.update!(status: OVERRIDE_STATUS_USED, used_at: Time.current)
+    emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_USED, "use")
     @override_request
   end
 
   private
+
+  def emit_override_event!(event_type, action)
+    AuditEmissionService.emit!(
+      event_type: event_type,
+      action: action,
+      target: @override_request,
+      business_date: BusinessDateService.current,
+      metadata: {
+        request_type: @override_request.request_type,
+        operational_transaction_id: @override_request.operational_transaction_id
+      }.compact
+    )
+  end
 
   def expired?(override_request)
     override_request.expires_at.present? && override_request.expires_at < Time.current

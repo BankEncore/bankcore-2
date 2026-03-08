@@ -2,6 +2,7 @@
 
 class PostingLeg < ApplicationRecord
   include Bankcore::Enums
+  include PostedRecordImmutable
 
   belongs_to :posting_batch
   belongs_to :gl_account, optional: true
@@ -13,6 +14,10 @@ class PostingLeg < ApplicationRecord
   validate :has_target
 
   private
+
+  def posted_record_immutable?
+    posting_batch.status == STATUS_POSTED
+  end
 
   def has_target
     return if gl_account_id.present? ^ account_id.present?

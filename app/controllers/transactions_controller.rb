@@ -19,25 +19,10 @@ class TransactionsController < ApplicationController
     batch = @transaction.posting_batch
     raise ActiveRecord::RecordNotFound, "No posting batch" unless batch
 
-    amount_cents = batch.posting_legs.sum(:amount_cents)
-    threshold = Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS
-
-    if amount_cents >= threshold
-      override = OverrideRequest.usable.find_by(
-        operational_transaction_id: @transaction.id,
-        request_type: Bankcore::Enums::OVERRIDE_TYPE_REVERSAL
-      )
-      unless override
-        redirect_to new_override_request_path(transaction_id: @transaction.id, request_type: "reversal"),
-          alert: "Reversals of #{helpers.number_to_currency(threshold / 100.0)} or more require supervisor approval. Please request an override first."
-        return
-      end
-      ReversalService.reverse!(posting_batch: batch, override_request: override)
-    else
-      ReversalService.reverse!(posting_batch: batch)
-    end
-
+    ReversalService.reverse!(posting_batch: batch)
     redirect_to transaction_path(@transaction), notice: "Transaction reversed successfully."
+  rescue ReversalService::OverrideRequiredError => e
+    redirect_to new_override_request_path(transaction_id: @transaction.id, request_type: "reversal"), alert: e.message
   rescue ReversalService::ReversalError, OverrideRequestService::OverrideError => e
     redirect_to transaction_path(@transaction), alert: "Reversal failed: #{e.message}"
   end

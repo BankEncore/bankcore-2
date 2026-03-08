@@ -36,6 +36,8 @@ class PostingEngine
     existing_batch = matching_idempotent_batch
     return existing_batch if existing_batch.present?
 
+    emit_posting_requested!
+
     ActiveRecord::Base.transaction do
       build_and_validate_legs!
       create_posted_records!
@@ -44,6 +46,9 @@ class PostingEngine
     existing_batch = matching_idempotent_batch
     return existing_batch if existing_batch.present?
 
+    raise
+  rescue StandardError => e
+    emit_posting_failed!(e)
     raise
   end
 
@@ -154,13 +159,14 @@ class PostingEngine
     AccountProjector.project!(posting_batch: batch)
 
     AuditEmissionService.emit!(
-      event_type: @reversal_of_batch_id ? "reversal_posted" : "posting_succeeded",
+      event_type: AuditEmissionService::EVENT_POSTING_COMMITTED,
       action: "post",
       target: batch,
       business_date: @business_date,
       metadata: {
         transaction_code: @transaction_code,
-        reversal_of_batch_id: @reversal_of_batch_id
+        reversal_of_batch_id: @reversal_of_batch_id,
+        posting_reference: batch.posting_reference
       }
     )
 
@@ -226,5 +232,28 @@ class PostingEngine
     else
       value
     end
+  end
+
+  def emit_posting_requested!
+    AuditEmissionService.emit!(
+      event_type: AuditEmissionService::EVENT_POSTING_REQUESTED,
+      action: "request",
+      business_date: @business_date,
+      metadata: semantic_idempotency_payload
+    )
+  end
+
+  def emit_posting_failed!(error)
+    AuditEmissionService.emit!(
+      event_type: AuditEmissionService::EVENT_POSTING_FAILED,
+      action: "fail",
+      business_date: @business_date,
+      metadata: semantic_idempotency_payload.merge(
+        error_class: error.class.name,
+        error_message: error.message
+      )
+    )
+  rescue StandardError
+    nil
   end
 end

@@ -24,11 +24,19 @@ class BusinessDateEodService
       next_bd.save!
 
       AuditEmissionService.emit!(
-        event_type: "business_date_closed",
+        event_type: AuditEmissionService::EVENT_BUSINESS_DATE_CLOSED,
         action: "close",
         target: current,
         business_date: current.business_date,
         metadata: { closed_date: current.business_date.to_s, opened_date: next_date.to_s }
+      )
+
+      AuditEmissionService.emit!(
+        event_type: AuditEmissionService::EVENT_BUSINESS_DATE_OPENED,
+        action: "open",
+        target: next_bd,
+        business_date: next_date,
+        metadata: { opened_date: next_date.to_s, prior_date: current.business_date.to_s }
       )
     end
 

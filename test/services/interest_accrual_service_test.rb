@@ -84,7 +84,31 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "rolls back posting when interest accrual linkage fails" do
+    assert_no_difference [ "BankingTransaction.count", "PostingBatch.count", "PostingLeg.count", "InterestAccrual.count" ] do
+      error = assert_raises(RuntimeError) do
+        with_stubbed_class_method(InterestAccrual, :find_or_create_by!, ->(*) { raise "accrual linkage failed" }) do
+          InterestAccrualService.accrue!(
+            account_id: @account.id,
+            amount_cents: 150,
+            accrual_date: @accrual_date
+          )
+        end
+      end
+
+      assert_equal "accrual linkage failed", error.message
+    end
+  end
+
   private
+
+  def with_stubbed_class_method(klass, method_name, replacement)
+    original = klass.method(method_name)
+    klass.define_singleton_method(method_name, &replacement)
+    yield
+  ensure
+    klass.define_singleton_method(method_name, original)
+  end
 
   def ensure_int_accrual_template!
     return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "INT_ACCRUAL" })
