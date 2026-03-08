@@ -4,25 +4,25 @@ overview: "Manually replace Dependabot PR #3 with a controlled Tailwind v4 upgra
 todos:
   - id: close-pr-3
     content: "Close Dependabot PR #3 and note that the upgrade requires a manual migration branch because of custom Tailwind and DaisyUI setup."
-    status: pending
+    status: completed
   - id: create-manual-branch
     content: Create a manual branch from current main for the Tailwind v4 upgrade.
-    status: pending
+    status: completed
   - id: upgrade-tailwind-deps
     content: Upgrade tailwindcss-rails and reconcile the Ruby/npm Tailwind plugin setup for v4.
-    status: pending
+    status: completed
   - id: migrate-config-and-css
     content: Migrate config/tailwind.config.js and app/assets/stylesheets/application.tailwind.css to a v4-compatible shape while preserving the bankcore DaisyUI theme.
-    status: pending
+    status: completed
   - id: validate-build-paths
     content: Validate Tailwind build/watch, Rails tests, local CI, and assets:precompile after the upgrade.
-    status: pending
+    status: completed
   - id: smoke-test-ui
     content: Smoke test the key DaisyUI-heavy workstation screens for visual regressions.
-    status: pending
+    status: completed
   - id: open-manual-pr
     content: "Open a normal PR documenting that it replaces Dependabot PR #3 after validation passes."
-    status: pending
+    status: completed
 isProject: false
 ---
 
