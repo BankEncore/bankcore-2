@@ -29,7 +29,7 @@ module ApplicationHelper
       "success"
     when "pending", "draft", "validated", "warning", "review_needed", "review", "override_required"
       "warning"
-    when "reversed", "denied", "closed", "inactive", "expired", "failed", "error", "rejected"
+    when "reversed", "denied", "closed", "inactive", "expired", "failed", "error", "rejected", "blocked"
       "error"
     else
       "neutral"

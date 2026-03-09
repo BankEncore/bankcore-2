@@ -78,11 +78,21 @@ class ReversalServiceTest < ActiveSupport::TestCase
   end
 
   test "raises when high-value reversal lacks override approval" do
-    error = assert_raises(ReversalService::OverrideRequiredError) do
-      ReversalService.reverse!(posting_batch: high_value_batch())
+    high_value_batch = high_value_batch()
+
+    error = nil
+    assert_difference "TransactionException.count", 1 do
+      error = assert_raises(ReversalService::OverrideRequiredError) do
+        ReversalService.reverse!(posting_batch: high_value_batch)
+      end
     end
 
     assert_match(/require supervisor approval/i, error.message)
+    transaction_exception = TransactionException.order(:id).last
+    assert_equal high_value_batch.operational_transaction_id, transaction_exception.transaction_id
+    assert_equal TransactionException::EXCEPTION_TYPE_OVERRIDE_REQUIRED, transaction_exception.exception_type
+    assert_equal TransactionException::STATUS_OPEN, transaction_exception.status
+    assert transaction_exception.requires_override
   end
 
   test "below-threshold reversal does not require override" do

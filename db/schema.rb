@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_090000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -398,6 +398,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_080000) do
     t.index ["code"], name: "index_transaction_codes_on_code", unique: true
   end
 
+  create_table "transaction_exceptions", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "exception_type", null: false
+    t.string "reason_code", null: false
+    t.boolean "requires_override", default: false, null: false
+    t.datetime "resolved_at"
+    t.bigint "resolved_by_id"
+    t.string "status", null: false
+    t.bigint "transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["resolved_by_id"], name: "index_transaction_exceptions_on_resolved_by_id"
+    t.index ["transaction_id", "exception_type", "status"], name: "index_transaction_exceptions_on_txn_type_and_status"
+    t.index ["transaction_id", "status"], name: "index_transaction_exceptions_on_txn_and_status"
+    t.index ["transaction_id"], name: "index_transaction_exceptions_on_transaction_id"
+  end
+
   create_table "transaction_references", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "reference_type", null: false
@@ -497,6 +513,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_080000) do
   add_foreign_key "posting_template_legs", "posting_templates"
   add_foreign_key "posting_templates", "transaction_codes"
   add_foreign_key "role_permissions", "roles"
+  add_foreign_key "transaction_exceptions", "transactions"
+  add_foreign_key "transaction_exceptions", "users", column: "resolved_by_id"
   add_foreign_key "transaction_references", "transactions"
   add_foreign_key "transactions", "branches"
   add_foreign_key "user_roles", "roles"

@@ -88,6 +88,24 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "td", text: "TXN-002"
   end
 
+  test "show renders transaction exceptions" do
+    transaction = BankingTransaction.find_by!(reference_number: "TXN-002")
+    TransactionException.create!(
+      operational_transaction: transaction,
+      exception_type: TransactionException::EXCEPTION_TYPE_OVERRIDE_REQUIRED,
+      status: TransactionException::STATUS_OPEN,
+      requires_override: true,
+      reason_code: "reversal_threshold"
+    )
+
+    get transaction_url(transaction)
+
+    assert_response :success
+    assert_select "h2", text: /Transaction Exceptions/
+    assert_select "td", text: "override_required"
+    assert_select "td", text: "reversal_threshold"
+  end
+
   test "reverse requires reverse_transactions permission" do
     batch = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",

@@ -26,6 +26,7 @@ class TransactionsController < ApplicationController
 
   def show
     @posting_batch = @transaction.posting_batch
+    @transaction_exceptions = @transaction.transaction_exceptions.includes(:resolved_by).order(created_at: :desc)
     @transaction_references = @transaction.transaction_references.order(:reference_type, :id)
     @posting_legs = @posting_batch&.posting_legs&.includes(:account, :gl_account) || []
   end

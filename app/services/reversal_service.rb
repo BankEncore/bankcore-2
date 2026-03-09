@@ -19,6 +19,7 @@ class ReversalService
 
   def reverse!
     raise ReversalError, "Batch is not posted" unless @posting_batch.status == STATUS_POSTED
+    precheck_override_requirement!
 
     @posting_batch.with_lock do
       if @posting_batch.reversal_batch.present?
@@ -53,6 +54,18 @@ class ReversalService
   end
 
   private
+
+  def precheck_override_requirement!
+    return unless override_required?
+    return if @override_request.present?
+    return if OverrideRequest.usable.exists?(
+      operational_transaction_id: @posting_batch.operational_transaction_id,
+      request_type: OVERRIDE_TYPE_REVERSAL
+    )
+
+    create_override_required_exception!
+    raise OverrideRequiredError, override_required_message
+  end
 
   def create_reversal_batch!(reversal_code)
     legs = @posting_batch.posting_legs.order(:position)
@@ -118,6 +131,18 @@ class ReversalService
         reversal_code: reversal_code,
         idempotency_key: @idempotency_key
       }.compact
+    )
+  end
+
+  def create_override_required_exception!
+    return unless @posting_batch.operational_transaction_id.present?
+
+    TransactionException.find_or_create_by!(
+      transaction_id: @posting_batch.operational_transaction_id,
+      exception_type: TransactionException::EXCEPTION_TYPE_OVERRIDE_REQUIRED,
+      status: TransactionException::STATUS_OPEN,
+      reason_code: "reversal_threshold",
+      requires_override: true
     )
   end
 end

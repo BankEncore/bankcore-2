@@ -114,6 +114,45 @@
     </div>
   </section>
 
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Transaction Exceptions</h2>
+        <p class="mt-1 text-sm text-base-content/65">Explicit review-needed or policy-blocked states linked to this transaction.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <% if @transaction_exceptions.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Reason</th>
+              <th>Override</th>
+              <th>Resolved</th>
+              <th>Resolved By</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @transaction_exceptions.each do |transaction_exception| %>
+              <tr>
+                <td><%= transaction_exception.exception_type %></td>
+                <td><span class="<%= status_pill_class(transaction_exception.status) %>"><%= transaction_exception.status %></span></td>
+                <td><%= transaction_exception.reason_code %></td>
+                <td><%= transaction_exception.requires_override ? "Required" : "Not Required" %></td>
+                <td class="ui-mono"><%= transaction_exception.resolved_at&.strftime("%Y-%m-%d %H:%M") || "—" %></td>
+                <td><%= transaction_exception.resolved_by&.display_name || transaction_exception.resolved_by&.username || "—" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No transaction exceptions recorded.</p>
+      <% end %>
+    </div>
+  </section>
+
   <% if reversible && batch_total_cents >= Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS %>
     <section class="ui-override-box mb-6">
       <div class="space-y-2">
