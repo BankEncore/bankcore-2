@@ -46,4 +46,40 @@ class OverrideRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to override_request_path(OverrideRequest.last)
     assert_match /submitted/i, flash[:notice]
   end
+
+  test "approve requires approve_overrides permission" do
+    override = OverrideRequest.create!(
+      request_type: "reversal",
+      status: "pending",
+      operational_transaction_id: @transaction.id,
+      branch_id: @transaction.branch_id,
+      requested_by_id: @user.id
+    )
+
+    delete logout_url
+    post login_url, params: { username: "limiteduser", password: "secret" }
+    post approve_override_request_url(override)
+
+    assert_response :forbidden
+    assert_match /do not have permission/i, flash[:alert]
+  end
+
+  test "approve succeeds with approve_overrides permission" do
+    post login_url, params: { username: "testuser", password: "secret" }
+
+    override = OverrideRequest.create!(
+      request_type: "reversal",
+      status: "pending",
+      operational_transaction_id: @transaction.id,
+      branch_id: @transaction.branch_id,
+      requested_by_id: users(:one).id
+    )
+
+    post approve_override_request_url(override)
+
+    assert_redirected_to override_request_path(override)
+    assert_match /approved/i, flash[:notice]
+    override.reload
+    assert_equal "approved", override.status
+  end
 end

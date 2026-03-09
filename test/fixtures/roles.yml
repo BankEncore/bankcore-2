@@ -5,3 +5,17 @@ one:
   description: Can post manual transactions
   created_at: <%= ts %>
   updated_at: <%= ts %>
+
+two:
+  code: supervisor
+  name: Supervisor
+  description: Can approve override requests
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  code: teller
+  name: Teller
+  description: Can post transactions only (no reverse or approve)
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

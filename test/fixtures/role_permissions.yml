@@ -4,3 +4,21 @@ one:
   permission_code: post_transactions
   created_at: <%= ts %>
   updated_at: <%= ts %>
+
+two:
+  role: one
+  permission_code: reverse_transactions
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  role: two
+  permission_code: approve_overrides
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+four:
+  role: three
+  permission_code: post_transactions
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
