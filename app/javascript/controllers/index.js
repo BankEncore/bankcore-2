@@ -415,7 +415,7 @@ class TransactionWorkstationController extends Controller {
     const currentValue = (input.value || "").trim()
     const wasAutofilled = input.dataset.referenceAutofilled === "1"
     const manPattern = /^MAN-[A-Z0-9_]+-\d{12}$/
-    const achPattern = /^ACH-.+-[0-9]{6}$/
+    const achPattern = /^ACH-.+-[0-9]{6}-[0-9]{6}$/
     const isAutofillPattern = manPattern.test(currentValue) || achPattern.test(currentValue)
     const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && isAutofillPattern))
 
@@ -427,7 +427,9 @@ class TransactionWorkstationController extends Controller {
 
     if (useAchFormat) {
       const yymmdd = effectiveDate.replace(/-/g, "").slice(2, 8)
-      input.value = `ACH-${trace}-${yymmdd}`
+      const now = new Date()
+      const hhmmss = String(now.getHours()).padStart(2, "0") + String(now.getMinutes()).padStart(2, "0") + String(now.getSeconds()).padStart(2, "0")
+      input.value = `ACH-${trace}-${yymmdd}-${hhmmss}`
     } else {
       const ts = new Date().toISOString().slice(2, 4) +
         new Date().toISOString().slice(5, 7) +

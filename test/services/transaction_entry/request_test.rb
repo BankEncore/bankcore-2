@@ -106,7 +106,7 @@ class TransactionEntry::RequestTest < ActiveSupport::TestCase
       business_date: business_dates(:one).business_date
     )
 
-    assert_equal "ACH-123456789012345-260309", request.reference_number
+    assert_match /\AACH-123456789012345-260309-\d{6}\z/, request.reference_number
   end
 
   test "generates generic MAN reference for ACH when trace or effective date missing" do

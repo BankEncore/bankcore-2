@@ -104,7 +104,8 @@ module TransactionEntry
 
     def self.generate_ach_default_reference(ach_trace_number, ach_effective_date)
       date_str = ach_effective_date.respond_to?(:strftime) ? ach_effective_date.strftime("%y%m%d") : ach_effective_date.to_s.delete("-")[2, 6]
-      "ACH-#{ach_trace_number.to_s.strip}-#{date_str}"
+      time_str = Time.current.strftime("%H%M%S")
+      "ACH-#{ach_trace_number.to_s.strip}-#{date_str}-#{time_str}"
     end
 
     def self.default_transfer_memo_if_blank(transaction_code:, memo:, account_numbers:)
