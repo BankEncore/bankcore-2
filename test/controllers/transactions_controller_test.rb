@@ -337,6 +337,74 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal fee_types(:maintenance).id, assessment.fee_type_id
   end
 
+  test "preview with blank reference for ACH generates ACH format and preserves through confirm post" do
+    post transactions_url, params: {
+      preview: "1",
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "15.00",
+        memo: "ACH preview test",
+        ach_trace_number: "987654321098765",
+        ach_effective_date: "2026-03-10",
+        ach_batch_reference: "FILE-PREVIEW",
+        authorization_reference: "AUTH-PREVIEW",
+        authorization_source: "test",
+        reference_number: ""
+      }
+    }
+
+    assert_response :success
+    doc = Nokogiri::HTML(response.body)
+    ref_input = doc.at_css("input[type=hidden][name='transaction[reference_number]']")
+    assert ref_input, "hidden reference_number field should be present"
+    generated_ref = ref_input["value"]
+    assert_match /\AACH-987654321098765-260310-\d{6}\z/, generated_ref
+
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "15.00",
+        memo: "ACH preview test",
+        ach_trace_number: "987654321098765",
+        ach_effective_date: "2026-03-10",
+        ach_batch_reference: "FILE-PREVIEW",
+        authorization_reference: "AUTH-PREVIEW",
+        authorization_source: "test",
+        reference_number: generated_ref
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    assert_equal generated_ref, BankingTransaction.last.reference_number
+  end
+
+  test "create posts ACH with default batch reference and originator memo when blank" do
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "25.00",
+        memo: "",
+        ach_trace_number: "111222333444555",
+        ach_effective_date: "2026-03-12",
+        ach_batch_reference: "",
+        ach_company_name: "Acme Corp",
+        ach_identification_number: "ID-789",
+        authorization_reference: "AUTH-ORIG",
+        authorization_source: "form"
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_match /\AACH\d{12}\z/, transaction.transaction_references.find { |r| r.reference_type == "ach_batch_reference" }&.reference_value
+    assert_equal "Acme Corp - 111222333444555", transaction.memo
+    assert_includes transaction.transaction_references.map(&:reference_type), "ach_company_name"
+    assert_includes transaction.transaction_references.map(&:reference_type), "ach_identification_number"
+  end
+
   test "create routes ach entries through ach workflow" do
     post transactions_url, params: {
       transaction: {
@@ -355,6 +423,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to transaction_path(BankingTransaction.last)
     transaction = BankingTransaction.last
     assert_equal "ACH_DEBIT", transaction.transaction_type
+    assert_match /\AACH-123456789012345-260308-\d{6}\z/, transaction.reference_number
     assert_equal(
       [
         "ach_batch_reference",

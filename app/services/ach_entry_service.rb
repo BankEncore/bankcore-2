@@ -7,8 +7,8 @@ class AchEntryService
 
   def initialize(transaction_code:, account_id:, amount_cents:, business_date: nil, memo: nil, reason_text: nil,
                  reference_number: nil, external_reference: nil, idempotency_key: nil, created_by_id: nil,
-                 ach_trace_number:, ach_effective_date:, ach_batch_reference:, authorization_reference: nil,
-                 authorization_source: nil)
+                 ach_trace_number:, ach_effective_date:, ach_batch_reference:, ach_company_name: nil,
+                 ach_identification_number: nil, authorization_reference: nil, authorization_source: nil)
     @transaction_code = transaction_code
     @account_id = account_id
     @amount_cents = amount_cents
@@ -22,6 +22,8 @@ class AchEntryService
     @ach_trace_number = ach_trace_number
     @ach_effective_date = ach_effective_date
     @ach_batch_reference = ach_batch_reference
+    @ach_company_name = ach_company_name
+    @ach_identification_number = ach_identification_number
     @authorization_reference = authorization_reference
     @authorization_source = authorization_source
   end
@@ -75,6 +77,8 @@ class AchEntryService
       TransactionReference::REFERENCE_TYPE_ACH_TRACE_NUMBER => @ach_trace_number,
       TransactionReference::REFERENCE_TYPE_ACH_EFFECTIVE_DATE => @ach_effective_date&.to_date&.iso8601,
       TransactionReference::REFERENCE_TYPE_ACH_BATCH_REFERENCE => @ach_batch_reference,
+      TransactionReference::REFERENCE_TYPE_ACH_COMPANY_NAME => @ach_company_name,
+      TransactionReference::REFERENCE_TYPE_ACH_IDENTIFICATION_NUMBER => @ach_identification_number,
       TransactionReference::REFERENCE_TYPE_AUTHORIZATION_REFERENCE => @authorization_reference,
       TransactionReference::REFERENCE_TYPE_AUTHORIZATION_SOURCE => @authorization_source
     }.compact

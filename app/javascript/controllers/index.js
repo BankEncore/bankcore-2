@@ -263,6 +263,8 @@ class TransactionWorkstationController extends Controller {
     "achTrace",
     "achEffectiveDate",
     "achBatch",
+    "achCompanyName",
+    "achIdentificationNumber",
     "authRef",
     "singlePicker",
     "sourcePicker",
@@ -321,7 +323,12 @@ class TransactionWorkstationController extends Controller {
       this.achTraceTarget.value = ""
       this.achEffectiveDateTarget.value = ""
       this.achBatchTarget.value = ""
+      if (this.hasAchCompanyNameTarget) this.achCompanyNameTarget.value = ""
+      if (this.hasAchIdentificationNumberTarget) this.achIdentificationNumberTarget.value = ""
       this.authRefTarget.value = ""
+    } else {
+      this.updateAchBatchAutofill()
+      this.updateAchMemoAutofill()
     }
 
     if (!isFee) {
@@ -343,29 +350,61 @@ class TransactionWorkstationController extends Controller {
 
   updateMemoAutofill(code) {
     if (!this.hasMemoInputTarget) return
-    if (code !== "XFER_INTERNAL") {
-      if (this.memoInputTarget.dataset.memoAutofilled === "1") {
-        delete this.memoInputTarget.dataset.memoAutofilled
+    if (code === "XFER_INTERNAL") {
+      const sourceAccount = this.pickerAccount(this.sourcePickerTarget)
+      const destinationAccount = this.pickerAccount(this.destinationPickerTarget)
+      const sourceNum = sourceAccount?.account_number?.trim()
+      const destNum = destinationAccount?.account_number?.trim()
+      if (!sourceNum || !destNum) {
+        if (this.memoInputTarget.dataset.memoAutofilled === "1") delete this.memoInputTarget.dataset.memoAutofilled
+        return
+      }
+      const input = this.memoInputTarget
+      const currentValue = (input.value || "").trim()
+      const wasAutofilled = input.dataset.memoAutofilled === "1"
+      const transferMemoPattern = /^Internal transfer: .+ → .+$/
+      const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && transferMemoPattern.test(currentValue)))
+      if (shouldAutofill) {
+        input.value = `Internal transfer: ${sourceNum} → ${destNum}`
+        input.dataset.memoAutofilled = "1"
       }
       return
     }
+    if (ACH_TYPES.includes(code)) {
+      this.updateAchMemoAutofill()
+      return
+    }
+    if (this.memoInputTarget.dataset.memoAutofilled === "1") delete this.memoInputTarget.dataset.memoAutofilled
+  }
 
-    const sourceAccount = this.pickerAccount(this.sourcePickerTarget)
-    const destinationAccount = this.pickerAccount(this.destinationPickerTarget)
-    const sourceNum = sourceAccount?.account_number?.trim()
-    const destNum = destinationAccount?.account_number?.trim()
-    if (!sourceNum || !destNum) return
+  updateAchMemoAutofill() {
+    if (!this.hasMemoInputTarget || !this.hasAchCompanyNameTarget || !this.hasAchTraceTarget) return
+    const company = (this.achCompanyNameTarget.value || "").trim()
+    const refNum = (this.achTraceTarget.value || "").trim()
+    if (!company || !refNum) return
 
     const input = this.memoInputTarget
     const currentValue = (input.value || "").trim()
     const wasAutofilled = input.dataset.memoAutofilled === "1"
-    const transferMemoPattern = /^Internal transfer: .+ → .+$/
-    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && transferMemoPattern.test(currentValue)))
-
+    const achMemoPattern = /.+ - .+/
+    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && achMemoPattern.test(currentValue)))
     if (shouldAutofill) {
-      input.value = `Internal transfer: ${sourceNum} → ${destNum}`
+      input.value = `${company} - ${refNum}`
       input.dataset.memoAutofilled = "1"
     }
+  }
+
+  syncAchMemoFromOriginator() {
+    this.updateAchMemoAutofill()
+  }
+
+  updateAchBatchAutofill() {
+    if (!this.hasAchBatchTarget) return
+    const currentValue = (this.achBatchTarget.value || "").trim()
+    if (currentValue !== "") return
+    const ts = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7) + new Date().toISOString().slice(8, 10) + new Date().toISOString().slice(11, 13) + new Date().toISOString().slice(14, 16) + new Date().toISOString().slice(17, 19)
+    this.achBatchTarget.value = `ACH${ts}`
+    this.achBatchTarget.dataset.achBatchAutofilled = "1"
   }
 
   updateReferenceAutofill(code) {
@@ -375,9 +414,23 @@ class TransactionWorkstationController extends Controller {
     const input = this.referenceNumberInputTarget
     const currentValue = (input.value || "").trim()
     const wasAutofilled = input.dataset.referenceAutofilled === "1"
-    const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && /^MAN-[A-Z0-9_]+-\d{12}$/.test(currentValue)))
+    const manPattern = /^MAN-[A-Z0-9_]+-\d{12}$/
+    const achPattern = /^ACH-.+-[0-9]{6}-[0-9]{6}$/
+    const isAutofillPattern = manPattern.test(currentValue) || achPattern.test(currentValue)
+    const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && isAutofillPattern))
 
-    if (shouldAutofill) {
+    if (!shouldAutofill) return
+
+    const trace = this.hasAchTraceTarget ? this.achTraceTarget.value?.trim() : ""
+    const effectiveDate = this.hasAchEffectiveDateTarget ? this.achEffectiveDateTarget.value?.trim() : ""
+    const useAchFormat = ACH_TYPES.includes(code) && trace && effectiveDate
+
+    if (useAchFormat) {
+      const yymmdd = effectiveDate.replace(/-/g, "").slice(2, 8)
+      const now = new Date()
+      const hhmmss = String(now.getHours()).padStart(2, "0") + String(now.getMinutes()).padStart(2, "0") + String(now.getSeconds()).padStart(2, "0")
+      input.value = `ACH-${trace}-${yymmdd}-${hhmmss}`
+    } else {
       const ts = new Date().toISOString().slice(2, 4) +
         new Date().toISOString().slice(5, 7) +
         new Date().toISOString().slice(8, 10) +
@@ -385,8 +438,12 @@ class TransactionWorkstationController extends Controller {
         new Date().toISOString().slice(14, 16) +
         new Date().toISOString().slice(17, 19)
       input.value = `MAN-${code}-${ts}`
-      input.dataset.referenceAutofilled = "1"
     }
+    input.dataset.referenceAutofilled = "1"
+  }
+
+  syncReferenceFromAch() {
+    if (this.hasTypeSelectTarget) this.updateReferenceAutofill(this.typeSelectTarget.value)
   }
 
   updateContext() {

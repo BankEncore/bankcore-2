@@ -3,21 +3,35 @@
     <label class="label" for="ach_trace_number">
       <span class="label-text text-sm font-medium">ACH Trace Number</span>
     </label>
-    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number" data-transaction-workstation-target="achTrace">
+    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number" data-transaction-workstation-target="achTrace" data-action="input->transaction-workstation#syncReferenceFromAch change->transaction-workstation#syncReferenceFromAch input->transaction-workstation#syncAchMemoFromOriginator change->transaction-workstation#syncAchMemoFromOriginator">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="ach_effective_date">
       <span class="label-text text-sm font-medium">Effective Date</span>
     </label>
-    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono" data-transaction-workstation-target="achEffectiveDate">
+    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono" data-transaction-workstation-target="achEffectiveDate" data-action="input->transaction-workstation#syncReferenceFromAch change->transaction-workstation#syncReferenceFromAch">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="ach_batch_reference">
       <span class="label-text text-sm font-medium">Batch / File Reference</span>
     </label>
-    <input type="text" name="transaction[ach_batch_reference]" id="ach_batch_reference" value="<%= params.dig(:transaction, :ach_batch_reference) %>" class="input input-bordered w-full ui-mono" placeholder="ACH batch or file ID" data-transaction-workstation-target="achBatch">
+    <input type="text" name="transaction[ach_batch_reference]" id="ach_batch_reference" value="<%= params.dig(:transaction, :ach_batch_reference) %>" class="input input-bordered w-full ui-mono" placeholder="Auto-generated if blank" data-transaction-workstation-target="achBatch">
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="ach_company_name">
+      <span class="label-text text-sm font-medium">Company Name</span>
+    </label>
+    <input type="text" name="transaction[ach_company_name]" id="ach_company_name" value="<%= params.dig(:transaction, :ach_company_name) %>" class="input input-bordered w-full" placeholder="Originator company name" data-transaction-workstation-target="achCompanyName" data-action="input->transaction-workstation#syncAchMemoFromOriginator change->transaction-workstation#syncAchMemoFromOriginator">
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="ach_identification_number">
+      <span class="label-text text-sm font-medium">Identification Number</span>
+    </label>
+    <input type="text" name="transaction[ach_identification_number]" id="ach_identification_number" value="<%= params.dig(:transaction, :ach_identification_number) %>" class="input input-bordered w-full ui-mono" placeholder="Originator ID number" data-transaction-workstation-target="achIdentificationNumber" data-action="input->transaction-workstation#syncAchMemoFromOriginator change->transaction-workstation#syncAchMemoFromOriginator">
   </div>
 
   <div class="form-control w-full">

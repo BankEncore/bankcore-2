@@ -18,6 +18,8 @@ class TransactionsController < ApplicationController
     ach_trace_number
     ach_effective_date
     ach_batch_reference
+    ach_company_name
+    ach_identification_number
     authorization_reference
     authorization_source
   ].freeze
