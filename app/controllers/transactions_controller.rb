@@ -149,7 +149,7 @@ class TransactionsController < ApplicationController
     return nil unless source_id && dest_id
 
     numbers_by_id = Account
-      .where(id: [source_id, dest_id])
+      .where(id: [ source_id, dest_id ])
       .pluck(:id, :account_number)
       .to_h
     {
