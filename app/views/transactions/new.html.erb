@@ -25,9 +25,15 @@
               <div class="ui-kv-label">Operator</div>
               <div class="ui-kv-value"><%= workspace_user_label %></div>
             </div>
-            <div class="ui-kv-row">
-              <div class="ui-kv-label">Selected Account</div>
-              <div id="selected_account_context" class="ui-kv-value" data-transaction-workstation-target="selectedAccountContext">Waiting for account selection</div>
+            <div>
+              <div class="ui-kv-label mb-3">Selected Account</div>
+              <div id="account_context_panels" data-transaction-workstation-target="accountContextPanels">
+                <%= render "transactions/account_context_panels",
+                    transfer_mode: params.dig(:transaction, :transaction_code) == "XFER_INTERNAL",
+                    single_account_payload: @selected_account_payload,
+                    source_account_payload: @selected_source_account_payload,
+                    destination_account_payload: @selected_destination_account_payload %>
+              </div>
             </div>
             <div class="ui-kv-row">
               <div class="ui-kv-label">Workflow Mode</div>
@@ -142,7 +148,7 @@
                     field_id: "account_id",
                     label: "Account",
                     selected_id: @preselected_account_id || params.dig(:transaction, :account_id),
-                    selected_account: @selected_account,
+                    selected_account_payload: @selected_account_payload,
                     picker_target: "singlePicker" %>
               </div>
 

@@ -22,25 +22,13 @@ class AccountLookupsController < ApplicationController
 
     Account
       .where(status: Bankcore::Enums::STATUS_ACTIVE)
-      .includes(:account_product)
+      .includes(:account_product, :branch, :account_balances, account_owners: :party)
       .where("account_number LIKE :query OR account_reference LIKE :query", query: like_query)
       .order(:account_number)
       .limit(MAX_RESULTS)
   end
 
   def account_payload(account)
-    {
-      id: account.id,
-      account_number: account.account_number,
-      account_reference: account.account_reference,
-      product_code: account.product_code,
-      status: account.status,
-      display_label: [
-        account.account_number,
-        account.account_reference,
-        account.product_code,
-        account.status
-      ].compact.join(" — ")
-    }
+    AccountContextPayloadBuilder.build(account)
   end
 end

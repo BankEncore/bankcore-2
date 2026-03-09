@@ -12,15 +12,17 @@ const ACH_TYPES = ["ACH_CREDIT", "ACH_DEBIT"]
 
 class AccountPickerController extends Controller {
   static targets = ["hiddenInput", "queryInput", "results"]
-  static values = { url: String }
+  static values = { url: String, initialAccount: Object }
 
   connect() {
     this.abortController = null
     this.results = []
     this.highlightedIndex = -1
     this.searchTimeout = null
-    this.selectedLabel = this.queryInputTarget.value.trim()
-    this.element.dataset.accountPickerSelectedLabel = this.selectedLabel
+    this.account = this.hasInitialAccountValue ? this.initialAccountValue : null
+    this.selectedLabel = this.account?.display_label || this.queryInputTarget.value.trim()
+    this.queryInputTarget.value = this.selectedLabel
+    this.storeAccount(this.account)
   }
 
   disconnect() {
@@ -34,8 +36,8 @@ class AccountPickerController extends Controller {
     if (this.hiddenInputTarget.value && query !== this.selectedLabel) {
       this.hiddenInputTarget.value = ""
       this.selectedLabel = ""
-      this.element.dataset.accountPickerSelectedLabel = ""
-      this.dispatch("changed", { detail: { id: "", label: "" } })
+      this.storeAccount(null)
+      this.dispatch("changed", { detail: { id: "", label: "", account: null } })
     }
 
     if (query.length < 2) {
@@ -99,10 +101,7 @@ class AccountPickerController extends Controller {
     if (!option) return
 
     event.preventDefault()
-    this.selectAccount({
-      id: option.dataset.accountId,
-      display_label: option.dataset.accountLabel
-    })
+    this.selectAccount(this.results[Number(option.dataset.accountIndex)])
   }
 
   preventBlur(event) {
@@ -121,9 +120,9 @@ class AccountPickerController extends Controller {
     this.queryInputTarget.value = label
     this.queryInputTarget.setCustomValidity("")
     this.selectedLabel = label
-    this.element.dataset.accountPickerSelectedLabel = label
+    this.storeAccount(null)
     this.renderResults()
-    this.dispatch("changed", { detail: { id: id.toString(), label } })
+    this.dispatch("changed", { detail: { id: id.toString(), label, account: null } })
   }
 
   async performSearch(query) {
@@ -155,6 +154,8 @@ class AccountPickerController extends Controller {
   }
 
   selectAccount(account) {
+    if (!account) return
+
     const accountId = account.id.toString()
     const accountLabel = account.display_label
 
@@ -163,11 +164,11 @@ class AccountPickerController extends Controller {
     this.queryInputTarget.value = accountLabel
     this.queryInputTarget.setCustomValidity("")
     this.selectedLabel = accountLabel
-    this.element.dataset.accountPickerSelectedLabel = accountLabel
+    this.storeAccount(account)
     this.results = []
     this.highlightedIndex = -1
     this.renderResults()
-    this.dispatch("changed", { detail: { id: accountId, label: accountLabel } })
+    this.dispatch("changed", { detail: { id: accountId, label: accountLabel, account } })
   }
 
   highlightResult(index) {
@@ -193,15 +194,20 @@ class AccountPickerController extends Controller {
 
     const optionsMarkup = this.results.map((account, index) => {
       const activeClasses = index === this.highlightedIndex ? "bg-base-200" : ""
+      const ownerName = this.escapeHtml(account.primary_owner_name || "No primary owner")
+      const balanceSummary = this.escapeHtml(`${account.available_balance_display} available`)
 
       return `
         <button
           type="button"
           class="flex w-full items-start justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-base-200 ${activeClasses}"
           data-account-id="${account.id}"
-          data-account-label="${account.display_label}"
+          data-account-index="${index}"
         >
-          <span class="min-w-0 flex-1 ui-mono">${account.display_label}</span>
+          <span class="min-w-0 flex-1">
+            <span class="block ui-mono">${this.escapeHtml(account.display_label)}</span>
+            <span class="mt-1 block text-xs text-base-content/65">${ownerName} · ${balanceSummary}</span>
+          </span>
         </button>
       `
     }).join("")
@@ -222,6 +228,22 @@ class AccountPickerController extends Controller {
       this.abortController = null
     }
   }
+
+  storeAccount(account) {
+    this.account = account
+    this.element.dataset.accountPickerSelectedLabel = account?.display_label || ""
+    this.element.dataset.accountPickerAccount = account ? JSON.stringify(account) : ""
+  }
+
+  escapeHtml(value) {
+    return value
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;")
+  }
 }
 
 class TransactionWorkstationController extends Controller {
@@ -234,7 +256,7 @@ class TransactionWorkstationController extends Controller {
     "achFields",
     "amountInput",
     "amountLabel",
-    "selectedAccountContext",
+    "accountContextPanels",
     "guidance",
     "feeTypeSelect",
     "achTrace",
@@ -308,14 +330,15 @@ class TransactionWorkstationController extends Controller {
     const code = this.typeSelectTarget.value
 
     if (TRANSFER_TYPES.includes(code)) {
-      const sourceLabel = this.pickerLabel(this.sourcePickerTarget)
-      const destinationLabel = this.pickerLabel(this.destinationPickerTarget)
-      this.selectedAccountContextTarget.textContent = [sourceLabel, destinationLabel].filter(Boolean).join(" → ") || "Select both transfer accounts"
+      this.accountContextPanelsTarget.innerHTML = this.renderTransferContextPanels(
+        this.pickerAccount(this.sourcePickerTarget),
+        this.pickerAccount(this.destinationPickerTarget)
+      )
       this.guidanceTarget.textContent = "Internal transfer mode. Both accounts must be active and use the same currency."
       return
     }
 
-    this.selectedAccountContextTarget.textContent = this.pickerLabel(this.singlePickerTarget) || "Waiting for account selection"
+    this.accountContextPanelsTarget.innerHTML = this.renderSingleContextPanel(this.pickerAccount(this.singlePickerTarget))
 
     if (ADJUSTMENT_TYPES.includes(code)) {
       this.guidanceTarget.textContent = "Adjustment mode. Reason and reference capture are required before preview or post."
@@ -383,6 +406,11 @@ class TransactionWorkstationController extends Controller {
     return pickerElement?.dataset.accountPickerSelectedLabel || ""
   }
 
+  pickerAccount(pickerElement) {
+    const accountJson = pickerElement?.dataset.accountPickerAccount
+    return accountJson ? JSON.parse(accountJson) : null
+  }
+
   pickerHiddenInput(pickerElement) {
     return pickerElement?.querySelector("[data-account-picker-target='hiddenInput']")
   }
@@ -396,6 +424,73 @@ class TransactionWorkstationController extends Controller {
       bubbles: true,
       detail: { id: "", label: "" }
     }))
+  }
+
+  renderSingleContextPanel(account) {
+    return this.renderAccountContextPanel("Selected Account", account, "Waiting for account selection")
+  }
+
+  renderTransferContextPanels(sourceAccount, destinationAccount) {
+    return `
+      <div class="space-y-3">
+        ${this.renderAccountContextPanel("From Account", sourceAccount, "Select the source account")}
+        ${this.renderAccountContextPanel("To Account", destinationAccount, "Select the destination account")}
+      </div>
+    `
+  }
+
+  renderAccountContextPanel(title, account, emptyText) {
+    if (!account) {
+      return `
+        <section class="rounded-2xl border border-base-300 bg-base-100 p-4">
+          <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">${this.escapeHtml(title)}</h3>
+          <p class="mt-1 text-sm text-base-content/60">${this.escapeHtml(emptyText)}</p>
+        </section>
+      `
+    }
+
+    return `
+      <section class="rounded-2xl border border-base-300 bg-base-100 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">${this.escapeHtml(title)}</h3>
+            <p class="mt-1 text-base font-semibold text-base-content">
+              <span class="ui-mono">${this.escapeHtml(account.account_number)}</span>
+              <span class="text-base-content/60">·</span>
+              ${this.escapeHtml(account.product_name)}
+            </p>
+          </div>
+          <span class="${this.escapeHtml(account.status_class)}">${this.escapeHtml(account.status)}</span>
+        </div>
+        <div class="mt-4 space-y-3">
+          ${this.renderContextRow("Primary Owner", account.primary_owner_name || "—")}
+          ${this.renderContextRow("Reference", account.account_reference, "ui-mono")}
+          ${this.renderContextRow("Account Type", account.account_type)}
+          ${this.renderContextRow("Available Balance", account.available_balance_display, "ui-mono")}
+          ${this.renderContextRow("Posted Balance", account.posted_balance_display, "ui-mono")}
+          ${this.renderContextRow("Currency", account.currency_code, "ui-mono")}
+          ${this.renderContextRow("Branch", account.branch_code || "—")}
+        </div>
+      </section>
+    `
+  }
+
+  renderContextRow(label, value, valueClass = "") {
+    return `
+      <div class="ui-kv-row">
+        <div class="ui-kv-label">${this.escapeHtml(label)}</div>
+        <div class="ui-kv-value ${valueClass}">${this.escapeHtml(value)}</div>
+      </div>
+    `
+  }
+
+  escapeHtml(value) {
+    return (value || "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;")
   }
 }
 

@@ -1,5 +1,4 @@
 <% ts = Time.zone.parse("2026-03-07 12:00:00") %>
-<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
 one:
   account: one
   party: one
@@ -8,5 +7,12 @@ one:
   effective_on: 2026-03-01
   created_at: <%= ts %>
   updated_at: <%= ts %>
+
+two:
+  account: two
+  party: one
+  role_type: primary
+  is_primary: true
+  effective_on: 2026-03-01
   created_at: <%= ts %>
   updated_at: <%= ts %>

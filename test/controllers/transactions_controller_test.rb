@@ -28,6 +28,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
 
   test "new preserves the account review preselection in the searchable picker" do
     account = accounts(:one)
+    upsert_balance(account, posted_balance_cents: 10_000, available_balance_cents: 9_500, average_balance_cents: 8_000)
 
     get new_transaction_url(account_id: account.id)
 
@@ -35,6 +36,33 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#account_id[type='hidden'][value='#{account.id}']"
     assert_select "input#account_id_lookup[value*='#{account.account_number}']"
     assert_select "input#account_id_lookup[value*='#{account.account_reference}']"
+    assert_select "h3", text: "Selected Account"
+    assert_select ".ui-kv-label", text: "Primary Owner"
+    assert_select ".ui-kv-value", text: /Test Customer/
+    assert_select ".ui-kv-label", text: "Available Balance"
+    assert_select ".ui-kv-value.ui-mono", text: /\$95\.00/
+    assert_select ".ui-kv-label", text: "Posted Balance"
+    assert_select ".ui-kv-value.ui-mono", text: /\$100\.00/
+  end
+
+  test "new renders transfer account context panels when transfer accounts are selected" do
+    upsert_balance(accounts(:one), posted_balance_cents: 10_000, available_balance_cents: 9_500, average_balance_cents: 8_000)
+    upsert_balance(accounts(:two), posted_balance_cents: 25_000, available_balance_cents: 25_000, average_balance_cents: 24_000)
+
+    get new_transaction_url(
+      transaction: {
+        transaction_code: "XFER_INTERNAL",
+        source_account_id: accounts(:one).id,
+        destination_account_id: accounts(:two).id
+      }
+    )
+
+    assert_response :success
+    assert_select "h3", text: "From Account"
+    assert_select "h3", text: "To Account"
+    assert_select ".ui-kv-value", text: /DDA-1001/
+    assert_select ".ui-kv-value", text: /SAV-3001/
+    assert_select ".ui-kv-value.ui-mono", text: /\$250\.00/
   end
 
   test "create posts ADJ_CREDIT and redirects" do
@@ -298,6 +326,16 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
       gl_account: gl_accounts(:ten),
       description: "Credit ACH clearing",
       position: 1
+    )
+  end
+
+  def upsert_balance(account, posted_balance_cents:, available_balance_cents:, average_balance_cents:)
+    balance = AccountBalance.find_or_initialize_by(account: account)
+    balance.update!(
+      posted_balance_cents: posted_balance_cents,
+      available_balance_cents: available_balance_cents,
+      average_balance_cents: average_balance_cents,
+      as_of_at: Time.current
     )
   end
 end

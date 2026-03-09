@@ -147,11 +147,20 @@ class TransactionsController < ApplicationController
 
     accounts_by_id = Account
       .where(id: selected_ids.values, status: Bankcore::Enums::STATUS_ACTIVE)
-      .includes(:account_product)
+      .includes(:account_product, :branch, :account_balances, account_owners: :party)
       .index_by(&:id)
 
     @selected_account = accounts_by_id[selected_ids[:account_id].to_i]
     @selected_source_account = accounts_by_id[selected_ids[:source_account_id].to_i]
     @selected_destination_account = accounts_by_id[selected_ids[:destination_account_id].to_i]
+    @selected_account_payload = account_context_payload(@selected_account)
+    @selected_source_account_payload = account_context_payload(@selected_source_account)
+    @selected_destination_account_payload = account_context_payload(@selected_destination_account)
+  end
+
+  def account_context_payload(account)
+    return if account.blank?
+
+    AccountContextPayloadBuilder.build(account)
   end
 end
