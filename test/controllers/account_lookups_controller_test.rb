@@ -10,7 +10,7 @@ class AccountLookupsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     payload = JSON.parse(response.body)
-    assert_equal [accounts(:one).id], payload.fetch("accounts").map { |account| account.fetch("id") }
+    assert_equal [ accounts(:one).id ], payload.fetch("accounts").map { |account| account.fetch("id") }
     assert_equal "DDA-1001", payload.fetch("accounts").first.fetch("account_reference")
   end
 
