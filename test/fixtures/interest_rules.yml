@@ -1,0 +1,18 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+now_default:
+  account_product: now
+  rate: 0.010000
+  day_count_method: actual_365
+  posting_cadence: monthly
+  effective_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+savings_default:
+  account_product: savings
+  rate: 0.036500
+  day_count_method: actual_365
+  posting_cadence: monthly
+  effective_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

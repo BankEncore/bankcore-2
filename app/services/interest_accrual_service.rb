@@ -3,16 +3,17 @@
 class InterestAccrualService
   include Bankcore::Enums
 
-  def self.accrue!(account_id:, amount_cents:, accrual_date: nil, idempotency_key: nil)
+  def self.accrue!(account_id:, amount_cents:, accrual_date: nil, idempotency_key: nil, interest_rule_id: nil)
     new(account_id: account_id, amount_cents: amount_cents, accrual_date: accrual_date,
-        idempotency_key: idempotency_key).accrue!
+        idempotency_key: idempotency_key, interest_rule_id: interest_rule_id).accrue!
   end
 
-  def initialize(account_id:, amount_cents:, accrual_date: nil, idempotency_key: nil)
+  def initialize(account_id:, amount_cents:, accrual_date: nil, idempotency_key: nil, interest_rule_id: nil)
     @account_id = account_id
     @amount_cents = amount_cents
     @accrual_date = accrual_date || BusinessDateService.current
     @idempotency_key = idempotency_key
+    @interest_rule_id = interest_rule_id
   end
 
   def accrue!
@@ -36,6 +37,7 @@ class InterestAccrualService
 
       InterestAccrual.find_or_create_by!(posting_batch_id: batch.id) do |accrual|
         accrual.account_id = @account_id
+        accrual.interest_rule_id = @interest_rule_id
         accrual.accrual_date = @accrual_date
         accrual.amount_cents = @amount_cents
         accrual.status = Bankcore::Enums::STATUS_POSTED

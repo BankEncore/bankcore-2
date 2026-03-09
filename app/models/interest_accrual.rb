@@ -4,6 +4,7 @@ class InterestAccrual < ApplicationRecord
   include Bankcore::Enums
 
   belongs_to :account
+  belongs_to :interest_rule, optional: true
   belongs_to :posting_batch, optional: true
 
   validates :accrual_date, presence: true
