@@ -27,11 +27,11 @@
             </div>
             <div class="ui-kv-row">
               <div class="ui-kv-label">Selected Account</div>
-              <div id="selected_account_context" class="ui-kv-value">Waiting for account selection</div>
+              <div id="selected_account_context" class="ui-kv-value" data-transaction-workstation-target="selectedAccountContext">Waiting for account selection</div>
             </div>
             <div class="ui-kv-row">
               <div class="ui-kv-label">Workflow Mode</div>
-              <div id="transaction_guidance" class="ui-kv-value">Choose a transaction code to load the required controls.</div>
+              <div id="transaction_guidance" class="ui-kv-value" data-transaction-workstation-target="guidance">Choose a transaction code to load the required controls.</div>
             </div>
           </div>
         </div>
@@ -82,7 +82,14 @@
             </div>
           <% end %>
 
-          <%= form_with url: transactions_path, method: :post, local: true, class: "space-y-5" do %>
+          <%= form_with url: transactions_path,
+                        method: :post,
+                        local: true,
+                        class: "space-y-5",
+                        data: {
+                          controller: "transaction-workstation",
+                          action: "submit->transaction-workstation#validateForm account-picker:changed->transaction-workstation#updateContext"
+                        } do %>
             <section class="ui-form-section">
               <div>
                 <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Posting Instruction</h3>
@@ -93,7 +100,12 @@
                   <label class="label" for="transaction_code">
                     <span class="label-text text-sm font-medium">Transaction Type</span>
                   </label>
-                  <select name="transaction[transaction_code]" id="transaction_code" class="select select-bordered w-full" required>
+                  <select name="transaction[transaction_code]"
+                          id="transaction_code"
+                          class="select select-bordered w-full"
+                          required
+                          data-action="change->transaction-workstation#updateFields"
+                          data-transaction-workstation-target="typeSelect">
                     <option value="">— Select type —</option>
                     <% @transaction_codes.each do |tc| %>
                       <option value="<%= tc.code %>" <%= "selected" if params.dig(:transaction, :transaction_code) == tc.code %>><%= tc.code %> — <%= tc.description %></option>
@@ -103,9 +115,18 @@
 
                 <div class="form-control w-full">
                   <label class="label" for="amount">
-                    <span id="amount_label" class="label-text text-sm font-medium">Amount (USD)</span>
+                    <span id="amount_label" class="label-text text-sm font-medium" data-transaction-workstation-target="amountLabel">Amount (USD)</span>
                   </label>
-                  <input type="number" name="transaction[amount]" id="amount" step="0.01" min="0" value="<%= params.dig(:transaction, :amount) %>" class="input input-bordered w-full ui-mono text-lg" placeholder="0.00" required>
+                  <input type="number"
+                         name="transaction[amount]"
+                         id="amount"
+                         step="0.01"
+                         min="0"
+                         value="<%= params.dig(:transaction, :amount) %>"
+                         class="input input-bordered w-full ui-mono text-lg"
+                         placeholder="0.00"
+                         required
+                         data-transaction-workstation-target="amountInput">
                 </div>
               </div>
             </section>
@@ -115,16 +136,14 @@
                 <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Account Routing</h3>
               </div>
 
-              <div id="account_fields" class="form-control w-full">
-                <label class="label" for="account_id">
-                  <span class="label-text text-sm font-medium">Account</span>
-                </label>
-                <select name="transaction[account_id]" id="account_id" class="select select-bordered w-full ui-mono" data-preselected-account="<%= @preselected_account_id || params.dig(:transaction, :account_id) %>">
-                  <option value="">— Select account —</option>
-                  <% @accounts.each do |acc| %>
-                    <option value="<%= acc.id %>" <%= "selected" if (@preselected_account_id.to_i == acc.id || params.dig(:transaction, :account_id).to_i == acc.id) %>><%= acc.account_number %> — <%= acc.account_product&.product_code %> — <%= acc.status %></option>
-                  <% end %>
-                </select>
+              <div id="account_fields" class="w-full" data-transaction-workstation-target="accountFields">
+                <%= render "transactions/account_picker",
+                    field_name: "transaction[account_id]",
+                    field_id: "account_id",
+                    label: "Account",
+                    selected_id: @preselected_account_id || params.dig(:transaction, :account_id),
+                    selected_account: @selected_account,
+                    picker_target: "singlePicker" %>
               </div>
 
               <%= render "transactions/transfer_fields" %>
@@ -167,136 +186,3 @@
     </div>
   </div>
 </div>
-
-<script>
-  function initializeTransactionWorkstation() {
-    const typeSelect = document.getElementById('transaction_code');
-    if (!typeSelect) return;
-
-    const accountFields = document.getElementById('account_fields');
-    const transferFields = document.getElementById('transfer_fields');
-    const adjustmentFields = document.getElementById('adjustment_fields');
-    const feeFields = document.getElementById('fee_fields');
-    const achFields = document.getElementById('ach_fields');
-    const accountSelect = document.getElementById('account_id');
-    const sourceSelect = document.getElementById('source_account_id');
-    const destSelect = document.getElementById('destination_account_id');
-    const amountInput = document.getElementById('amount');
-    const amountLabel = document.getElementById('amount_label');
-    const selectedAccountContext = document.getElementById('selected_account_context');
-    const guidance = document.getElementById('transaction_guidance');
-    const feeTypeSelect = document.getElementById('fee_type_id');
-    const achTrace = document.getElementById('ach_trace_number');
-    const achEffectiveDate = document.getElementById('ach_effective_date');
-    const achBatch = document.getElementById('ach_batch_reference');
-    const authRef = document.getElementById('authorization_reference');
-
-    const TRANSFER_TYPES = ['XFER_INTERNAL'];
-    const ADJUSTMENT_TYPES = ['ADJ_CREDIT', 'ADJ_DEBIT'];
-    const FEE_TYPES = ['FEE_POST'];
-    const ACH_TYPES = ['ACH_CREDIT', 'ACH_DEBIT'];
-
-    function selectedText(select) {
-      const option = select && select.options[select.selectedIndex];
-      return option && option.value ? option.text : null;
-    }
-
-    function toggleRequired(field, required) {
-      if (!field) return;
-      if (required) {
-        field.setAttribute('required', 'required');
-      } else {
-        field.removeAttribute('required');
-      }
-    }
-
-    function updateContext(code) {
-      if (TRANSFER_TYPES.includes(code)) {
-        const fromAccount = selectedText(sourceSelect);
-        const toAccount = selectedText(destSelect);
-        selectedAccountContext.textContent = [fromAccount, toAccount].filter(Boolean).join(' → ') || 'Select both transfer accounts';
-        guidance.textContent = 'Internal transfer mode. Both accounts must be active and use the same currency.';
-      } else {
-        selectedAccountContext.textContent = selectedText(accountSelect) || 'Waiting for account selection';
-        if (ADJUSTMENT_TYPES.includes(code)) {
-          guidance.textContent = 'Adjustment mode. Reason and reference capture are required before preview or post.';
-        } else if (FEE_TYPES.includes(code)) {
-          guidance.textContent = 'Fee mode. The dispatcher will resolve the active fee rule for the selected account product.';
-        } else if (ACH_TYPES.includes(code)) {
-          guidance.textContent = 'ACH mode. Trace, effective date, and batch references are captured as structured transaction references.';
-        } else {
-          guidance.textContent = 'Choose a transaction code to load the required controls.';
-        }
-      }
-    }
-
-    function updateFields() {
-      const code = typeSelect.value;
-      const isTransfer = TRANSFER_TYPES.includes(code);
-      const isAdjustment = ADJUSTMENT_TYPES.includes(code);
-      const isFee = FEE_TYPES.includes(code);
-      const isAch = ACH_TYPES.includes(code);
-      const isAchDebit = code === 'ACH_DEBIT';
-
-      accountFields.classList.toggle('hidden', isTransfer);
-      transferFields.classList.toggle('hidden', !isTransfer);
-      adjustmentFields.classList.toggle('hidden', !isAdjustment);
-      feeFields.classList.toggle('hidden', !isFee);
-      achFields.classList.toggle('hidden', !isAch);
-
-      toggleRequired(accountSelect, !isTransfer);
-      toggleRequired(sourceSelect, isTransfer);
-      toggleRequired(destSelect, isTransfer);
-      toggleRequired(feeTypeSelect, isFee);
-      toggleRequired(achTrace, isAch);
-      toggleRequired(achEffectiveDate, isAch);
-      toggleRequired(achBatch, isAch);
-      toggleRequired(authRef, isAchDebit);
-
-      if (isFee) {
-        amountLabel.textContent = 'Amount Override (USD)';
-        amountInput.placeholder = 'Leave blank to use fee rule/default';
-        amountInput.removeAttribute('required');
-      } else {
-        amountLabel.textContent = 'Amount (USD)';
-        amountInput.placeholder = '0.00';
-        amountInput.setAttribute('required', 'required');
-      }
-
-      if (!isTransfer) {
-        sourceSelect.value = '';
-        destSelect.value = '';
-      } else {
-        accountSelect.value = '';
-      }
-
-      if (!isAch) {
-        achTrace.value = '';
-        achEffectiveDate.value = '';
-        achBatch.value = '';
-        authRef.value = '';
-      }
-
-      if (!isFee) {
-        feeTypeSelect.value = '';
-      }
-
-      updateContext(code);
-    }
-
-    typeSelect.addEventListener('change', updateFields);
-    accountSelect.addEventListener('change', () => updateContext(typeSelect.value));
-    sourceSelect.addEventListener('change', () => updateContext(typeSelect.value));
-    destSelect.addEventListener('change', () => updateContext(typeSelect.value));
-
-    const preselectedId = accountSelect.dataset.preselectedAccount;
-    if (preselectedId) {
-      accountSelect.value = preselectedId;
-    }
-
-    updateFields();
-  }
-
-  document.addEventListener('turbo:load', initializeTransactionWorkstation);
-  document.addEventListener('DOMContentLoaded', initializeTransactionWorkstation);
-</script>

@@ -1,30 +1,30 @@
-<div id="ach_fields" class="hidden grid gap-4 lg:grid-cols-2">
+<div id="ach_fields" class="hidden grid gap-4 lg:grid-cols-2" data-transaction-workstation-target="achFields">
   <div class="form-control w-full">
     <label class="label" for="ach_trace_number">
       <span class="label-text text-sm font-medium">ACH Trace Number</span>
     </label>
-    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number">
+    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number" data-transaction-workstation-target="achTrace">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="ach_effective_date">
       <span class="label-text text-sm font-medium">Effective Date</span>
     </label>
-    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono">
+    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono" data-transaction-workstation-target="achEffectiveDate">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="ach_batch_reference">
       <span class="label-text text-sm font-medium">Batch / File Reference</span>
     </label>
-    <input type="text" name="transaction[ach_batch_reference]" id="ach_batch_reference" value="<%= params.dig(:transaction, :ach_batch_reference) %>" class="input input-bordered w-full ui-mono" placeholder="ACH batch or file ID">
+    <input type="text" name="transaction[ach_batch_reference]" id="ach_batch_reference" value="<%= params.dig(:transaction, :ach_batch_reference) %>" class="input input-bordered w-full ui-mono" placeholder="ACH batch or file ID" data-transaction-workstation-target="achBatch">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="authorization_reference">
       <span class="label-text text-sm font-medium">Authorization Reference</span>
     </label>
-    <input type="text" name="transaction[authorization_reference]" id="authorization_reference" value="<%= params.dig(:transaction, :authorization_reference) %>" class="input input-bordered w-full ui-mono" placeholder="Required for ACH debits">
+    <input type="text" name="transaction[authorization_reference]" id="authorization_reference" value="<%= params.dig(:transaction, :authorization_reference) %>" class="input input-bordered w-full ui-mono" placeholder="Required for ACH debits" data-transaction-workstation-target="authRef">
   </div>
 
   <div class="form-control w-full lg:col-span-2">

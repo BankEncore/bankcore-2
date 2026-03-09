@@ -18,10 +18,23 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     get new_transaction_url
     assert_response :success
     assert_select "select#transaction_code"
+    assert_select "input#account_id[type='hidden']"
+    assert_select "input#account_id_lookup[type='search']"
     assert_select "input[name='transaction[amount]']"
     assert_select "select[name='transaction[fee_type_id]']"
     assert_select "input[name='transaction[ach_trace_number]']"
     assert_select "a[href='#{interest_accruals_path}']"
+  end
+
+  test "new preserves the account review preselection in the searchable picker" do
+    account = accounts(:one)
+
+    get new_transaction_url(account_id: account.id)
+
+    assert_response :success
+    assert_select "input#account_id[type='hidden'][value='#{account.id}']"
+    assert_select "input#account_id_lookup[value*='#{account.account_number}']"
+    assert_select "input#account_id_lookup[value*='#{account.account_reference}']"
   end
 
   test "create posts ADJ_CREDIT and redirects" do

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class TransactionsController < ApplicationController
+  ACCOUNT_FIELD_NAMES = %i[account_id source_account_id destination_account_id].freeze
+
   TRANSACTION_FORM_FIELDS = %i[
     transaction_code
     account_id
@@ -51,8 +53,8 @@ class TransactionsController < ApplicationController
   end
 
   def new
-    load_form_dependencies
     @preselected_account_id = params[:account_id]
+    load_form_dependencies
   end
 
   def create
@@ -121,9 +123,9 @@ class TransactionsController < ApplicationController
 
   def load_form_dependencies
     @transaction_codes = TransactionCode.where(active: true, code: TransactionEntry::Request::MANUAL_ENTRY_CODES).order(:code)
-    @accounts = Account.where(status: Bankcore::Enums::STATUS_ACTIVE).includes(:account_product).order(:account_number)
     @fee_types = FeeType.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:name)
     @business_date = BusinessDateService.current
+    load_selected_accounts
   end
 
   def transaction_entry_request
@@ -132,5 +134,24 @@ class TransactionsController < ApplicationController
       created_by_id: current_user&.id,
       business_date: BusinessDateService.current
     )
+  end
+
+  def load_selected_accounts
+    selected_ids = ACCOUNT_FIELD_NAMES.index_with do |field_name|
+      if field_name == :account_id
+        @preselected_account_id.presence || transaction_form_params[field_name].presence
+      else
+        transaction_form_params[field_name].presence
+      end
+    end.compact
+
+    accounts_by_id = Account
+      .where(id: selected_ids.values, status: Bankcore::Enums::STATUS_ACTIVE)
+      .includes(:account_product)
+      .index_by(&:id)
+
+    @selected_account = accounts_by_id[selected_ids[:account_id].to_i]
+    @selected_source_account = accounts_by_id[selected_ids[:source_account_id].to_i]
+    @selected_destination_account = accounts_by_id[selected_ids[:destination_account_id].to_i]
   end
 end

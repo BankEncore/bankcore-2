@@ -1,10 +1,10 @@
-<div id="fee_fields" class="hidden space-y-4">
+<div id="fee_fields" class="hidden space-y-4" data-transaction-workstation-target="feeFields">
   <div class="grid gap-4 lg:grid-cols-2">
     <div class="form-control w-full">
       <label class="label" for="fee_type_id">
         <span class="label-text text-sm font-medium">Fee Type</span>
       </label>
-      <select name="transaction[fee_type_id]" id="fee_type_id" class="select select-bordered w-full">
+      <select name="transaction[fee_type_id]" id="fee_type_id" class="select select-bordered w-full" data-transaction-workstation-target="feeTypeSelect">
         <option value="">— Select fee type —</option>
         <% @fee_types.each do |fee_type| %>
           <option value="<%= fee_type.id %>" <%= "selected" if params.dig(:transaction, :fee_type_id).to_i == fee_type.id %>><%= fee_type.code %> — <%= fee_type.name %></option>
