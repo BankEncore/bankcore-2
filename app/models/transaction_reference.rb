@@ -4,6 +4,11 @@ class TransactionReference < ApplicationRecord
   REFERENCE_TYPE_REFERENCE_NUMBER = "reference_number"
   REFERENCE_TYPE_EXTERNAL_REFERENCE = "external_reference"
   REFERENCE_TYPE_IDEMPOTENCY_KEY = "idempotency_key"
+  REFERENCE_TYPE_ACH_TRACE_NUMBER = "ach_trace_number"
+  REFERENCE_TYPE_ACH_EFFECTIVE_DATE = "ach_effective_date"
+  REFERENCE_TYPE_ACH_BATCH_REFERENCE = "ach_batch_reference"
+  REFERENCE_TYPE_AUTHORIZATION_REFERENCE = "authorization_reference"
+  REFERENCE_TYPE_AUTHORIZATION_SOURCE = "authorization_source"
 
   belongs_to :operational_transaction, class_name: "BankingTransaction", foreign_key: :transaction_id
 

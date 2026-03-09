@@ -5,6 +5,8 @@ require "test_helper"
 class TransactionsControllerTest < ActionDispatch::IntegrationTest
   setup do
     post login_url, params: { username: "testuser", password: "secret" }
+    ensure_ach_template!
+    ensure_fee_post_template!
   end
 
   test "index renders" do
@@ -17,6 +19,9 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "select#transaction_code"
     assert_select "input[name='transaction[amount]']"
+    assert_select "select[name='transaction[fee_type_id]']"
+    assert_select "input[name='transaction[ach_trace_number]']"
+    assert_select "a[href='#{interest_accruals_path}']"
   end
 
   test "create posts ADJ_CREDIT and redirects" do
@@ -68,6 +73,27 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=hidden][name='transaction[external_reference]'][value='CASE-99']"
   end
 
+  test "preview preserves fee and ach fields for confirm step" do
+    post transactions_url, params: {
+      preview: "1",
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "25.00",
+        ach_trace_number: "123456789012345",
+        ach_effective_date: "2026-03-08",
+        ach_batch_reference: "FILE-20260308",
+        authorization_reference: "AUTH-22",
+        authorization_source: "signed form"
+      }
+    }
+
+    assert_response :success
+    assert_select "input[type=hidden][name='transaction[ach_trace_number]'][value='123456789012345']"
+    assert_select "input[type=hidden][name='transaction[authorization_reference]'][value='AUTH-22']"
+    assert_select "input[type=hidden][name='transaction[ach_batch_reference]'][value='FILE-20260308']"
+  end
+
   test "show renders transaction" do
     txn = BankingTransaction.create!(
       transaction_type: "ADJ_CREDIT",
@@ -106,6 +132,56 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "td", text: "reversal_threshold"
   end
 
+  test "create routes fee posts through fee workflow" do
+    assert_difference "FeeAssessment.count", 1 do
+      post transactions_url, params: {
+        transaction: {
+          transaction_code: "FEE_POST",
+          account_id: accounts(:one).id,
+          fee_type_id: fee_types(:maintenance).id,
+          memo: "Manual maintenance assessment",
+          reason_text: "Operator correction",
+          reference_number: "FEE-20260309-001"
+        }
+      }
+    end
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    assessment = FeeAssessment.order(:id).last
+    assert_equal accounts(:one).id, assessment.account_id
+    assert_equal fee_types(:maintenance).id, assessment.fee_type_id
+  end
+
+  test "create routes ach entries through ach workflow" do
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "42.50",
+        memo: "ACH debit",
+        ach_trace_number: "123456789012345",
+        ach_effective_date: "2026-03-08",
+        ach_batch_reference: "FILE-20260308",
+        authorization_reference: "AUTH-42",
+        authorization_source: "signed form"
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_equal "ACH_DEBIT", transaction.transaction_type
+    assert_equal(
+      [
+        "ach_batch_reference",
+        "ach_effective_date",
+        "ach_trace_number",
+        "authorization_reference",
+        "authorization_source"
+      ],
+      transaction.transaction_references.order(:reference_type).pluck(:reference_type)
+    )
+  end
+
   test "reverse requires reverse_transactions permission" do
     batch = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",
@@ -123,6 +199,21 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_match /do not have permission/i, flash[:alert]
   end
 
+  test "reverse preview renders confirm screen" do
+    batch = PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: accounts(:one).id,
+      amount_cents: 4000,
+      business_date: business_dates(:one).business_date
+    )
+
+    get reverse_preview_transaction_url(batch.operational_transaction)
+
+    assert_response :success
+    assert_select "h1", text: /Reversal Preview/
+    assert_select "form[action='#{reverse_transaction_path(batch.operational_transaction)}']"
+  end
+
   test "reverse redirects to override request when threshold exceeded without approval" do
     batch = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",
@@ -136,5 +227,64 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_override_request_path(transaction_id: txn.id, request_type: "reversal")
     assert_match /require supervisor approval/i, flash[:alert]
+  end
+
+  private
+
+  def ensure_fee_post_template!
+    return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "FEE_POST" })
+
+    posting_template = PostingTemplate.create!(
+      transaction_code: transaction_codes(:fee_post),
+      name: "Fee Assessment",
+      description: "Debit account, credit fee income",
+      active: true
+    )
+    PostingTemplateLeg.create!(
+      posting_template: posting_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+      description: "Debit customer account",
+      position: 0
+    )
+    PostingTemplateLeg.create!(
+      posting_template: posting_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account: gl_accounts(:three),
+      description: "Credit fee income",
+      position: 1
+    )
+  end
+
+  def ensure_ach_template!
+    return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "ACH_DEBIT" })
+
+    transaction_code = TransactionCode.find_or_create_by!(code: "ACH_DEBIT") do |record|
+      record.description = "Outgoing ACH"
+      record.reversal_code = "ACH_CREDIT"
+      record.active = true
+    end
+    posting_template = PostingTemplate.create!(
+      transaction_code: transaction_code,
+      name: "ACH Debit",
+      description: "Debit account, credit ACH clearing",
+      active: true
+    )
+    PostingTemplateLeg.create!(
+      posting_template: posting_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+      description: "Debit customer account",
+      position: 0
+    )
+    PostingTemplateLeg.create!(
+      posting_template: posting_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account: gl_accounts(:ten),
+      description: "Credit ACH clearing",
+      position: 1
+    )
   end
 end

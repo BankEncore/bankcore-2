@@ -1,0 +1,76 @@
+<% content_for :title, "Reverse Transaction ##{@transaction.id} - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Transaction Review", transaction_path(@transaction), class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Reversal Preview</h1>
+      <p class="workspace-subtitle">Review the inverse posting legs before creating the controlled reversal batch.</p>
+    </div>
+  </div>
+
+  <% if @override_required %>
+    <section class="ui-override-box mb-6">
+      <div class="space-y-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="<%= status_pill_class('pending') %>">Override Required</span>
+          <span class="text-sm font-medium text-base-content">This reversal meets or exceeds <span class="ui-mono"><%= number_to_currency(@override_threshold_cents / 100.0) %></span>.</span>
+        </div>
+        <p class="text-sm text-base-content/80">If no approved override is already available, confirming the reversal will route you into the approval request flow.</p>
+      </div>
+    </section>
+  <% end %>
+
+  <section class="posting-preview-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Reverse <%= @transaction.transaction_type %></h2>
+        <p class="mt-1 text-sm text-base-content/65">Economic amount <span class="ui-mono font-semibold"><%= number_to_currency(@economic_amount_cents / 100.0) %></span></p>
+      </div>
+      <span class="<%= status_pill_class('review') %>">Explicit Confirmation</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Leg</th>
+            <th>Scope</th>
+            <th>Target</th>
+            <th class="text-right">Debit</th>
+            <th class="text-right">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @preview_legs.each do |leg| %>
+            <tr>
+              <td><span class="<%= leg_type_pill_class(leg[:leg_type]) %>"><%= leg[:leg_type] %></span></td>
+              <td class="text-sm text-base-content/70"><%= leg[:ledger_scope] %></td>
+              <td>
+                <% if leg[:account].present? %>
+                  <div class="font-medium text-base-content">Customer Account</div>
+                  <div class="ui-mono text-sm text-base-content/70"><%= leg[:account].account_number %></div>
+                <% elsif leg[:gl_account].present? %>
+                  <div class="font-medium text-base-content">GL Account</div>
+                  <div class="ui-mono text-sm text-base-content/70"><%= leg[:gl_account].gl_number %> — <%= leg[:gl_account].name %></div>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td class="ui-mono text-right"><%= leg[:leg_type] == "debit" ? number_to_currency(leg[:amount_cents] / 100.0) : "—" %></td>
+              <td class="ui-mono text-right"><%= leg[:leg_type] == "credit" ? number_to_currency(leg[:amount_cents] / 100.0) : "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <div class="ui-confirm-strip mt-5">
+        <p class="max-w-2xl text-sm text-base-content/70">Confirming will call the governed reversal flow. Existing override rules and idempotency protections remain in force.</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <%= button_to "Confirm Reversal", reverse_transaction_path(@transaction), method: :post, class: "btn btn-error" %>
+          <%= link_to "Cancel", transaction_path(@transaction), class: "btn btn-ghost" %>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

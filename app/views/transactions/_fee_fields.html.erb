@@ -1,0 +1,19 @@
+<div id="fee_fields" class="hidden space-y-4">
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="form-control w-full">
+      <label class="label" for="fee_type_id">
+        <span class="label-text text-sm font-medium">Fee Type</span>
+      </label>
+      <select name="transaction[fee_type_id]" id="fee_type_id" class="select select-bordered w-full">
+        <option value="">— Select fee type —</option>
+        <% @fee_types.each do |fee_type| %>
+          <option value="<%= fee_type.id %>" <%= "selected" if params.dig(:transaction, :fee_type_id).to_i == fee_type.id %>><%= fee_type.code %> — <%= fee_type.name %></option>
+        <% end %>
+      </select>
+    </div>
+
+    <div class="rounded-2xl border border-sky-400/25 bg-sky-500/10 px-4 py-3 text-sm text-base-content/80">
+      Fee posting resolves the active fee rule for the selected account product. Leave amount blank to use the rule-driven amount or fee-type default.
+    </div>
+  </div>
+</div>
