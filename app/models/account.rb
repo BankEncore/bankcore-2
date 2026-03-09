@@ -5,6 +5,8 @@ class Account < ApplicationRecord
 
   attr_accessor :primary_party_id
 
+  before_validation :default_account_reference
+
   belongs_to :branch
   belongs_to :account_product, optional: true
   has_many :account_owners
@@ -18,6 +20,7 @@ class Account < ApplicationRecord
   has_many :interest_accruals
 
   validates :account_number, presence: true, uniqueness: true
+  validates :account_reference, presence: true, uniqueness: true
   validates :account_type, presence: true, inclusion: { in: Bankcore::ACCOUNT_TYPES }
   validates :branch_id, presence: true
   validates :currency_code, presence: true
@@ -25,5 +28,11 @@ class Account < ApplicationRecord
 
   def product_code
     account_product&.product_code || account_type
+  end
+
+  private
+
+  def default_account_reference
+    self.account_reference = account_number if account_reference.blank?
   end
 end

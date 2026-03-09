@@ -1,6 +1,7 @@
 <% ts = Time.zone.parse("2026-03-07 12:00:00") %>
 one:
   account_number: "1001"
+  account_reference: "DDA-1001"
   account_type: dda
   account_product: dda
   branch: one
@@ -12,6 +13,7 @@ one:
 
 two:
   account_number: "3001"
+  account_reference: "SAV-3001"
   account_type: savings
   account_product: savings
   branch: one

@@ -50,7 +50,10 @@
           <% @accounts.each do |account| %>
             <% balance = account.account_balances.first %>
             <tr>
-              <td class="ui-mono"><%= account.account_number %></td>
+              <td>
+                <div class="ui-mono"><%= account.account_number %></div>
+                <div class="text-xs text-base-content/60"><%= account.account_reference %></div>
+              </td>
               <td><%= account.account_type %></td>
               <td><%= account.branch&.branch_code %></td>
               <td><span class="<%= status_pill_class(account.status) %>"><%= account.status %></span></td>

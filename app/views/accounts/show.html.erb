@@ -41,6 +41,10 @@
 
         <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
           <div class="ui-kv-row">
+            <div class="ui-kv-label">Account Reference</div>
+            <div class="ui-kv-value ui-mono"><%= @account.account_reference %></div>
+          </div>
+          <div class="ui-kv-row">
             <div class="ui-kv-label">Branch</div>
             <div class="ui-kv-value"><%= @account.branch&.branch_code %></div>
           </div>

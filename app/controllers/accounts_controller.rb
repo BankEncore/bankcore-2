@@ -51,7 +51,7 @@ class AccountsController < ApplicationController
   end
 
   def account_params
-    params.require(:account).permit(:account_number, :account_product_id, :branch_id)
+    params.require(:account).permit(:account_number, :account_reference, :account_product_id, :branch_id)
   end
 
   def create_deposit_account_if_needed!
