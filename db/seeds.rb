@@ -69,6 +69,7 @@ account_products_data = [
     currency_code: "USD",
     statement_cycle: "monthly",
     allow_overdraft: true,
+    interest_expense_gl_number: "5120",
     liability_gl_number: "2120"
   },
   {
@@ -78,6 +79,7 @@ account_products_data = [
     currency_code: "USD",
     statement_cycle: "monthly",
     allow_overdraft: false,
+    interest_expense_gl_number: "5130",
     liability_gl_number: "2130"
   },
   {
@@ -87,12 +89,15 @@ account_products_data = [
     currency_code: "USD",
     statement_cycle: "monthly",
     allow_overdraft: false,
+    interest_expense_gl_number: "5130",
     liability_gl_number: "2130"
   }
 ]
 
 account_products_data.each do |attrs|
   liability_gl = GlAccount.find_by!(gl_number: attrs.delete(:liability_gl_number))
+  interest_expense_gl_number = attrs.delete(:interest_expense_gl_number)
+  interest_expense_gl = GlAccount.find_by(gl_number: interest_expense_gl_number) if interest_expense_gl_number.present?
   product = AccountProduct.find_or_initialize_by(product_code: attrs[:product_code])
   product.assign_attributes(
     name: attrs[:name],
@@ -101,7 +106,8 @@ account_products_data.each do |attrs|
     statement_cycle: attrs[:statement_cycle],
     allow_overdraft: attrs[:allow_overdraft],
     status: Bankcore::Enums::STATUS_ACTIVE,
-    liability_gl_account: liability_gl
+    liability_gl_account: liability_gl,
+    interest_expense_gl_account: interest_expense_gl
   )
   product.save!
 end
@@ -261,18 +267,22 @@ if defined?(PostingTemplate)
     t.description = "GL-only: Debit interest expense, Credit interest payable"
     t.active = true
   end
-  PostingTemplateLeg.find_or_create_by!(posting_template_id: int_acc_tpl.id, position: 0) do |l|
-    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
-    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-    l.gl_account_id = gl_5130.id
-    l.description = "Debit interest expense"
-  end
-  PostingTemplateLeg.find_or_create_by!(posting_template_id: int_acc_tpl.id, position: 1) do |l|
-    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
-    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-    l.gl_account_id = gl_2510.id
-    l.description = "Credit interest payable"
-  end
+  int_acc_debit = PostingTemplateLeg.find_or_initialize_by(posting_template_id: int_acc_tpl.id, position: 0)
+  int_acc_debit.assign_attributes(
+    leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+    account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+    gl_account_id: nil,
+    description: "Debit product interest expense"
+  )
+  int_acc_debit.save!
+  int_acc_credit = PostingTemplateLeg.find_or_initialize_by(posting_template_id: int_acc_tpl.id, position: 1)
+  int_acc_credit.assign_attributes(
+    leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+    account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+    gl_account_id: gl_2510.id,
+    description: "Credit interest payable"
+  )
+  int_acc_credit.save!
 
   # INT_POST: Debit 2510 Interest Payable, Credit customer_account
   int_post_code = TransactionCode.find_by!(code: "INT_POST")

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_031500) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_040000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -54,6 +54,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_031500) do
     t.bigint "asset_gl_account_id"
     t.datetime "created_at", null: false
     t.string "currency_code", default: "USD", null: false
+    t.bigint "interest_expense_gl_account_id"
     t.bigint "liability_gl_account_id"
     t.string "name", null: false
     t.string "product_code", null: false
@@ -62,6 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_031500) do
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false
     t.index ["asset_gl_account_id"], name: "index_account_products_on_asset_gl_account_id"
+    t.index ["interest_expense_gl_account_id"], name: "index_account_products_on_interest_expense_gl_account_id"
     t.index ["liability_gl_account_id"], name: "index_account_products_on_liability_gl_account_id"
     t.index ["product_code"], name: "index_account_products_on_product_code", unique: true
   end
@@ -396,6 +398,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_031500) do
   add_foreign_key "account_owners", "accounts"
   add_foreign_key "account_owners", "parties"
   add_foreign_key "account_products", "gl_accounts", column: "asset_gl_account_id"
+  add_foreign_key "account_products", "gl_accounts", column: "interest_expense_gl_account_id"
   add_foreign_key "account_products", "gl_accounts", column: "liability_gl_account_id"
   add_foreign_key "account_transactions", "accounts"
   add_foreign_key "account_transactions", "accounts", column: "contra_account_id"

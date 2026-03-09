@@ -4,7 +4,7 @@ require "test_helper"
 
 class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
   def setup
-    @account = accounts(:one)
+    @account = accounts(:two)
     @accrual_date = business_dates(:one).business_date
     ensure_int_accrual_template!
     ensure_interest_bearing_deposit!
@@ -41,7 +41,7 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
   end
 
   test "skips non-interest-bearing accounts" do
-    deposit_accounts(:one).update!(interest_bearing: false, interest_rate_basis_points: 0)
+    DepositAccount.find_by!(account_id: @account.id).update!(interest_bearing: false, interest_rate_basis_points: 0)
 
     results = InterestAccrualRunnerService.run!(accrual_date: @accrual_date)
 
@@ -58,7 +58,7 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
       t.reversal_code = "INT_ACCRUAL_REVERSAL"
       t.active = true
     end
-    gl_expense = GlAccount.find_or_create_by!(gl_number: "5130") do |g|
+    GlAccount.find_or_create_by!(gl_number: "5130") do |g|
       g.name = "Interest Expense"
       g.category = "expense"
       g.normal_balance = "debit"
@@ -75,25 +75,31 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
       t.description = "GL-only accrual"
       t.active = true
     end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 0) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-      l.gl_account_id = gl_expense.id
-      l.description = "Debit interest expense"
-    end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 1) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-      l.gl_account_id = gl_payable.id
-      l.description = "Credit interest payable"
-    end
+    debit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 0)
+    debit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account_id: nil,
+      description: "Debit product interest expense"
+    )
+    debit_leg.save!
+
+    credit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 1)
+    credit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account_id: gl_payable.id,
+      description: "Credit interest payable"
+    )
+    credit_leg.save!
   end
 
   def ensure_interest_bearing_deposit!
-    deposit_accounts(:one).update!(
-      interest_bearing: true,
-      interest_rate_basis_points: 365 # ~3.65% annual = ~0.01% daily, 100000 cents = $1000 -> ~1 cent/day
-    )
+    deposit_account = DepositAccount.find_or_initialize_by(account_id: @account.id)
+    deposit_account.deposit_type ||= @account.account_product.default_deposit_type
+    deposit_account.interest_bearing = true
+    deposit_account.interest_rate_basis_points = 365 # ~3.65% annual = ~0.01% daily, 100000 cents = $1000 -> ~1 cent/day
+    deposit_account.save!
   end
 
   def ensure_balance!
