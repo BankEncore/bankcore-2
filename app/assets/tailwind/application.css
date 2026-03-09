@@ -77,6 +77,22 @@
     @apply sticky top-0 z-30 flex flex-col gap-4 border-b border-base-300 bg-white/95 px-5 py-4 backdrop-blur lg:px-8;
   }
 
+  .workspace-contextbar {
+    @apply flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500;
+  }
+
+  .workspace-context-item {
+    @apply text-slate-500;
+  }
+
+  .workspace-context-item-active {
+    @apply text-primary;
+  }
+
+  .workspace-context-separator {
+    @apply text-slate-400;
+  }
+
   .workspace-statusbar {
     @apply flex flex-wrap items-center gap-2 text-xs font-medium text-slate-600;
   }

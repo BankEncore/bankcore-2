@@ -27,6 +27,8 @@
   <body data-theme="bankcore">
     <% page_title = (content_for(:title).presence || "BankCORE").sub(/ - BankCORE\z/, "") %>
     <% if current_user %>
+      <% current_section = app_current_nav_section %>
+      <% current_link = app_current_nav_link %>
       <div class="app-shell">
         <aside class="app-sidebar">
           <div class="app-sidebar-brand">
@@ -37,62 +39,16 @@
           </div>
 
           <nav class="app-sidebar-nav">
-            <div class="app-sidebar-section">
-              <div class="app-sidebar-label">Primary Workspace</div>
-              <%= link_to transactions_path, class: app_nav_link_class(transactions_path) do %>
-                <span>Transactions</span>
-              <% end %>
-              <%= link_to business_dates_path, class: app_nav_link_class(business_dates_path) do %>
-                <span>Business Dates</span>
-              <% end %>
-              <%= link_to override_requests_path, class: app_nav_link_class(override_requests_path) do %>
-                <span>Overrides</span>
-              <% end %>
-            </div>
-
-            <div class="app-sidebar-section">
-              <div class="app-sidebar-label">Customer Operations</div>
-              <%= link_to accounts_path, class: app_nav_link_class(accounts_path) do %>
-                <span>Accounts</span>
-              <% end %>
-              <%= link_to new_account_path, class: app_nav_link_class(new_account_path) do %>
-                <span>New Account</span>
-              <% end %>
-              <%= link_to parties_path, class: app_nav_link_class(parties_path) do %>
-                <span>Parties</span>
-              <% end %>
-              <%= link_to branches_path, class: app_nav_link_class(branches_path) do %>
-                <span>Branches</span>
-              <% end %>
-            </div>
-
-            <div class="app-sidebar-section">
-              <div class="app-sidebar-label">Back Office Review</div>
-              <%= link_to account_products_path, class: app_nav_link_class(account_products_path) do %>
-                <span>Account Products</span>
-              <% end %>
-              <%= link_to fee_types_path, class: app_nav_link_class(fee_types_path) do %>
-                <span>Fee Types</span>
-              <% end %>
-              <%= link_to gl_accounts_path, class: app_nav_link_class(gl_accounts_path) do %>
-                <span>GL Accounts</span>
-              <% end %>
-              <%= link_to trial_balances_path, class: app_nav_link_class(trial_balances_path) do %>
-                <span>Trial Balance</span>
-              <% end %>
-              <%= link_to fee_assessments_path, class: app_nav_link_class(fee_assessments_path) do %>
-                <span>Fee Assessments</span>
-              <% end %>
-              <%= link_to interest_accruals_path, class: app_nav_link_class(interest_accruals_path) do %>
-                <span>Interest Accruals</span>
-              <% end %>
-              <%= link_to interest_postings_path, class: app_nav_link_class(interest_postings_path) do %>
-                <span>Interest Postings</span>
-              <% end %>
-              <%= link_to audit_events_path, class: app_nav_link_class(audit_events_path) do %>
-                <span>Audit Events</span>
-              <% end %>
-            </div>
+            <% app_navigation_sections.each do |section| %>
+              <div class="app-sidebar-section">
+                <div class="app-sidebar-label"><%= section[:label] %></div>
+                <% section[:links].each do |link| %>
+                  <%= link_to link.path, class: app_nav_link_class(path: link.path, path_prefixes: link.path_prefixes) do %>
+                    <span><%= link.label %></span>
+                  <% end %>
+                <% end %>
+              </div>
+            <% end %>
           </nav>
 
           <div class="app-sidebar-footer">
@@ -103,6 +59,18 @@
 
         <div class="workspace-main">
           <header class="app-topbar">
+            <div class="workspace-contextbar">
+              <span class="workspace-context-item">Workspace</span>
+              <% if current_section %>
+                <span class="workspace-context-separator">/</span>
+                <span class="workspace-context-item"><%= current_section[:label] %></span>
+              <% end %>
+              <% if current_link %>
+                <span class="workspace-context-separator">/</span>
+                <span class="workspace-context-item workspace-context-item-active"><%= current_link.label %></span>
+              <% end %>
+            </div>
+
             <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div class="text-lg font-semibold tracking-tight text-base-content"><%= page_title %></div>

@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module ApplicationHelper
+  AppNavLink = Struct.new(:label, :path, :path_prefixes, keyword_init: true)
+
   def current_business_date
     BusinessDateService.current.strftime("%Y-%m-%d")
   rescue BusinessDateService::NoOpenBusinessDateError
@@ -43,8 +45,67 @@ module ApplicationHelper
     "ui-status-pill ui-status-pill-#{variant}"
   end
 
-  def app_nav_link_class(path)
-    active = current_page?(path) || request.path.start_with?(path)
+  def app_nav_link_class(path:, path_prefixes: nil)
+    active = app_nav_active_for?(path: path, path_prefixes: path_prefixes)
     active ? "app-nav-link app-nav-link-active" : "app-nav-link"
+  end
+
+  def app_navigation_sections
+    @app_navigation_sections ||= [
+      {
+        label: "Primary Workspace",
+        links: [
+          AppNavLink.new(label: "Transactions", path: transactions_path),
+          AppNavLink.new(label: "Business Dates", path: business_dates_path),
+          AppNavLink.new(label: "Overrides", path: override_requests_path)
+        ]
+      },
+      {
+        label: "Customer Operations",
+        links: [
+          AppNavLink.new(label: "Accounts", path: accounts_path),
+          AppNavLink.new(label: "New Account", path: new_account_path),
+          AppNavLink.new(label: "Parties", path: parties_path),
+          AppNavLink.new(label: "Branches", path: branches_path)
+        ]
+      },
+      {
+        label: "Back Office Review",
+        links: [
+          AppNavLink.new(label: "Account Products", path: account_products_path),
+          AppNavLink.new(label: "Fee Types", path: fee_types_path),
+          AppNavLink.new(label: "GL Accounts", path: gl_accounts_path),
+          AppNavLink.new(label: "Trial Balance", path: trial_balances_path),
+          AppNavLink.new(label: "Fee Assessments", path: fee_assessments_path),
+          AppNavLink.new(label: "Interest Accruals", path: interest_accruals_path),
+          AppNavLink.new(label: "Interest Postings", path: interest_postings_path),
+          AppNavLink.new(label: "Audit Events", path: audit_events_path)
+        ]
+      }
+    ]
+  end
+
+  def app_current_nav_section
+    app_navigation_sections.find do |section|
+      section[:links].any? do |link|
+        app_nav_active_for?(path: link.path, path_prefixes: link.path_prefixes)
+      end
+    end
+  end
+
+  def app_current_nav_link
+    app_current_nav_section&.fetch(:links)&.find do |link|
+      app_nav_active_for?(path: link.path, path_prefixes: link.path_prefixes)
+    end
+  end
+
+  def app_nav_active_for?(path:, path_prefixes: nil)
+    return true if current_page?(path)
+
+    prefixes = Array(path_prefixes.presence || path).map { |prefix| prefix.to_s.chomp("/") }
+    current_path = request.path.to_s.chomp("/")
+    prefixes.any? do |prefix|
+      current_path == prefix || current_path.start_with?("#{prefix}/")
+    end
   end
 end
