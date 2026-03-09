@@ -19,13 +19,14 @@ class TransactionsController < ApplicationController
 
   def index
     @transactions = BankingTransaction
-      .includes(:branch, :posting_batch)
+      .includes(:branch, :posting_batch, :transaction_references)
       .order(created_at: :desc)
       .limit(100)
   end
 
   def show
     @posting_batch = @transaction.posting_batch
+    @transaction_references = @transaction.transaction_references.order(:reference_type, :id)
     @posting_legs = @posting_batch&.posting_legs&.includes(:account, :gl_account) || []
   end
 

@@ -8,6 +8,7 @@ class BankingTransaction < ApplicationRecord
   belongs_to :branch
   belongs_to :created_by, class_name: "User", optional: true
   has_many :account_transactions, foreign_key: :transaction_id, dependent: :nullify
+  has_many :transaction_references, foreign_key: :transaction_id, dependent: :restrict_with_error
   has_one :posting_batch, foreign_key: :operational_transaction_id
 
   validates :transaction_type, presence: true

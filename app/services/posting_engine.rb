@@ -166,6 +166,7 @@ class PostingEngine
 
     JournalProjector.project!(posting_batch: batch)
     AccountProjector.project!(posting_batch: batch)
+    persist_transaction_references!(operational_txn: operational_txn, batch: batch)
 
     AuditEmissionService.emit!(
       event_type: AuditEmissionService::EVENT_POSTING_COMMITTED,
@@ -180,6 +181,16 @@ class PostingEngine
     )
 
     batch
+  end
+
+  def persist_transaction_references!(operational_txn:, batch:)
+    reference_attributes(batch).each do |reference_type, reference_value|
+      TransactionReference.find_or_create_by!(
+        operational_transaction: operational_txn,
+        reference_type: reference_type,
+        reference_value: reference_value
+      )
+    end
   end
 
   def resolve_branch_id
@@ -209,6 +220,14 @@ class PostingEngine
 
   def idempotency_payload_json
     @idempotency_payload_json ||= JSON.generate(canonicalize_value(semantic_idempotency_payload))
+  end
+
+  def reference_attributes(batch)
+    {
+      TransactionReference::REFERENCE_TYPE_REFERENCE_NUMBER => @reference_number.presence,
+      TransactionReference::REFERENCE_TYPE_EXTERNAL_REFERENCE => @external_reference.presence,
+      TransactionReference::REFERENCE_TYPE_IDEMPOTENCY_KEY => batch.idempotency_key.presence
+    }.compact
   end
 
   def semantic_idempotency_payload

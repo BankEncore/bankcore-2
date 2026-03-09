@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_080000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -398,6 +398,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_070000) do
     t.index ["code"], name: "index_transaction_codes_on_code", unique: true
   end
 
+  create_table "transaction_references", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "reference_type", null: false
+    t.string "reference_value", null: false
+    t.bigint "transaction_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["reference_type", "reference_value"], name: "index_transaction_references_on_type_and_value"
+    t.index ["transaction_id", "reference_type", "reference_value"], name: "index_transaction_references_on_txn_type_value", unique: true
+    t.index ["transaction_id"], name: "index_transaction_references_on_transaction_id"
+  end
+
   create_table "transactions", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "approved_by_id"
     t.bigint "branch_id", null: false
@@ -486,6 +497,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_070000) do
   add_foreign_key "posting_template_legs", "posting_templates"
   add_foreign_key "posting_templates", "transaction_codes"
   add_foreign_key "role_permissions", "roles"
+  add_foreign_key "transaction_references", "transactions"
   add_foreign_key "transactions", "branches"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
