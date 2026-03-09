@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_013002) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_031500) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -50,6 +50,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_013002) do
   end
 
   create_table "account_products", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.boolean "allow_overdraft", default: false, null: false
     t.bigint "asset_gl_account_id"
     t.datetime "created_at", null: false
     t.string "currency_code", default: "USD", null: false
@@ -57,6 +58,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_013002) do
     t.string "name", null: false
     t.string "product_code", null: false
     t.string "product_family", null: false
+    t.string "statement_cycle", default: "monthly", null: false
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false
     t.index ["asset_gl_account_id"], name: "index_account_products_on_asset_gl_account_id"

@@ -53,22 +53,57 @@ end
 
 # 3. Account Products
 account_products_data = [
-  { product_code: "dda", name: "Noninterest-Bearing DDA", product_family: "deposit", currency_code: "USD", liability_gl_number: "2110" },
-  { product_code: "now", name: "Interest-Bearing Demand", product_family: "deposit", currency_code: "USD", liability_gl_number: "2120" },
-  { product_code: "savings", name: "Savings", product_family: "deposit", currency_code: "USD", liability_gl_number: "2130" },
-  { product_code: "cd", name: "Time Deposit", product_family: "deposit", currency_code: "USD", liability_gl_number: "2130" }
+  {
+    product_code: "dda",
+    name: "Noninterest-Bearing DDA",
+    product_family: "deposit",
+    currency_code: "USD",
+    statement_cycle: "monthly",
+    allow_overdraft: true,
+    liability_gl_number: "2110"
+  },
+  {
+    product_code: "now",
+    name: "Interest-Bearing Demand",
+    product_family: "deposit",
+    currency_code: "USD",
+    statement_cycle: "monthly",
+    allow_overdraft: true,
+    liability_gl_number: "2120"
+  },
+  {
+    product_code: "savings",
+    name: "Savings",
+    product_family: "deposit",
+    currency_code: "USD",
+    statement_cycle: "monthly",
+    allow_overdraft: false,
+    liability_gl_number: "2130"
+  },
+  {
+    product_code: "cd",
+    name: "Time Deposit",
+    product_family: "deposit",
+    currency_code: "USD",
+    statement_cycle: "monthly",
+    allow_overdraft: false,
+    liability_gl_number: "2130"
+  }
 ]
 
 account_products_data.each do |attrs|
   liability_gl = GlAccount.find_by!(gl_number: attrs.delete(:liability_gl_number))
-
-  AccountProduct.find_or_create_by!(product_code: attrs[:product_code]) do |product|
-    product.name = attrs[:name]
-    product.product_family = attrs[:product_family]
-    product.currency_code = attrs[:currency_code]
-    product.status = Bankcore::Enums::STATUS_ACTIVE
-    product.liability_gl_account = liability_gl
-  end
+  product = AccountProduct.find_or_initialize_by(product_code: attrs[:product_code])
+  product.assign_attributes(
+    name: attrs[:name],
+    product_family: attrs[:product_family],
+    currency_code: attrs[:currency_code],
+    statement_cycle: attrs[:statement_cycle],
+    allow_overdraft: attrs[:allow_overdraft],
+    status: Bankcore::Enums::STATUS_ACTIVE,
+    liability_gl_account: liability_gl
+  )
+  product.save!
 end
 
 # 4. Business Date
@@ -102,10 +137,14 @@ AccountOwner.find_or_create_by!(account_id: account.id, party_id: party.id) do |
   ao.effective_on = Date.current
 end
 
-DepositAccount.find_or_create_by!(account_id: account.id) do |da|
-  da.deposit_type = "dda"
-  da.interest_bearing = false
-end
+product = account.account_product
+deposit_account = DepositAccount.find_or_initialize_by(account_id: account.id)
+deposit_account.assign_attributes(
+  deposit_type: product.default_deposit_type,
+  interest_bearing: product.default_interest_bearing?,
+  overdraft_policy: product.default_overdraft_policy
+)
+deposit_account.save!
 
 # 6. Transaction Codes
 transaction_codes_data = [
@@ -396,10 +435,14 @@ AccountOwner.find_or_create_by!(account_id: account2.id, party_id: party.id) do 
   ao.effective_on = Date.current
 end
 
-DepositAccount.find_or_create_by!(account_id: account2.id) do |da|
-  da.deposit_type = "savings"
-  da.interest_bearing = true
-end
+product = account2.account_product
+deposit_account = DepositAccount.find_or_initialize_by(account_id: account2.id)
+deposit_account.assign_attributes(
+  deposit_type: product.default_deposit_type,
+  interest_bearing: product.default_interest_bearing?,
+  overdraft_policy: product.default_overdraft_policy
+)
+deposit_account.save!
 
 # 8. Fee Types (Phase 5)
 if defined?(FeeType)

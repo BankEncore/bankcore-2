@@ -4,7 +4,14 @@ require "test_helper"
 
 class AccountProductTest < ActiveSupport::TestCase
   test "validates product_code presence and uniqueness" do
-    product = AccountProduct.new(name: "Test Product", product_family: "deposit", currency_code: "USD", status: "active")
+    product = AccountProduct.new(
+      name: "Test Product",
+      product_family: "deposit",
+      currency_code: "USD",
+      statement_cycle: "monthly",
+      allow_overdraft: false,
+      status: "active"
+    )
     assert_not product.valid?
     assert_includes product.errors[:product_code], "can't be blank"
 
@@ -13,8 +20,29 @@ class AccountProductTest < ActiveSupport::TestCase
       name: "Duplicate",
       product_family: "deposit",
       currency_code: "USD",
+      statement_cycle: "monthly",
+      allow_overdraft: false,
       status: "active"
     )
     assert_not duplicate.valid?
+  end
+
+  test "derives deposit defaults from product code" do
+    assert_equal "dda", account_products(:dda).default_deposit_type
+    assert_not account_products(:dda).default_interest_bearing?
+    assert_equal "allow", account_products(:dda).default_overdraft_policy
+
+    assert_equal "savings", account_products(:savings).default_deposit_type
+    assert account_products(:savings).default_interest_bearing?
+    assert_equal "disallow", account_products(:savings).default_overdraft_policy
+  end
+
+  test "validates statement_cycle inclusion" do
+    product = account_products(:dda).dup
+    product.product_code = "dda_invalid_cycle"
+    product.statement_cycle = "weekly"
+
+    assert_not product.valid?
+    assert_includes product.errors[:statement_cycle], "is not included in the list"
   end
 end

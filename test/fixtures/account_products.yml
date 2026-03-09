@@ -4,6 +4,8 @@ dda:
   name: Noninterest-Bearing DDA
   product_family: deposit
   currency_code: USD
+  statement_cycle: monthly
+  allow_overdraft: true
   status: active
   liability_gl_account: six
   created_at: <%= ts %>
@@ -14,6 +16,8 @@ now:
   name: Interest-Bearing Demand
   product_family: deposit
   currency_code: USD
+  statement_cycle: monthly
+  allow_overdraft: true
   status: active
   liability_gl_account: seven
   created_at: <%= ts %>
@@ -24,6 +28,8 @@ savings:
   name: Savings
   product_family: deposit
   currency_code: USD
+  statement_cycle: monthly
+  allow_overdraft: false
   status: active
   liability_gl_account: eight
   created_at: <%= ts %>

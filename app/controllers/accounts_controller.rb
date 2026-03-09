@@ -22,7 +22,6 @@ class AccountsController < ApplicationController
   def new
     @account = Account.new(
       status: Bankcore::Enums::STATUS_ACTIVE,
-      currency_code: "USD",
       opened_on: Date.current
     )
     set_form_options
@@ -52,16 +51,18 @@ class AccountsController < ApplicationController
   end
 
   def account_params
-    params.require(:account).permit(:account_number, :account_product_id, :branch_id, :currency_code)
+    params.require(:account).permit(:account_number, :account_product_id, :branch_id)
   end
 
   def create_deposit_account_if_needed!
-    return unless %w[dda now savings cd].include?(@account.account_type)
+    product = @account.account_product
+    return unless product&.deposit_product?
 
     DepositAccount.create!(
       account_id: @account.id,
-      deposit_type: @account.account_type,
-      interest_bearing: false
+      deposit_type: product.default_deposit_type,
+      interest_bearing: product.default_interest_bearing?,
+      overdraft_policy: product.default_overdraft_policy
     )
   end
 
@@ -88,6 +89,6 @@ class AccountsController < ApplicationController
     return if @account.account_product.blank?
 
     @account.account_type = @account.account_product.product_code
-    @account.currency_code = @account.account_product.currency_code if @account.currency_code.blank?
+    @account.currency_code = @account.account_product.currency_code
   end
 end
