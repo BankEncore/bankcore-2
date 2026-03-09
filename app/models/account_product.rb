@@ -12,6 +12,7 @@ class AccountProduct < ApplicationRecord
   belongs_to :interest_expense_gl_account, class_name: "GlAccount", optional: true
 
   has_many :accounts, dependent: :restrict_with_error
+  has_many :fee_rules, dependent: :restrict_with_error
 
   validates :product_code, presence: true, uniqueness: true
   validates :name, presence: true

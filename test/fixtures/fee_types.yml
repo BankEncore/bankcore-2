@@ -1,0 +1,18 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+maintenance:
+  code: MAINTENANCE
+  name: Monthly Maintenance Fee
+  default_amount_cents: 1500
+  gl_account: three
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+service_charge:
+  code: SERVICE_CHARGE
+  name: Service Charge
+  default_amount_cents: 500
+  gl_account: three
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

@@ -248,17 +248,21 @@ if defined?(PostingTemplate)
     t.description = "Debit account, Credit fee income"
     t.active = true
   end
-  PostingTemplateLeg.find_or_create_by!(posting_template_id: fee_tpl.id, position: 0) do |l|
-    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
-    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
-    l.description = "Debit customer account"
-  end
-  PostingTemplateLeg.find_or_create_by!(posting_template_id: fee_tpl.id, position: 1) do |l|
-    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
-    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-    l.gl_account_id = gl_4510.id
-    l.description = "Credit fee income"
-  end
+  fee_debit = PostingTemplateLeg.find_or_initialize_by(posting_template_id: fee_tpl.id, position: 0)
+  fee_debit.assign_attributes(
+    leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+    account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+    description: "Debit customer account"
+  )
+  fee_debit.save!
+  fee_credit = PostingTemplateLeg.find_or_initialize_by(posting_template_id: fee_tpl.id, position: 1)
+  fee_credit.assign_attributes(
+    leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+    account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+    gl_account_id: nil,
+    description: "Credit fee income"
+  )
+  fee_credit.save!
 
   # INT_ACCRUAL: Debit 5130 Interest Expense, Credit 2510 Interest Payable (GL-only)
   int_acc_code = TransactionCode.find_by!(code: "INT_ACCRUAL")
@@ -457,6 +461,7 @@ deposit_account.save!
 # 8. Fee Types (Phase 5)
 if defined?(FeeType)
   gl_4510 = GlAccount.find_by!(gl_number: "4510")
+  gl_4560 = GlAccount.find_by!(gl_number: "4560")
   FeeType.find_or_create_by!(code: "MAINTENANCE") do |ft|
     ft.name = "Monthly Maintenance Fee"
     ft.default_amount_cents = 1500 # $15.00
@@ -468,6 +473,41 @@ if defined?(FeeType)
     ft.default_amount_cents = 500 # $5.00
     ft.gl_account_id = gl_4510.id
     ft.status = Bankcore::Enums::STATUS_ACTIVE
+  end
+
+  if defined?(FeeRule)
+    maintenance_fee = FeeType.find_by!(code: "MAINTENANCE")
+    service_charge_fee = FeeType.find_by!(code: "SERVICE_CHARGE")
+
+    [
+      {
+        fee_type: maintenance_fee,
+        account_product: AccountProduct.find_by!(product_code: "dda"),
+        amount_cents: 1500,
+        gl_account: maintenance_fee.gl_account,
+        effective_on: Date.current.beginning_of_month
+      },
+      {
+        fee_type: service_charge_fee,
+        account_product: AccountProduct.find_by!(product_code: "savings"),
+        amount_cents: 700,
+        gl_account: gl_4560,
+        effective_on: Date.current.beginning_of_month
+      }
+    ].each do |attrs|
+      fee_rule = FeeRule.find_or_initialize_by(
+        fee_type: attrs[:fee_type],
+        account_product: attrs[:account_product],
+        priority: 100
+      )
+      fee_rule.assign_attributes(
+        method: FeeRule::METHOD_FIXED_AMOUNT,
+        amount_cents: attrs[:amount_cents],
+        gl_account: attrs[:gl_account],
+        effective_on: attrs[:effective_on]
+      )
+      fee_rule.save!
+    end
   end
 end
 
