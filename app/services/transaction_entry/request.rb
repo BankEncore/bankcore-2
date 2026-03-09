@@ -19,12 +19,19 @@ module TransactionEntry
       :authorization_reference, :authorization_source, :override_request_id,
       :reversal_target_transaction_id, :gl_account_id
 
-    def self.from_form(raw_params:, created_by_id:, business_date: nil)
+    def self.from_form(raw_params:, created_by_id:, business_date: nil, account_numbers: nil)
       transaction_code = normalize_string(raw_params[:transaction_code])
       raw_ref = normalize_string(raw_params[:reference_number])
       reference_number = default_reference_if_blank(
         transaction_code: transaction_code,
         reference_number: raw_ref
+      )
+
+      raw_memo = normalize_string(raw_params[:memo])
+      memo = default_transfer_memo_if_blank(
+        transaction_code: transaction_code,
+        memo: raw_memo,
+        account_numbers: account_numbers
       )
 
       new(
@@ -34,7 +41,7 @@ module TransactionEntry
         destination_account_id: normalize_integer(raw_params[:destination_account_id]),
         amount: normalize_string(raw_params[:amount]),
         amount_cents: normalize_amount(raw_params[:amount]),
-        memo: normalize_string(raw_params[:memo]),
+        memo: memo,
         reason_text: normalize_string(raw_params[:reason_text]),
         reference_number: reference_number,
         external_reference: normalize_string(raw_params[:external_reference]),
@@ -68,6 +75,18 @@ module TransactionEntry
     def self.generate_default_reference(transaction_code)
       ts = Time.current.strftime("%y%m%d%H%M%S")
       "MAN-#{transaction_code}-#{ts}"
+    end
+
+    def self.default_transfer_memo_if_blank(transaction_code:, memo:, account_numbers:)
+      return memo if memo.present?
+      return nil unless transaction_code == "XFER_INTERNAL"
+
+      nums = account_numbers.is_a?(Hash) ? account_numbers.with_indifferent_access : {}
+      source_num = nums[:source].to_s.strip.presence
+      dest_num = nums[:destination].to_s.strip.presence
+      return nil unless source_num.present? && dest_num.present?
+
+      "Internal transfer: #{source_num} → #{dest_num}"
     end
 
     def self.normalize_string(value)

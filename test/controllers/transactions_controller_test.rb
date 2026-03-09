@@ -7,6 +7,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     post login_url, params: { username: "testuser", password: "secret" }
     ensure_ach_template!
     ensure_fee_post_template!
+    ensure_internal_transfer_template!
   end
 
   test "index renders" do
@@ -43,6 +44,70 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ui-kv-value.ui-mono", text: /\$95\.00/
     assert_select ".ui-kv-label", text: "Posted Balance"
     assert_select ".ui-kv-value.ui-mono", text: /\$100\.00/
+  end
+
+  test "create posts XFER_INTERNAL with server-generated memo when blank" do
+    upsert_balance(accounts(:one), posted_balance_cents: 10_000, available_balance_cents: 10_000, average_balance_cents: 8_000)
+    upsert_balance(accounts(:two), posted_balance_cents: 25_000, available_balance_cents: 25_000, average_balance_cents: 24_000)
+
+    assert_difference "BankingTransaction.count", 1 do
+      post transactions_url, params: {
+        transaction: {
+          transaction_code: "XFER_INTERNAL",
+          source_account_id: accounts(:one).id,
+          destination_account_id: accounts(:two).id,
+          amount: "50.00",
+          memo: "",
+          reference_number: ""
+        }
+      }
+    end
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_equal "Internal transfer: 1001 → 3001", transaction.memo
+    assert_match /\AMAN-XFER_INTERNAL-\d{12}\z/, transaction.reference_number
+    follow_redirect!
+    assert_match /posted successfully/i, flash[:notice]
+  end
+
+  test "preview with blank memo for transfer generates default and preserves through confirm post" do
+    upsert_balance(accounts(:one), posted_balance_cents: 10_000, available_balance_cents: 10_000, average_balance_cents: 8_000)
+    upsert_balance(accounts(:two), posted_balance_cents: 25_000, available_balance_cents: 25_000, average_balance_cents: 24_000)
+
+    post transactions_url, params: {
+      preview: "1",
+      transaction: {
+        transaction_code: "XFER_INTERNAL",
+        source_account_id: accounts(:one).id,
+        destination_account_id: accounts(:two).id,
+        amount: "25.00",
+        memo: "",
+        reference_number: ""
+      }
+    }
+
+    assert_response :success
+    assert_select "input[type=hidden][name='transaction[memo]']", 1
+    doc = Nokogiri::HTML(response.body)
+    memo_input = doc.at_css("input[type=hidden][name='transaction[memo]']")
+    assert memo_input, "hidden memo field should be present"
+    generated_memo = memo_input["value"]
+    assert_equal "Internal transfer: 1001 → 3001", generated_memo
+
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "XFER_INTERNAL",
+        source_account_id: accounts(:one).id,
+        destination_account_id: accounts(:two).id,
+        amount: "25.00",
+        memo: generated_memo,
+        reference_number: doc.at_css("input[type=hidden][name='transaction[reference_number]']")&.[]("value")
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    assert_equal "Internal transfer: 1001 → 3001", BankingTransaction.last.memo
   end
 
   test "new renders transfer account context panels when transfer accounts are selected" do
@@ -351,6 +416,37 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+
+  def ensure_internal_transfer_template!
+    return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "XFER_INTERNAL" })
+
+    xfer_code = TransactionCode.find_or_create_by!(code: "XFER_INTERNAL") do |code|
+      code.description = "Internal account transfer"
+      code.active = true
+    end
+
+    xfer_template = PostingTemplate.create!(
+      transaction_code: xfer_code,
+      name: "Internal Transfer",
+      description: "Debit source, credit destination",
+      active: true
+    )
+
+    PostingTemplateLeg.create!(
+      posting_template: xfer_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_SOURCE,
+      description: "Debit source account",
+      position: 0
+    )
+    PostingTemplateLeg.create!(
+      posting_template: xfer_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_DESTINATION,
+      description: "Credit destination account",
+      position: 1
+    )
+  end
 
   def ensure_fee_post_template!
     return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "FEE_POST" })

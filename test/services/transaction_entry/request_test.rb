@@ -36,6 +36,60 @@ class TransactionEntry::RequestTest < ActiveSupport::TestCase
     assert_equal "OPERATOR-REF-001", request.reference_number
   end
 
+  test "generates default transfer memo for XFER_INTERNAL when blank and account numbers provided" do
+    request = TransactionEntry::Request.from_form(
+      raw_params: {
+        transaction_code: "XFER_INTERNAL",
+        source_account_id: accounts(:one).id.to_s,
+        destination_account_id: accounts(:two).id.to_s,
+        amount: "100.00",
+        memo: "",
+        reference_number: "MAN-XFER-001"
+      },
+      created_by_id: users(:one).id,
+      business_date: business_dates(:one).business_date,
+      account_numbers: { source: "1001", destination: "3001" }
+    )
+
+    assert_equal "Internal transfer: 1001 → 3001", request.memo
+  end
+
+  test "preserves operator-supplied memo for transfer" do
+    request = TransactionEntry::Request.from_form(
+      raw_params: {
+        transaction_code: "XFER_INTERNAL",
+        source_account_id: accounts(:one).id.to_s,
+        destination_account_id: accounts(:two).id.to_s,
+        amount: "100.00",
+        memo: "Operator memo text",
+        reference_number: "MAN-XFER-001"
+      },
+      created_by_id: users(:one).id,
+      business_date: business_dates(:one).business_date,
+      account_numbers: { source: "1001", destination: "3001" }
+    )
+
+    assert_equal "Operator memo text", request.memo
+  end
+
+  test "does not generate transfer memo for non-transfer codes" do
+    request = TransactionEntry::Request.from_form(
+      raw_params: {
+        transaction_code: "ADJ_CREDIT",
+        account_id: accounts(:one).id.to_s,
+        amount: "10.00",
+        memo: "",
+        reason_text: "Test",
+        reference_number: "MAN-ADJ-001"
+      },
+      created_by_id: users(:one).id,
+      business_date: business_dates(:one).business_date,
+      account_numbers: { source: "1001", destination: "3001" }
+    )
+
+    assert_nil request.memo
+  end
+
   test "does not generate default for non-manual codes" do
     request = TransactionEntry::Request.from_form(
       raw_params: {
