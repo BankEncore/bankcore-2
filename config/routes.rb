@@ -34,6 +34,7 @@ Rails.application.routes.draw do
 
   resources :parties, only: %i[index show new create edit update]
 
+  resources :fee_types, only: %i[index new create edit update], path: "fee-types"
   resources :fee_assessments, only: %i[index], path: "fee-assessments"
   resources :interest_accruals, only: %i[index], path: "interest-accruals"
   resources :audit_events, only: %i[index], path: "audit-events"
