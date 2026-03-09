@@ -129,11 +129,33 @@ class TransactionsController < ApplicationController
   end
 
   def transaction_entry_request
+    params_hash = transaction_form_params
+    account_numbers = transfer_account_numbers_for_memo_default(params_hash)
+
     TransactionEntry::Request.from_form(
-      raw_params: transaction_form_params,
+      raw_params: params_hash,
       created_by_id: current_user&.id,
-      business_date: BusinessDateService.current
+      business_date: BusinessDateService.current,
+      account_numbers: account_numbers
     )
+  end
+
+  def transfer_account_numbers_for_memo_default(params_hash)
+    return nil unless params_hash[:transaction_code].to_s == "XFER_INTERNAL"
+    return nil if params_hash[:memo].to_s.strip.present?
+
+    source_id = params_hash[:source_account_id].presence&.to_i
+    dest_id = params_hash[:destination_account_id].presence&.to_i
+    return nil unless source_id && dest_id
+
+    numbers_by_id = Account
+      .where(id: [ source_id, dest_id ])
+      .pluck(:id, :account_number)
+      .to_h
+    {
+      source: numbers_by_id[source_id],
+      destination: numbers_by_id[dest_id]
+    }
   end
 
   def load_selected_accounts

@@ -3,7 +3,7 @@
     <label class="label" for="memo">
       <span class="label-text text-sm font-medium">Memo</span>
     </label>
-    <textarea name="transaction[memo]" id="memo" class="textarea textarea-bordered w-full" rows="3" placeholder="Operator-visible summary for account history and transaction review"><%= params.dig(:transaction, :memo) %></textarea>
+    <textarea name="transaction[memo]" id="memo" class="textarea textarea-bordered w-full" rows="3" placeholder="Operator-visible summary for account history and transaction review" data-transaction-workstation-target="memoInput" data-action="input->transaction-workstation#markMemoUserEdited"><%= params.dig(:transaction, :memo) %></textarea>
   </div>
 
   <div class="form-control w-full lg:col-span-2">

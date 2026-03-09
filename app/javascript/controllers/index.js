@@ -267,11 +267,13 @@ class TransactionWorkstationController extends Controller {
     "singlePicker",
     "sourcePicker",
     "destinationPicker",
-    "referenceNumberInput"
+    "referenceNumberInput",
+    "memoInput"
   ]
 
   connect() {
     this.referenceUserEdited = false
+    this.memoUserEdited = false
     this.updateFields()
   }
 
@@ -327,11 +329,43 @@ class TransactionWorkstationController extends Controller {
     }
 
     this.updateReferenceAutofill(code)
+    this.updateMemoAutofill(code)
     this.updateContext()
   }
 
   markReferenceUserEdited() {
     this.referenceUserEdited = true
+  }
+
+  markMemoUserEdited() {
+    this.memoUserEdited = true
+  }
+
+  updateMemoAutofill(code) {
+    if (!this.hasMemoInputTarget) return
+    if (code !== "XFER_INTERNAL") {
+      if (this.memoInputTarget.dataset.memoAutofilled === "1") {
+        delete this.memoInputTarget.dataset.memoAutofilled
+      }
+      return
+    }
+
+    const sourceAccount = this.pickerAccount(this.sourcePickerTarget)
+    const destinationAccount = this.pickerAccount(this.destinationPickerTarget)
+    const sourceNum = sourceAccount?.account_number?.trim()
+    const destNum = destinationAccount?.account_number?.trim()
+    if (!sourceNum || !destNum) return
+
+    const input = this.memoInputTarget
+    const currentValue = (input.value || "").trim()
+    const wasAutofilled = input.dataset.memoAutofilled === "1"
+    const transferMemoPattern = /^Internal transfer: .+ → .+$/
+    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && transferMemoPattern.test(currentValue)))
+
+    if (shouldAutofill) {
+      input.value = `Internal transfer: ${sourceNum} → ${destNum}`
+      input.dataset.memoAutofilled = "1"
+    }
   }
 
   updateReferenceAutofill(code) {
@@ -364,6 +398,7 @@ class TransactionWorkstationController extends Controller {
         this.pickerAccount(this.destinationPickerTarget)
       )
       this.guidanceTarget.textContent = "Internal transfer mode. Both accounts must be active and use the same currency."
+      this.updateMemoAutofill(code)
       return
     }
 
