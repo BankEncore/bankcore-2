@@ -53,6 +53,7 @@ class OverrideRequestService
       reason_text: @reason_text,
       expires_at: @expires_at
     )
+    ensure_transaction_exception_open!
 
     AuditEmissionService.emit!(
       event_type: AuditEmissionService::EVENT_OVERRIDE_REQUESTED,
@@ -75,6 +76,7 @@ class OverrideRequestService
       status: OVERRIDE_STATUS_APPROVED,
       approved_by_id: @approved_by_id
     )
+    resolve_transaction_exceptions!(resolved_by_id: @approved_by_id)
     emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_APPROVED, "approve")
     @override_request
   end
@@ -86,6 +88,7 @@ class OverrideRequestService
       status: OVERRIDE_STATUS_DENIED,
       approved_by_id: @approved_by_id
     )
+    block_transaction_exceptions!(resolved_by_id: @approved_by_id)
     emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_DENIED, "deny")
     @override_request
   end
@@ -96,11 +99,40 @@ class OverrideRequestService
     raise OverrideError, "Override has expired" if expired?(@override_request)
 
     @override_request.update!(status: OVERRIDE_STATUS_USED, used_at: Time.current)
+    resolve_transaction_exceptions!(resolved_by_id: @override_request.approved_by_id)
     emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_USED, "use")
     @override_request
   end
 
   private
+
+  def ensure_transaction_exception_open!
+    return unless @operational_transaction_id.present?
+
+    TransactionException.find_or_create_by!(
+      transaction_id: @operational_transaction_id,
+      exception_type: exception_type_for_request(@request_type),
+      status: TransactionException::STATUS_OPEN,
+      reason_code: reason_code_for_request(@request_type),
+      requires_override: requires_override_for_request?(@request_type)
+    )
+  end
+
+  def resolve_transaction_exceptions!(resolved_by_id:)
+    return unless @override_request.operational_transaction_id.present?
+
+    matching_transaction_exceptions.find_each do |transaction_exception|
+      transaction_exception.resolve!(resolved_by_id: resolved_by_id)
+    end
+  end
+
+  def block_transaction_exceptions!(resolved_by_id:)
+    return unless @override_request.operational_transaction_id.present?
+
+    matching_transaction_exceptions.find_each do |transaction_exception|
+      transaction_exception.block!(resolved_by_id: resolved_by_id)
+    end
+  end
 
   def emit_override_event!(event_type, action)
     AuditEmissionService.emit!(
@@ -117,5 +149,30 @@ class OverrideRequestService
 
   def expired?(override_request)
     override_request.expires_at.present? && override_request.expires_at < Time.current
+  end
+
+  def matching_transaction_exceptions
+    TransactionException.open.where(
+      transaction_id: @override_request.operational_transaction_id,
+      exception_type: exception_type_for_request(@override_request.request_type)
+    )
+  end
+
+  def exception_type_for_request(request_type)
+    case request_type
+    when OVERRIDE_TYPE_REVERSAL then TransactionException::EXCEPTION_TYPE_OVERRIDE_REQUIRED
+    else TransactionException::EXCEPTION_TYPE_POLICY_BLOCKED
+    end
+  end
+
+  def reason_code_for_request(request_type)
+    case request_type
+    when OVERRIDE_TYPE_REVERSAL then "reversal_threshold"
+    else request_type
+    end
+  end
+
+  def requires_override_for_request?(request_type)
+    request_type == OVERRIDE_TYPE_REVERSAL
   end
 end
