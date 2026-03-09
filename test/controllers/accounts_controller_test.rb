@@ -17,9 +17,10 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='account[account_number]']"
     assert_select "select[name='account[account_product_id]']"
     assert_select "select[name='account[branch_id]']"
+    assert_select "input[name='account[currency_code]']", count: 0
   end
 
-  test "create creates account and redirects" do
+  test "create creates account with product-driven deposit defaults and redirects" do
     branch = branches(:one)
     product = account_products(:dda)
     assert_difference "Account.count", 1 do
@@ -27,8 +28,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
         account: {
           account_number: "2001",
           account_product_id: product.id,
-          branch_id: branch.id,
-          currency_code: "USD"
+          branch_id: branch.id
         }
       }
     end
@@ -37,8 +37,31 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "2001", account.account_number
     assert_equal product.id, account.account_product_id
     assert_equal "dda", account.account_type
+    assert_equal "USD", account.currency_code
     assert_equal branch.id, account.branch_id
-    assert_not_nil account.deposit_account
+    assert_equal "dda", account.deposit_account.deposit_type
+    assert_equal false, account.deposit_account.interest_bearing
+    assert_equal "allow", account.deposit_account.overdraft_policy
+  end
+
+  test "create uses product defaults for interest-bearing deposit products" do
+    branch = branches(:one)
+    product = account_products(:now)
+
+    assert_difference "Account.count", 1 do
+      post accounts_url, params: {
+        account: {
+          account_number: "2003",
+          account_product_id: product.id,
+          branch_id: branch.id
+        }
+      }
+    end
+
+    account = Account.last
+    assert_equal "now", account.deposit_account.deposit_type
+    assert_equal true, account.deposit_account.interest_bearing
+    assert_equal "allow", account.deposit_account.overdraft_policy
   end
 
   test "create with primary party creates account owner" do
@@ -51,7 +74,6 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
           account_number: "2002",
           account_product_id: product.id,
           branch_id: branch.id,
-          currency_code: "USD",
           primary_party_id: party.id
         }
       }
@@ -68,8 +90,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
       account: {
         account_number: "1001",
         account_product_id: product.id,
-        branch_id: branch.id,
-        currency_code: "USD"
+        branch_id: branch.id
       }
     }
     assert_response :unprocessable_entity
