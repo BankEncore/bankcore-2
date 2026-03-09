@@ -375,9 +375,21 @@ class TransactionWorkstationController extends Controller {
     const input = this.referenceNumberInputTarget
     const currentValue = (input.value || "").trim()
     const wasAutofilled = input.dataset.referenceAutofilled === "1"
-    const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && /^MAN-[A-Z0-9_]+-\d{12}$/.test(currentValue)))
+    const manPattern = /^MAN-[A-Z0-9_]+-\d{12}$/
+    const achPattern = /^ACH-.+-[0-9]{6}$/
+    const isAutofillPattern = manPattern.test(currentValue) || achPattern.test(currentValue)
+    const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && isAutofillPattern))
 
-    if (shouldAutofill) {
+    if (!shouldAutofill) return
+
+    const trace = this.hasAchTraceTarget ? this.achTraceTarget.value?.trim() : ""
+    const effectiveDate = this.hasAchEffectiveDateTarget ? this.achEffectiveDateTarget.value?.trim() : ""
+    const useAchFormat = ACH_TYPES.includes(code) && trace && effectiveDate
+
+    if (useAchFormat) {
+      const yymmdd = effectiveDate.replace(/-/g, "").slice(2, 8)
+      input.value = `ACH-${trace}-${yymmdd}`
+    } else {
       const ts = new Date().toISOString().slice(2, 4) +
         new Date().toISOString().slice(5, 7) +
         new Date().toISOString().slice(8, 10) +
@@ -385,8 +397,12 @@ class TransactionWorkstationController extends Controller {
         new Date().toISOString().slice(14, 16) +
         new Date().toISOString().slice(17, 19)
       input.value = `MAN-${code}-${ts}`
-      input.dataset.referenceAutofilled = "1"
     }
+    input.dataset.referenceAutofilled = "1"
+  }
+
+  syncReferenceFromAch() {
+    if (this.hasTypeSelectTarget) this.updateReferenceAutofill(this.typeSelectTarget.value)
   }
 
   updateContext() {

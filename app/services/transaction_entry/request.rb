@@ -22,9 +22,13 @@ module TransactionEntry
     def self.from_form(raw_params:, created_by_id:, business_date: nil, account_numbers: nil)
       transaction_code = normalize_string(raw_params[:transaction_code])
       raw_ref = normalize_string(raw_params[:reference_number])
+      ach_trace = normalize_string(raw_params[:ach_trace_number])
+      ach_date = normalize_date(raw_params[:ach_effective_date])
       reference_number = default_reference_if_blank(
         transaction_code: transaction_code,
-        reference_number: raw_ref
+        reference_number: raw_ref,
+        ach_trace_number: ach_trace,
+        ach_effective_date: ach_date
       )
 
       raw_memo = normalize_string(raw_params[:memo])
@@ -65,16 +69,27 @@ module TransactionEntry
       )
     end
 
-    def self.default_reference_if_blank(transaction_code:, reference_number:)
+    ACH_CODES = %w[ACH_CREDIT ACH_DEBIT].freeze
+
+    def self.default_reference_if_blank(transaction_code:, reference_number:, ach_trace_number: nil, ach_effective_date: nil)
       return reference_number if reference_number.present?
       return nil unless transaction_code.present? && MANUAL_ENTRY_CODES.include?(transaction_code)
 
-      generate_default_reference(transaction_code)
+      if ACH_CODES.include?(transaction_code) && ach_trace_number.present? && ach_effective_date.present?
+        generate_ach_default_reference(ach_trace_number, ach_effective_date)
+      else
+        generate_default_reference(transaction_code)
+      end
     end
 
     def self.generate_default_reference(transaction_code)
       ts = Time.current.strftime("%y%m%d%H%M%S")
       "MAN-#{transaction_code}-#{ts}"
+    end
+
+    def self.generate_ach_default_reference(ach_trace_number, ach_effective_date)
+      date_str = ach_effective_date.respond_to?(:strftime) ? ach_effective_date.strftime("%y%m%d") : ach_effective_date.to_s.delete("-")[2, 6]
+      "ACH-#{ach_trace_number.to_s.strip}-#{date_str}"
     end
 
     def self.default_transfer_memo_if_blank(transaction_code:, memo:, account_numbers:)

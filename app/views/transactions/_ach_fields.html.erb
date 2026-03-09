@@ -3,14 +3,14 @@
     <label class="label" for="ach_trace_number">
       <span class="label-text text-sm font-medium">ACH Trace Number</span>
     </label>
-    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number" data-transaction-workstation-target="achTrace">
+    <input type="text" name="transaction[ach_trace_number]" id="ach_trace_number" value="<%= params.dig(:transaction, :ach_trace_number) %>" class="input input-bordered w-full ui-mono" placeholder="15-digit trace number" data-transaction-workstation-target="achTrace" data-action="input->transaction-workstation#syncReferenceFromAch change->transaction-workstation#syncReferenceFromAch">
   </div>
 
   <div class="form-control w-full">
     <label class="label" for="ach_effective_date">
       <span class="label-text text-sm font-medium">Effective Date</span>
     </label>
-    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono" data-transaction-workstation-target="achEffectiveDate">
+    <input type="date" name="transaction[ach_effective_date]" id="ach_effective_date" value="<%= params.dig(:transaction, :ach_effective_date) %>" class="input input-bordered w-full ui-mono" data-transaction-workstation-target="achEffectiveDate" data-action="input->transaction-workstation#syncReferenceFromAch change->transaction-workstation#syncReferenceFromAch">
   </div>
 
   <div class="form-control w-full">
