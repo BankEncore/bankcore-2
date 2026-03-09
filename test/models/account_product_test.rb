@@ -37,6 +37,11 @@ class AccountProductTest < ActiveSupport::TestCase
     assert_equal "disallow", account_products(:savings).default_overdraft_policy
   end
 
+  test "resolves product-aware interest expense gls" do
+    assert_equal "5120", account_products(:now).resolved_interest_expense_gl_account.gl_number
+    assert_equal "5130", account_products(:savings).resolved_interest_expense_gl_account.gl_number
+  end
+
   test "validates statement_cycle inclusion" do
     product = account_products(:dda).dup
     product.product_code = "dda_invalid_cycle"
@@ -44,5 +49,13 @@ class AccountProductTest < ActiveSupport::TestCase
 
     assert_not product.valid?
     assert_includes product.errors[:statement_cycle], "is not included in the list"
+  end
+
+  test "validates interest-bearing products require an expense gl" do
+    product = account_products(:now).dup
+    product.interest_expense_gl_account = nil
+
+    assert_not product.valid?
+    assert_includes product.errors[:interest_expense_gl_account], "must be present for interest-bearing products"
   end
 end

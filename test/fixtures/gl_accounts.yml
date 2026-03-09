@@ -71,6 +71,15 @@ eight:
   created_at: <%= ts %>
   updated_at: <%= ts %>
 
+nine:
+  gl_number: "5120"
+  name: Interest Expense – NOW Accounts
+  category: expense
+  normal_balance: debit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
 three:
   gl_number: "4510"
   name: Deposit Service Charges

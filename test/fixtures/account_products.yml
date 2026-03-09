@@ -18,6 +18,7 @@ now:
   currency_code: USD
   statement_cycle: monthly
   allow_overdraft: true
+  interest_expense_gl_account: nine
   status: active
   liability_gl_account: seven
   created_at: <%= ts %>
@@ -30,6 +31,7 @@ savings:
   currency_code: USD
   statement_cycle: monthly
   allow_overdraft: false
+  interest_expense_gl_account: four
   status: active
   liability_gl_account: eight
   created_at: <%= ts %>

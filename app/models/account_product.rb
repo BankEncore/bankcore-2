@@ -9,6 +9,7 @@ class AccountProduct < ApplicationRecord
 
   belongs_to :liability_gl_account, class_name: "GlAccount", optional: true
   belongs_to :asset_gl_account, class_name: "GlAccount", optional: true
+  belongs_to :interest_expense_gl_account, class_name: "GlAccount", optional: true
 
   has_many :accounts, dependent: :restrict_with_error
 
@@ -18,6 +19,7 @@ class AccountProduct < ApplicationRecord
   validates :currency_code, presence: true
   validates :statement_cycle, presence: true, inclusion: { in: STATEMENT_CYCLES }
   validates :status, presence: true, inclusion: { in: Bankcore::Enums::STATUSES }
+  validate :interest_bearing_products_require_interest_expense_gl
 
   def deposit_product?
     product_family == "deposit" && DEPOSIT_PRODUCT_CODES.include?(product_code)
@@ -35,5 +37,18 @@ class AccountProduct < ApplicationRecord
     return nil unless deposit_product?
 
     allow_overdraft ? "allow" : "disallow"
+  end
+
+  def resolved_interest_expense_gl_account
+    interest_expense_gl_account
+  end
+
+  private
+
+  def interest_bearing_products_require_interest_expense_gl
+    return unless deposit_product? && default_interest_bearing?
+    return if interest_expense_gl_account.present?
+
+    errors.add(:interest_expense_gl_account, "must be present for interest-bearing products")
   end
 end

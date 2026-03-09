@@ -4,14 +4,15 @@ require "test_helper"
 
 class InterestAccrualServiceTest < ActiveSupport::TestCase
   def setup
-    @account = accounts(:one)
-    @other_account = Account.create!(
+    @account = create_interest_account(
       account_number: "2002",
-      account_type: @account.account_type,
-      branch: @account.branch,
-      currency_code: @account.currency_code,
-      status: Bankcore::Enums::STATUS_ACTIVE,
-      opened_on: @account.opened_on
+      product: account_products(:now),
+      rate_basis_points: 365
+    )
+    @other_account = create_interest_account(
+      account_number: "2003",
+      product: account_products(:savings),
+      rate_basis_points: 365
     )
     @accrual_date = business_dates(:one).business_date
     ensure_int_accrual_template!
@@ -100,6 +101,28 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "uses product-aware interest expense gl for now products" do
+    batch = InterestAccrualService.accrue!(
+      account_id: @account.id,
+      amount_cents: 150,
+      accrual_date: @accrual_date
+    )
+
+    gl_numbers = batch.posting_legs.includes(:gl_account).order(:position).map { |leg| leg.gl_account.gl_number }
+    assert_equal %w[5120 2510], gl_numbers
+  end
+
+  test "uses product-aware interest expense gl for savings products" do
+    batch = InterestAccrualService.accrue!(
+      account_id: @other_account.id,
+      amount_cents: 150,
+      accrual_date: @accrual_date
+    )
+
+    gl_numbers = batch.posting_legs.includes(:gl_account).order(:position).map { |leg| leg.gl_account.gl_number }
+    assert_equal %w[5130 2510], gl_numbers
+  end
+
   private
 
   def with_stubbed_class_method(klass, method_name, replacement)
@@ -118,7 +141,7 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
       t.reversal_code = "INT_ACCRUAL_REVERSAL"
       t.active = true
     end
-    gl_expense = GlAccount.find_or_create_by!(gl_number: "5130") do |g|
+    GlAccount.find_or_create_by!(gl_number: "5130") do |g|
       g.name = "Interest Expense"
       g.category = "expense"
       g.normal_balance = "debit"
@@ -135,17 +158,43 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
       t.description = "GL-only accrual"
       t.active = true
     end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 0) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-      l.gl_account_id = gl_expense.id
-      l.description = "Debit interest expense"
-    end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 1) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-      l.gl_account_id = gl_payable.id
-      l.description = "Credit interest payable"
-    end
+    debit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 0)
+    debit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account_id: nil,
+      description: "Debit product interest expense"
+    )
+    debit_leg.save!
+
+    credit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 1)
+    credit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account_id: gl_payable.id,
+      description: "Credit interest payable"
+    )
+    credit_leg.save!
+  end
+
+  def create_interest_account(account_number:, product:, rate_basis_points:)
+    account = Account.create!(
+      account_number: account_number,
+      account_type: product.product_code,
+      account_product: product,
+      branch: branches(:one),
+      currency_code: product.currency_code,
+      status: Bankcore::Enums::STATUS_ACTIVE,
+      opened_on: Date.current
+    )
+
+    DepositAccount.create!(
+      account: account,
+      deposit_type: product.default_deposit_type,
+      interest_bearing: true,
+      interest_rate_basis_points: rate_basis_points
+    )
+
+    account
   end
 end
