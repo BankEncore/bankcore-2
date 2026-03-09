@@ -15,6 +15,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form"
     assert_select "input[name='account[account_number]']"
+    assert_select "input[name='account[account_reference]']"
     assert_select "select[name='account[account_product_id]']"
     assert_select "select[name='account[branch_id]']"
     assert_select "input[name='account[currency_code]']", count: 0
@@ -27,6 +28,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
       post accounts_url, params: {
         account: {
           account_number: "2001",
+          account_reference: "CHK-2001",
           account_product_id: product.id,
           branch_id: branch.id
         }
@@ -35,6 +37,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to account_path(Account.last)
     account = Account.last
     assert_equal "2001", account.account_number
+    assert_equal "CHK-2001", account.account_reference
     assert_equal product.id, account.account_product_id
     assert_equal "dda", account.account_type
     assert_equal "USD", account.currency_code
@@ -59,6 +62,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     end
 
     account = Account.last
+    assert_equal "2003", account.account_reference
     assert_equal "now", account.deposit_account.deposit_type
     assert_equal true, account.deposit_account.interest_bearing
     assert_equal "allow", account.deposit_account.overdraft_policy
@@ -72,6 +76,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
       post accounts_url, params: {
         account: {
           account_number: "2002",
+          account_reference: "CHK-2002",
           account_product_id: product.id,
           branch_id: branch.id,
           primary_party_id: party.id
@@ -81,6 +86,15 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     account = Account.last
     assert_equal 1, account.account_owners.count
     assert_equal party.id, account.account_owners.first.party_id
+  end
+
+  test "show renders account reference" do
+    get account_url(accounts(:one))
+
+    assert_response :success
+    assert_select "h2", text: /Account/
+    assert_select ".ui-kv-label", text: "Account Reference"
+    assert_select ".ui-kv-value", text: /DDA-1001/
   end
 
   test "create with duplicate account number re-renders form" do

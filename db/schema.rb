@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_093000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -90,6 +90,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_090000) do
   create_table "accounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.string "account_number", null: false
     t.bigint "account_product_id"
+    t.string "account_reference", null: false
     t.string "account_type", null: false
     t.bigint "branch_id", null: false
     t.date "closed_on"
@@ -100,6 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_090000) do
     t.datetime "updated_at", null: false
     t.index ["account_number"], name: "index_accounts_on_account_number", unique: true
     t.index ["account_product_id"], name: "index_accounts_on_account_product_id"
+    t.index ["account_reference"], name: "index_accounts_on_account_reference", unique: true
     t.index ["branch_id"], name: "index_accounts_on_branch_id"
   end
 
