@@ -13,7 +13,10 @@ Rails.application.routes.draw do
   root "transactions#index"
 
   resources :transactions, only: %i[index show new create] do
-    member { post :reverse }
+    member do
+      get :reverse_preview
+      post :reverse
+    end
   end
 
   resources :accounts, only: %i[index show new create] do
@@ -36,7 +39,10 @@ Rails.application.routes.draw do
 
   resources :fee_types, only: %i[index new create edit update], path: "fee-types"
   resources :fee_assessments, only: %i[index], path: "fee-assessments"
-  resources :interest_accruals, only: %i[index], path: "interest-accruals"
+  resources :interest_accruals, only: %i[index], path: "interest-accruals" do
+    collection { post :run }
+  end
+  resources :interest_postings, only: %i[index create], path: "interest-postings"
   resources :audit_events, only: %i[index], path: "audit-events"
   resources :branches, only: %i[index show]
   resources :gl_accounts, only: %i[index], path: "gl-accounts"

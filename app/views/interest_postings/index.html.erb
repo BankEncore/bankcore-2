@@ -1,0 +1,90 @@
+<% content_for :title, "Interest Posting - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Interest Posting</h1>
+      <p class="workspace-subtitle">Cycle-aware posting batches sum unposted accruals and link each accrual to the resulting posting batch.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Posting Workbench</h2>
+        <p class="mt-1 text-sm text-base-content/65">Only accrued balances due on the current business date will be posted.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="ui-status-pill ui-status-pill-neutral"><%= @business_date&.strftime("%Y-%m-%d") %></span>
+        <%= button_to "Post Due Interest", interest_postings_path, method: :post, class: "btn btn-primary btn-sm" %>
+      </div>
+    </div>
+
+    <div class="ui-panel-body space-y-4">
+      <div class="grid gap-4 lg:grid-cols-3">
+        <div class="ui-metric">
+          <div class="ui-metric-label">Due Accounts</div>
+          <div class="ui-metric-value ui-mono"><%= @due_accounts.size %></div>
+        </div>
+        <div class="ui-metric">
+          <div class="ui-metric-label">Accrual Items</div>
+          <div class="ui-metric-value ui-mono"><%= @due_accounts.sum { |entry| entry[:accrual_count] } %></div>
+        </div>
+        <div class="ui-metric">
+          <div class="ui-metric-label">Amount Ready</div>
+          <div class="ui-metric-value ui-mono"><%= number_to_currency(@due_accounts.sum { |entry| entry[:amount_cents] } / 100.0) %></div>
+        </div>
+      </div>
+
+      <% if @run_results.present? %>
+        <div class="rounded-2xl border border-base-300/70 px-4 py-4">
+          <div class="text-sm font-semibold text-base-content">Latest Run Summary</div>
+          <div class="mt-3 grid gap-4 lg:grid-cols-3 text-sm">
+            <div>Posted: <span class="ui-mono"><%= @run_results[:posted].size %></span></div>
+            <div>Skipped: <span class="ui-mono"><%= @run_results[:skipped].size %></span></div>
+            <div>Errors: <span class="ui-mono"><%= @run_results[:errors].size %></span></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel mt-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Due Accounts</h2>
+        <p class="mt-1 text-sm text-base-content/65">Accounts with unposted accruals available for the current posting cycle.</p>
+      </div>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Account</th>
+            <th>Product</th>
+            <th>Cadence</th>
+            <th class="text-right">Accruals</th>
+            <th class="text-right">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @due_accounts.each do |entry| %>
+            <tr>
+              <td><%= link_to entry[:account].account_number, account_path(entry[:account]), class: "link link-primary ui-mono" %></td>
+              <td><%= entry[:account].account_product&.name %></td>
+              <td class="ui-mono"><%= entry[:posting_cadence] %></td>
+              <td class="ui-mono text-right"><%= entry[:accrual_count] %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(entry[:amount_cents] / 100.0) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @due_accounts.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No due accounts with unposted accruals for the current business date.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

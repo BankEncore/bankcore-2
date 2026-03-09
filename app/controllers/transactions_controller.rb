@@ -7,15 +7,22 @@ class TransactionsController < ApplicationController
     source_account_id
     destination_account_id
     amount
+    fee_type_id
     memo
     reason_text
     reference_number
     external_reference
     idempotency_key
+    ach_trace_number
+    ach_effective_date
+    ach_batch_reference
+    authorization_reference
+    authorization_source
   ].freeze
 
-  before_action :set_transaction, only: %i[show reverse]
-  before_action -> { require_permission(:reverse_transactions) }, only: %i[reverse]
+  before_action :set_transaction, only: %i[show reverse reverse_preview]
+  before_action -> { require_permission(:post_transactions) }, only: %i[new create]
+  before_action -> { require_permission(:reverse_transactions) }, only: %i[reverse reverse_preview]
 
   def index
     @transactions = BankingTransaction
@@ -44,9 +51,7 @@ class TransactionsController < ApplicationController
   end
 
   def new
-    @transaction_codes = TransactionCode.where(active: true).order(:code)
-    @accounts = Account.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:account_number)
-    @business_date = BusinessDateService.current
+    load_form_dependencies
     @preselected_account_id = params[:account_id]
   end
 
@@ -56,26 +61,31 @@ class TransactionsController < ApplicationController
       return
     end
 
-    form_params = transaction_form_params
-    amount_cents = (form_params[:amount].to_f * 100).round
-    batch = ManualTransactionEntryService.entry!(
-      transaction_code: form_params[:transaction_code],
-      account_id: form_params[:account_id].presence,
-      source_account_id: form_params[:source_account_id].presence,
-      destination_account_id: form_params[:destination_account_id].presence,
-      amount_cents: amount_cents,
-      memo: form_params[:memo].presence,
-      reason_text: form_params[:reason_text].presence,
-      reference_number: form_params[:reference_number].presence,
-      external_reference: form_params[:external_reference].presence,
-      idempotency_key: form_params[:idempotency_key].presence,
-      created_by_id: current_user&.id
-    )
+    request = transaction_entry_request
+    batch = TransactionEntry::Dispatcher.post!(request: request)
     redirect_to transaction_path(batch.operational_transaction_id), notice: "Transaction posted successfully."
-  rescue PostingEngine::PostingError, PostingValidator::ValidationError => e
+  rescue PostingEngine::PostingError, PostingValidator::ValidationError, TransactionEntry::Error, ArgumentError => e
     load_form_dependencies
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
+  end
+
+  def reverse_preview
+    @posting_batch = @transaction.posting_batch
+    raise ActiveRecord::RecordNotFound, "No posting batch" unless @posting_batch
+
+    @preview_legs = @posting_batch.posting_legs.includes(:account, :gl_account).order(:position).map do |leg|
+      {
+        leg_type: leg.leg_type == Bankcore::Enums::LEG_TYPE_DEBIT ? Bankcore::Enums::LEG_TYPE_CREDIT : Bankcore::Enums::LEG_TYPE_DEBIT,
+        ledger_scope: leg.ledger_scope,
+        account: leg.account,
+        gl_account: leg.gl_account,
+        amount_cents: leg.amount_cents
+      }
+    end
+    @economic_amount_cents = @posting_batch.posting_legs.minimum(:amount_cents).to_i
+    @override_threshold_cents = Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS
+    @override_required = @economic_amount_cents >= @override_threshold_cents
   end
 
   private
@@ -85,37 +95,16 @@ class TransactionsController < ApplicationController
   end
 
   def preview_transaction
-    form_params = transaction_form_params
-    amount_cents = (form_params[:amount].to_f * 100).round
-    @preview_legs = PostingEngine.preview!(
-      transaction_code: form_params[:transaction_code],
-      account_id: form_params[:account_id].presence,
-      source_account_id: form_params[:source_account_id].presence,
-      destination_account_id: form_params[:destination_account_id].presence,
-      amount_cents: amount_cents,
-      memo: form_params[:memo].presence,
-      reason_text: form_params[:reason_text].presence,
-      reference_number: form_params[:reference_number].presence,
-      external_reference: form_params[:external_reference].presence,
-      gl_account_id: params[:gl_account_id].presence
-    )
-    @transaction_code = form_params[:transaction_code]
-    @amount_cents = amount_cents
-    @params_for_confirm = {
-      transaction_code: form_params[:transaction_code],
-      account_id: form_params[:account_id].presence,
-      source_account_id: form_params[:source_account_id].presence,
-      destination_account_id: form_params[:destination_account_id].presence,
-      amount: form_params[:amount],
-      memo: form_params[:memo].presence,
-      reason_text: form_params[:reason_text].presence,
-      reference_number: form_params[:reference_number].presence,
-      external_reference: form_params[:external_reference].presence,
-      idempotency_key: form_params[:idempotency_key].presence
-    }.compact
-    @preview_metadata = @params_for_confirm.slice(:memo, :reason_text, :reference_number, :external_reference, :idempotency_key)
+    request = transaction_entry_request
+    preview = TransactionEntry::PreviewService.preview!(request: request)
+    @preview_legs = preview[:legs]
+    @transaction_code = request.transaction_code
+    @amount_cents = preview[:amount_cents]
+    @params_for_confirm = request.to_form_params
+    @preview_metadata = preview[:metadata]
+    @preview_context_rows = preview[:context_rows]
     render :preview
-  rescue PostingEngine::PostingError, PostingValidator::ValidationError => e
+  rescue PostingEngine::PostingError, PostingValidator::ValidationError, TransactionEntry::Error, ArgumentError => e
     load_form_dependencies
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
@@ -131,8 +120,17 @@ class TransactionsController < ApplicationController
   end
 
   def load_form_dependencies
-    @transaction_codes = TransactionCode.where(active: true).order(:code)
-    @accounts = Account.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:account_number)
+    @transaction_codes = TransactionCode.where(active: true, code: TransactionEntry::Request::MANUAL_ENTRY_CODES).order(:code)
+    @accounts = Account.where(status: Bankcore::Enums::STATUS_ACTIVE).includes(:account_product).order(:account_number)
+    @fee_types = FeeType.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:name)
     @business_date = BusinessDateService.current
+  end
+
+  def transaction_entry_request
+    TransactionEntry::Request.from_form(
+      raw_params: transaction_form_params,
+      created_by_id: current_user&.id,
+      business_date: BusinessDateService.current
+    )
   end
 end

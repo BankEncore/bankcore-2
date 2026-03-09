@@ -19,6 +19,17 @@
     </div>
 
     <div class="ui-panel-body">
+      <% if @preview_context_rows.present? %>
+        <div class="ui-kv-grid mb-5">
+          <% @preview_context_rows.each do |label, value| %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label"><%= label %></div>
+              <div class="ui-kv-value"><%= value.presence || "—" %></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
       <% if @preview_metadata.present? %>
         <div class="ui-kv-grid mb-5">
           <% if @preview_metadata[:memo].present? %>
@@ -43,6 +54,12 @@
             <div class="ui-kv-row">
               <div class="ui-kv-label">External Reference</div>
               <div class="ui-kv-value ui-mono"><%= @preview_metadata[:external_reference] %></div>
+            </div>
+          <% end %>
+          <% if @preview_metadata[:idempotency_key].present? %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Idempotency Key</div>
+              <div class="ui-kv-value ui-mono"><%= @preview_metadata[:idempotency_key] %></div>
             </div>
           <% end %>
         </div>

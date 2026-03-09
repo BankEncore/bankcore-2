@@ -40,11 +40,7 @@
 
       <% if reversible %>
         <div class="flex items-center gap-2">
-          <%= button_to "Reverse Transaction",
-              reverse_transaction_path(@transaction),
-              method: :post,
-              form: { data: { turbo_confirm: "Are you sure you want to reverse this transaction? This cannot be undone." } },
-              class: "btn btn-error btn-outline btn-sm" %>
+          <%= link_to "Preview Reversal", reverse_preview_transaction_path(@transaction), class: "btn btn-error btn-outline btn-sm" %>
         </div>
       <% end %>
     </div>

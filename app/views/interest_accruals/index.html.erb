@@ -14,6 +14,42 @@
   <section class="ui-panel">
     <div class="ui-panel-header">
       <div>
+        <h2 class="text-lg font-semibold text-base-content">Accrual Workbench</h2>
+        <p class="mt-1 text-sm text-base-content/65">Daily accrual runs use the current business date and active product rules.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="ui-status-pill ui-status-pill-neutral"><%= @business_date&.strftime("%Y-%m-%d") %></span>
+        <%= button_to "Run Daily Accrual", run_interest_accruals_path, method: :post, class: "btn btn-primary btn-sm" %>
+      </div>
+    </div>
+
+    <div class="ui-panel-body space-y-4">
+      <div class="grid gap-4 lg:grid-cols-2">
+        <% @active_interest_rules.each do |rule| %>
+          <div class="rounded-2xl border border-base-300/70 px-4 py-3">
+            <div class="text-sm font-semibold text-base-content"><%= rule.account_product.name %></div>
+            <div class="mt-1 text-sm text-base-content/70">Rate <span class="ui-mono"><%= number_to_percentage(rule.rate.to_d * 100, precision: 2) %></span></div>
+            <div class="mt-1 text-sm text-base-content/70">Day Count <span class="ui-mono"><%= rule.day_count_method %></span></div>
+          </div>
+        <% end %>
+      </div>
+
+      <% if @run_results.present? %>
+        <div class="rounded-2xl border border-base-300/70 px-4 py-4">
+          <div class="text-sm font-semibold text-base-content">Latest Run Summary</div>
+          <div class="mt-3 grid gap-4 lg:grid-cols-3 text-sm">
+            <div>Accrued: <span class="ui-mono"><%= @run_results[:accrued].size %></span></div>
+            <div>Skipped: <span class="ui-mono"><%= @run_results[:skipped].size %></span></div>
+            <div>Errors: <span class="ui-mono"><%= @run_results[:errors].size %></span></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel mt-6">
+    <div class="ui-panel-header">
+      <div>
         <h2 class="text-lg font-semibold text-base-content">Accrual Register</h2>
         <p class="mt-1 text-sm text-base-content/65"><%= account_filter ? "Filtered to account ##{account_filter}." : "Recent accrual activity across interest-bearing accounts." %></p>
       </div>

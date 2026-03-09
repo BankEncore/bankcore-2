@@ -1,0 +1,36 @@
+<div class="grid gap-4 lg:grid-cols-2">
+  <div class="form-control w-full lg:col-span-2">
+    <label class="label" for="memo">
+      <span class="label-text text-sm font-medium">Memo</span>
+    </label>
+    <textarea name="transaction[memo]" id="memo" class="textarea textarea-bordered w-full" rows="3" placeholder="Operator-visible summary for account history and transaction review"><%= params.dig(:transaction, :memo) %></textarea>
+  </div>
+
+  <div class="form-control w-full lg:col-span-2">
+    <label class="label" for="reason_text">
+      <span class="label-text text-sm font-medium">Reason / Justification</span>
+    </label>
+    <textarea name="transaction[reason_text]" id="reason_text" class="textarea textarea-bordered w-full" rows="2" placeholder="Why this transaction is being entered"><%= params.dig(:transaction, :reason_text) %></textarea>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="reference_number">
+      <span class="label-text text-sm font-medium">Reference Number</span>
+    </label>
+    <input type="text" name="transaction[reference_number]" id="reference_number" value="<%= params.dig(:transaction, :reference_number) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. MAN-20260309-001">
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="external_reference">
+      <span class="label-text text-sm font-medium">External Reference</span>
+    </label>
+    <input type="text" name="transaction[external_reference]" id="external_reference" value="<%= params.dig(:transaction, :external_reference) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. case ID, network reference, ticket">
+  </div>
+
+  <div class="form-control w-full lg:col-span-2">
+    <label class="label" for="idempotency_key">
+      <span class="label-text text-sm font-medium">Idempotency Key</span>
+    </label>
+    <input type="text" name="transaction[idempotency_key]" id="idempotency_key" value="<%= params.dig(:transaction, :idempotency_key) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. manual-20260307-001">
+  </div>
+</div>

@@ -4,8 +4,8 @@
   <div class="workspace-header">
     <div>
       <%= link_to "← Back to Transactions", transactions_path, class: "link link-primary mb-2 inline-block text-sm" %>
-      <h1 class="workspace-title">Manual Transaction Entry</h1>
-      <p class="workspace-subtitle">Capture a governed back-office transaction, preview the balanced posting legs, and commit only after review.</p>
+      <h1 class="workspace-title">Transaction Workstation</h1>
+      <p class="workspace-subtitle">Use the shared shell for adjustments, transfers, fees, and ACH. Interest workflows and reversals use dedicated operator workbenches.</p>
     </div>
   </div>
 
@@ -31,7 +31,7 @@
             </div>
             <div class="ui-kv-row">
               <div class="ui-kv-label">Workflow Mode</div>
-              <div id="transaction_guidance" class="ui-kv-value">Choose a transaction code to load the required account controls.</div>
+              <div id="transaction_guidance" class="ui-kv-value">Choose a transaction code to load the required controls.</div>
             </div>
           </div>
         </div>
@@ -39,18 +39,24 @@
 
       <section class="ui-panel-muted">
         <div class="ui-panel-header">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Posting Rules</h2>
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Shared Rules</h2>
         </div>
         <div class="ui-panel-body space-y-3 text-sm text-base-content/75">
-          <p>All entries fail closed if the posting batch is unbalanced, a ledger target is missing, or the business date is not open.</p>
-          <p>Preview before commit if you want to inspect the derived debit and credit legs before posting.</p>
+          <p>All workstation submissions fail closed if the business date is closed, the amount is invalid, or the routing targets do not resolve.</p>
+          <p>Preview lets you inspect the derived posting legs before any operational transaction or side record is created.</p>
         </div>
       </section>
 
-      <section class="ui-override-box">
-        <div class="space-y-2">
-          <div class="text-sm font-semibold text-base-content">Exception Handling</div>
-          <p class="text-sm text-base-content/80">Override workflows remain explicit and auditable. Controlled actions such as governed reversals are routed through the approval path instead of silently bypassing validation.</p>
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Dedicated Workbenches</h2>
+        </div>
+        <div class="ui-panel-body space-y-3">
+          <%= link_to "Run Interest Accrual", interest_accruals_path, class: "btn btn-outline w-full justify-start" %>
+          <%= link_to "Run Interest Posting", interest_postings_path, class: "btn btn-outline w-full justify-start" %>
+          <div class="rounded-2xl border border-base-300/70 px-4 py-3 text-sm text-base-content/75">
+            Reversals are previewed and confirmed from each transaction review screen so override thresholds stay explicit.
+          </div>
         </div>
       </section>
     </div>
@@ -59,8 +65,8 @@
       <section class="ui-panel">
         <div class="ui-panel-header">
           <div>
-            <h2 class="text-lg font-semibold text-base-content">Transaction Definition</h2>
-            <p class="mt-1 text-sm text-base-content/65">Enter the transaction details, then preview or post the resulting batch.</p>
+            <h2 class="text-lg font-semibold text-base-content">Shared Transaction Shell</h2>
+            <p class="mt-1 text-sm text-base-content/65">The policy layer validates family-specific inputs before previewing or dispatching to the correct posting path.</p>
           </div>
         </div>
 
@@ -76,7 +82,7 @@
             </div>
           <% end %>
 
-          <%= form_with url: transactions_path, method: :post, local: true, class: "space-y-5" do |f| %>
+          <%= form_with url: transactions_path, method: :post, local: true, class: "space-y-5" do %>
             <section class="ui-form-section">
               <div>
                 <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Posting Instruction</h3>
@@ -97,7 +103,7 @@
 
                 <div class="form-control w-full">
                   <label class="label" for="amount">
-                    <span class="label-text text-sm font-medium">Amount (USD)</span>
+                    <span id="amount_label" class="label-text text-sm font-medium">Amount (USD)</span>
                   </label>
                   <input type="number" name="transaction[amount]" id="amount" step="0.01" min="0" value="<%= params.dig(:transaction, :amount) %>" class="input input-bordered w-full ui-mono text-lg" placeholder="0.00" required>
                 </div>
@@ -116,36 +122,23 @@
                 <select name="transaction[account_id]" id="account_id" class="select select-bordered w-full ui-mono" data-preselected-account="<%= @preselected_account_id || params.dig(:transaction, :account_id) %>">
                   <option value="">— Select account —</option>
                   <% @accounts.each do |acc| %>
-                    <option value="<%= acc.id %>" <%= "selected" if (@preselected_account_id.to_i == acc.id || params.dig(:transaction, :account_id).to_i == acc.id) %>><%= acc.account_number %> — <%= acc.status %></option>
+                    <option value="<%= acc.id %>" <%= "selected" if (@preselected_account_id.to_i == acc.id || params.dig(:transaction, :account_id).to_i == acc.id) %>><%= acc.account_number %> — <%= acc.account_product&.product_code %> — <%= acc.status %></option>
                   <% end %>
                 </select>
               </div>
 
-              <div id="transfer_fields" class="hidden grid gap-4 lg:grid-cols-2">
-                <div class="form-control w-full">
-                  <label class="label" for="source_account_id">
-                    <span class="label-text text-sm font-medium">From Account</span>
-                  </label>
-                  <select name="transaction[source_account_id]" id="source_account_id" class="select select-bordered w-full ui-mono">
-                    <option value="">— Select account —</option>
-                    <% @accounts.each do |acc| %>
-                      <option value="<%= acc.id %>" <%= "selected" if params.dig(:transaction, :source_account_id).to_i == acc.id %>><%= acc.account_number %></option>
-                    <% end %>
-                  </select>
-                </div>
+              <%= render "transactions/transfer_fields" %>
+            </section>
 
-                <div class="form-control w-full">
-                  <label class="label" for="destination_account_id">
-                    <span class="label-text text-sm font-medium">To Account</span>
-                  </label>
-                  <select name="transaction[destination_account_id]" id="destination_account_id" class="select select-bordered w-full ui-mono">
-                    <option value="">— Select account —</option>
-                    <% @accounts.each do |acc| %>
-                      <option value="<%= acc.id %>" <%= "selected" if params.dig(:transaction, :destination_account_id).to_i == acc.id %>><%= acc.account_number %></option>
-                    <% end %>
-                  </select>
-                </div>
+            <section class="ui-form-section space-y-4">
+              <div>
+                <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Family Controls</h3>
+                <p class="mt-1 text-sm text-base-content/65">Select a transaction type to load any family-specific controls that apply.</p>
               </div>
+
+              <%= render "transactions/adjustment_fields" %>
+              <%= render "transactions/fee_fields" %>
+              <%= render "transactions/ach_fields" %>
             </section>
 
             <section class="ui-form-section">
@@ -153,50 +146,15 @@
                 <h3 class="text-sm font-semibold uppercase tracking-[0.16em] text-base-content/60">Control Metadata</h3>
               </div>
 
-              <div class="grid gap-4 lg:grid-cols-2">
-                <div class="form-control w-full lg:col-span-2">
-                  <label class="label" for="memo">
-                    <span class="label-text text-sm font-medium">Memo</span>
-                  </label>
-                  <textarea name="transaction[memo]" id="memo" class="textarea textarea-bordered w-full" rows="3" placeholder="Operator-visible summary for account history and transaction review"><%= params.dig(:transaction, :memo) %></textarea>
-                </div>
-
-                <div class="form-control w-full lg:col-span-2">
-                  <label class="label" for="reason_text">
-                    <span class="label-text text-sm font-medium">Reason / Justification</span>
-                  </label>
-                  <textarea name="transaction[reason_text]" id="reason_text" class="textarea textarea-bordered w-full" rows="2" placeholder="Why this transaction is being entered"><%= params.dig(:transaction, :reason_text) %></textarea>
-                </div>
-
-                <div class="form-control w-full">
-                  <label class="label" for="reference_number">
-                    <span class="label-text text-sm font-medium">Reference Number</span>
-                  </label>
-                  <input type="text" name="transaction[reference_number]" id="reference_number" value="<%= params.dig(:transaction, :reference_number) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. MAN-20260309-001">
-                </div>
-
-                <div class="form-control w-full">
-                  <label class="label" for="external_reference">
-                    <span class="label-text text-sm font-medium">External Reference</span>
-                  </label>
-                  <input type="text" name="transaction[external_reference]" id="external_reference" value="<%= params.dig(:transaction, :external_reference) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. case ID, ACH trace, ticket">
-                </div>
-
-                <div class="form-control w-full lg:col-span-2">
-                  <label class="label" for="idempotency_key">
-                    <span class="label-text text-sm font-medium">Idempotency Key</span>
-                  </label>
-                  <input type="text" name="transaction[idempotency_key]" id="idempotency_key" value="<%= params.dig(:transaction, :idempotency_key) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. manual-20260307-001">
-                </div>
-              </div>
+              <%= render "transactions/shared_metadata_fields" %>
             </section>
 
             <div class="ui-review-banner">
-              Preview lets you inspect the planned ledger impact before commit. Posting immediately will create the operational transaction and the balanced posting batch in one controlled step.
+              Preview lets you inspect the planned ledger impact before commit. Posting immediately will create the operational transaction and the family-specific side effects in one controlled step.
             </div>
 
             <div class="ui-confirm-strip">
-              <p class="max-w-2xl text-sm text-base-content/70">Commit actions are deliberate. Posting will fail closed if any target, amount, or business-date validation does not pass.</p>
+              <p class="max-w-2xl text-sm text-base-content/70">Commit actions are deliberate. The dispatcher will route shared-shell transactions through the correct family path after policy validation.</p>
               <div class="flex flex-wrap items-center gap-2">
                 <button type="submit" name="preview" value="1" class="btn btn-outline">Preview Posting</button>
                 <button type="submit" class="btn btn-primary">Post Transaction</button>
@@ -211,22 +169,45 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  function initializeTransactionWorkstation() {
     const typeSelect = document.getElementById('transaction_code');
+    if (!typeSelect) return;
+
     const accountFields = document.getElementById('account_fields');
     const transferFields = document.getElementById('transfer_fields');
+    const adjustmentFields = document.getElementById('adjustment_fields');
+    const feeFields = document.getElementById('fee_fields');
+    const achFields = document.getElementById('ach_fields');
     const accountSelect = document.getElementById('account_id');
     const sourceSelect = document.getElementById('source_account_id');
     const destSelect = document.getElementById('destination_account_id');
+    const amountInput = document.getElementById('amount');
+    const amountLabel = document.getElementById('amount_label');
     const selectedAccountContext = document.getElementById('selected_account_context');
     const guidance = document.getElementById('transaction_guidance');
+    const feeTypeSelect = document.getElementById('fee_type_id');
+    const achTrace = document.getElementById('ach_trace_number');
+    const achEffectiveDate = document.getElementById('ach_effective_date');
+    const achBatch = document.getElementById('ach_batch_reference');
+    const authRef = document.getElementById('authorization_reference');
 
     const TRANSFER_TYPES = ['XFER_INTERNAL'];
-    const GL_ONLY_TYPES = ['INT_ACCRUAL'];
+    const ADJUSTMENT_TYPES = ['ADJ_CREDIT', 'ADJ_DEBIT'];
+    const FEE_TYPES = ['FEE_POST'];
+    const ACH_TYPES = ['ACH_CREDIT', 'ACH_DEBIT'];
 
     function selectedText(select) {
-      const option = select.options[select.selectedIndex];
+      const option = select && select.options[select.selectedIndex];
       return option && option.value ? option.text : null;
+    }
+
+    function toggleRequired(field, required) {
+      if (!field) return;
+      if (required) {
+        field.setAttribute('required', 'required');
+      } else {
+        field.removeAttribute('required');
+      }
     }
 
     function updateContext(code) {
@@ -234,42 +215,70 @@
         const fromAccount = selectedText(sourceSelect);
         const toAccount = selectedText(destSelect);
         selectedAccountContext.textContent = [fromAccount, toAccount].filter(Boolean).join(' → ') || 'Select both transfer accounts';
-        guidance.textContent = 'Internal transfer mode. Both source and destination accounts are required before preview or post.';
-      } else if (GL_ONLY_TYPES.includes(code)) {
-        selectedAccountContext.textContent = 'No customer account required';
-        guidance.textContent = 'GL-only posting mode. Customer account routing is intentionally disabled for this transaction code.';
+        guidance.textContent = 'Internal transfer mode. Both accounts must be active and use the same currency.';
       } else {
         selectedAccountContext.textContent = selectedText(accountSelect) || 'Waiting for account selection';
-        guidance.textContent = code ? 'Customer account mode. One active account will receive the debit or credit leg.' : 'Choose a transaction code to load the required account controls.';
+        if (ADJUSTMENT_TYPES.includes(code)) {
+          guidance.textContent = 'Adjustment mode. Reason and reference capture are required before preview or post.';
+        } else if (FEE_TYPES.includes(code)) {
+          guidance.textContent = 'Fee mode. The dispatcher will resolve the active fee rule for the selected account product.';
+        } else if (ACH_TYPES.includes(code)) {
+          guidance.textContent = 'ACH mode. Trace, effective date, and batch references are captured as structured transaction references.';
+        } else {
+          guidance.textContent = 'Choose a transaction code to load the required controls.';
+        }
       }
     }
 
     function updateFields() {
       const code = typeSelect.value;
-      if (TRANSFER_TYPES.includes(code)) {
-        accountFields.classList.add('hidden');
-        transferFields.classList.remove('hidden');
-        accountSelect.removeAttribute('required');
-        accountSelect.value = '';
-        sourceSelect.setAttribute('required', 'required');
-        destSelect.setAttribute('required', 'required');
-      } else if (GL_ONLY_TYPES.includes(code)) {
-        accountFields.classList.add('hidden');
-        transferFields.classList.add('hidden');
-        accountSelect.removeAttribute('required');
-        accountSelect.value = '';
-        sourceSelect.removeAttribute('required');
-        destSelect.removeAttribute('required');
+      const isTransfer = TRANSFER_TYPES.includes(code);
+      const isAdjustment = ADJUSTMENT_TYPES.includes(code);
+      const isFee = FEE_TYPES.includes(code);
+      const isAch = ACH_TYPES.includes(code);
+      const isAchDebit = code === 'ACH_DEBIT';
+
+      accountFields.classList.toggle('hidden', isTransfer);
+      transferFields.classList.toggle('hidden', !isTransfer);
+      adjustmentFields.classList.toggle('hidden', !isAdjustment);
+      feeFields.classList.toggle('hidden', !isFee);
+      achFields.classList.toggle('hidden', !isAch);
+
+      toggleRequired(accountSelect, !isTransfer);
+      toggleRequired(sourceSelect, isTransfer);
+      toggleRequired(destSelect, isTransfer);
+      toggleRequired(feeTypeSelect, isFee);
+      toggleRequired(achTrace, isAch);
+      toggleRequired(achEffectiveDate, isAch);
+      toggleRequired(achBatch, isAch);
+      toggleRequired(authRef, isAchDebit);
+
+      if (isFee) {
+        amountLabel.textContent = 'Amount Override (USD)';
+        amountInput.placeholder = 'Leave blank to use fee rule/default';
+        amountInput.removeAttribute('required');
+      } else {
+        amountLabel.textContent = 'Amount (USD)';
+        amountInput.placeholder = '0.00';
+        amountInput.setAttribute('required', 'required');
+      }
+
+      if (!isTransfer) {
         sourceSelect.value = '';
         destSelect.value = '';
       } else {
-        accountFields.classList.remove('hidden');
-        transferFields.classList.add('hidden');
-        accountSelect.setAttribute('required', 'required');
-        sourceSelect.removeAttribute('required');
-        destSelect.removeAttribute('required');
-        sourceSelect.value = '';
-        destSelect.value = '';
+        accountSelect.value = '';
+      }
+
+      if (!isAch) {
+        achTrace.value = '';
+        achEffectiveDate.value = '';
+        achBatch.value = '';
+        authRef.value = '';
+      }
+
+      if (!isFee) {
+        feeTypeSelect.value = '';
       }
 
       updateContext(code);
@@ -284,6 +293,10 @@
     if (preselectedId) {
       accountSelect.value = preselectedId;
     }
+
     updateFields();
-  });
+  }
+
+  document.addEventListener('turbo:load', initializeTransactionWorkstation);
+  document.addEventListener('DOMContentLoaded', initializeTransactionWorkstation);
 </script>
