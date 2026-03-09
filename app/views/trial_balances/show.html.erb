@@ -1,0 +1,124 @@
+<% content_for :title, "Trial Balance Detail - #{@gl_account.gl_number}" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Trial Balance", trial_balances_path(business_date: @business_date, include_zero: (@include_zero ? 1 : 0)), class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">G/L Drilldown</h1>
+      <p class="workspace-subtitle">Inspect the journal-line activity that makes up the trial balance position for a single GL account.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-5 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">GL Number</div>
+      <div class="ui-metric-value ui-mono"><%= @gl_account.gl_number %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Category</div>
+      <div class="ui-metric-value"><%= @gl_account.category %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Normal Balance</div>
+      <div class="ui-metric-value"><%= @gl_account.normal_balance %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Business Date</div>
+      <div class="ui-metric-value ui-mono"><%= @business_date&.strftime("%Y-%m-%d") %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Net</div>
+      <div class="ui-metric-value ui-mono"><%= number_to_currency(@summary_row.net_amount_cents / 100.0) %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content"><%= @gl_account.name %></h2>
+        <p class="mt-1 text-sm text-base-content/65">Summary totals for the selected GL account on the chosen business date.</p>
+      </div>
+    </div>
+
+    <div class="ui-panel-body">
+      <div class="grid gap-4 lg:grid-cols-3">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Debit Total</div>
+          <div class="ui-kv-value ui-mono"><%= number_to_currency(@summary_row.debit_cents / 100.0) %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Credit Total</div>
+          <div class="ui-kv-value ui-mono"><%= number_to_currency(@summary_row.credit_cents / 100.0) %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Balance Side</div>
+          <div class="ui-kv-value"><span class="<%= status_pill_class(@summary_row.balance_side == "flat" ? "neutral" : "active") %>"><%= @summary_row.balance_side %></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Journal Register</h2>
+        <p class="mt-1 text-sm text-base-content/65">Projected journal lines for this GL account. Use transaction links to jump into the originating operational review screen.</p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @detail_rows.size %> Rows</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Journal Ref</th>
+            <th>Posting Ref</th>
+            <th>Posted At</th>
+            <th>Branch</th>
+            <th>Txn Type</th>
+            <th>Txn Ref</th>
+            <th class="text-right">Debit</th>
+            <th class="text-right">Credit</th>
+            <th class="text-right">Net</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @detail_rows.each do |row| %>
+            <tr>
+              <td class="ui-mono"><%= row.journal_reference %></td>
+              <td class="ui-mono"><%= row.posting_reference %></td>
+              <td class="ui-mono"><%= row.posted_at&.strftime("%Y-%m-%d %H:%M") || "—" %></td>
+              <td><%= row.branch_name || "—" %></td>
+              <td><%= row.transaction_type || "—" %></td>
+              <td class="ui-mono"><%= row.transaction_reference_number || "—" %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.debit_cents / 100.0) %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.credit_cents / 100.0) %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.net_amount_cents / 100.0) %></td>
+              <td>
+                <% if row.operational_transaction_id.present? %>
+                  <%= link_to "Txn", transaction_path(row.operational_transaction_id), class: "btn btn-ghost btn-xs" %>
+                <% else %>
+                  <span class="text-sm text-base-content/50">No txn</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="6">Detail Total</td>
+            <td class="ui-mono text-right"><%= number_to_currency(@detail_totals[:debit_cents] / 100.0) %></td>
+            <td class="ui-mono text-right"><%= number_to_currency(@detail_totals[:credit_cents] / 100.0) %></td>
+            <td class="ui-mono text-right"><%= number_to_currency(@detail_totals[:net_cents].abs / 100.0) %></td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <% if @detail_rows.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No journal lines for this GL account on the selected business date.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

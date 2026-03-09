@@ -15,7 +15,10 @@
         <h2 class="text-lg font-semibold text-base-content">GL Register</h2>
         <p class="mt-1 text-sm text-base-content/65">Active general ledger accounts in numeric order.</p>
       </div>
-      <span class="ui-status-pill ui-status-pill-neutral"><%= @gl_accounts.size %> Accounts</span>
+      <div class="flex items-center gap-2">
+        <span class="ui-status-pill ui-status-pill-neutral"><%= @gl_accounts.size %> Accounts</span>
+        <%= link_to "View Trial Balance", trial_balances_path, class: "btn btn-ghost btn-sm" %>
+      </div>
     </div>
 
     <div class="ui-panel-body">

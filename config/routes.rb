@@ -46,6 +46,7 @@ Rails.application.routes.draw do
   resources :audit_events, only: %i[index], path: "audit-events"
   resources :branches, only: %i[index show]
   resources :gl_accounts, only: %i[index], path: "gl-accounts"
+  resources :trial_balances, only: %i[index show], path: "trial-balance"
 
   resources :override_requests, only: %i[index show new create] do
     member do
