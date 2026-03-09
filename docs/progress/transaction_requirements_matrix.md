@@ -69,6 +69,8 @@ Family-specific fields that the current generic form does not model consistently
 
 - `fee_type_id`
 - `fee_rule_id`
+- `authorization_reference`
+- `authorization_source`
 - `original_fee_assessment_id`
 - `interest_rule_id`
 - `accrual_date`
@@ -78,6 +80,27 @@ Family-specific fields that the current generic form does not model consistently
 - `ach_batch_reference`
 - `override_request_id`
 - `reversal_target_transaction_id`
+
+## Shared Resources And References
+
+Some fields should be treated as shared resources rather than incidental free-text metadata because they connect transaction families to other governed workflows or external control evidence.
+
+Cross-cutting shared resources to model explicitly:
+
+- `authorization_reference`
+  - used when a transaction depends on customer authorization, ACH authorization, or another governed approval artifact
+- `override_request_id`
+  - used when a transaction depends on a supervisor approval or governed exception path
+- `reversal_target_transaction_id`
+  - used when a new transaction is explicitly correcting or reversing an existing one
+- `fee_rule_id`
+  - used when fee posting is driven by a product/rule decision that should remain traceable
+- `interest_rule_id`
+  - used when accrual or posting is justified by a specific product rule
+- external network references such as `ach_trace_number`, `ach_batch_reference`, and `external_reference`
+  - used for settlement traceability and duplicate detection
+
+These resources should be captured in the normalized request object and validated by family policy objects, even when they are only required for a subset of transaction families.
 
 ## Implementation Notes
 

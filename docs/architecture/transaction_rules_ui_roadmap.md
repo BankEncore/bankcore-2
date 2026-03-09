@@ -85,6 +85,24 @@ Add a transaction-entry namespace under `app/services/transaction_entry/`:
 - construct a canonical idempotency fingerprint per family
 - return a validated policy result that the dispatcher can consume
 
+### Shared Resources
+
+The request object and policy layer should explicitly support shared resources that may be reused across transaction families:
+
+- authorization references
+- override requests
+- original transaction or posting targets
+- fee rules
+- interest rules
+- external network references such as ACH trace and batch identifiers
+
+Recommended handling:
+
+- model them as first-class fields on the normalized request object, not hidden controller-only params
+- let each family policy declare whether the shared resource is required, optional, or forbidden
+- preserve them into transaction metadata and reference structures where they matter for auditability
+- avoid one monolithic "shared resource" table until the domain proves it is necessary; start with explicit request fields and traceable linkage
+
 ### Rules To Centralize First
 
 - active/postable account eligibility
@@ -208,6 +226,7 @@ Recommended controller directions:
 #### ACH
 
 - ACH trace number
+- authorization reference
 - originator or authorization reference
 - effective date
 - batch/file reference
@@ -218,6 +237,17 @@ Recommended controller directions:
 - preview of inverse posting impact
 - clear approval-threshold messaging before submit
 - direct linkage to override request status when approval is required
+
+### Shared Resources In The UI
+
+The shared transaction shell should support rendering shared-resource sections when a family requires them, for example:
+
+- an authorization section for ACH or other authorization-dependent families
+- an override section when policy review or supervisor approval is already in play
+- a rule-context section when fees or interest derive from `fee_rule_id` or `interest_rule_id`
+- an original-transaction section for reversals and correction-style workflows
+
+This keeps the UI consistent without flattening every family into the same field set.
 
 ## 4. Review And Navigation Surfaces
 
