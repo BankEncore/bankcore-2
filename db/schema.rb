@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_070000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -229,6 +229,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_060000) do
     t.index ["account_id"], name: "index_interest_accruals_on_account_id"
     t.index ["interest_rule_id"], name: "index_interest_accruals_on_interest_rule_id"
     t.index ["posting_batch_id"], name: "index_interest_accruals_on_posting_batch_id"
+  end
+
+  create_table "interest_posting_applications", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "interest_accrual_id", null: false
+    t.date "posted_on", null: false
+    t.bigint "posting_batch_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["interest_accrual_id"], name: "index_interest_posting_applications_on_interest_accrual_id", unique: true
+    t.index ["posting_batch_id", "interest_accrual_id"], name: "index_interest_posting_applications_on_batch_and_accrual", unique: true
+    t.index ["posting_batch_id"], name: "index_interest_posting_applications_on_posting_batch_id"
   end
 
   create_table "interest_rules", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -454,6 +465,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_060000) do
   add_foreign_key "interest_accruals", "accounts"
   add_foreign_key "interest_accruals", "interest_rules"
   add_foreign_key "interest_accruals", "posting_batches"
+  add_foreign_key "interest_posting_applications", "interest_accruals"
+  add_foreign_key "interest_posting_applications", "posting_batches"
   add_foreign_key "interest_rules", "account_products"
   add_foreign_key "journal_entries", "posting_batches"
   add_foreign_key "journal_entry_lines", "branches"
