@@ -4,7 +4,9 @@ class AccountTransaction < ApplicationRecord
   include PostedRecordImmutable
 
   belongs_to :account
+  belongs_to :contra_account, class_name: "Account", optional: true
   belongs_to :posting_batch
+  belongs_to :operational_transaction, class_name: "BankingTransaction", foreign_key: :transaction_id, optional: true
 
   def debit_cents
     direction == "debit" ? amount_cents : 0
@@ -18,6 +20,7 @@ class AccountTransaction < ApplicationRecord
   validates :posting_batch_id, presence: true
   validates :amount_cents, presence: true, numericality: { only_integer: true }
   validates :direction, presence: true, inclusion: { in: %w[debit credit] }
+  validates :transaction_id, presence: true
 
   private
 

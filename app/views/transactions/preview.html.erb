@@ -19,6 +19,35 @@
     </div>
 
     <div class="ui-panel-body">
+      <% if @preview_metadata.present? %>
+        <div class="ui-kv-grid mb-5">
+          <% if @preview_metadata[:memo].present? %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Memo</div>
+              <div class="ui-kv-value"><%= @preview_metadata[:memo] %></div>
+            </div>
+          <% end %>
+          <% if @preview_metadata[:reason_text].present? %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Reason</div>
+              <div class="ui-kv-value"><%= @preview_metadata[:reason_text] %></div>
+            </div>
+          <% end %>
+          <% if @preview_metadata[:reference_number].present? %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">Reference</div>
+              <div class="ui-kv-value ui-mono"><%= @preview_metadata[:reference_number] %></div>
+            </div>
+          <% end %>
+          <% if @preview_metadata[:external_reference].present? %>
+            <div class="ui-kv-row">
+              <div class="ui-kv-label">External Reference</div>
+              <div class="ui-kv-value ui-mono"><%= @preview_metadata[:external_reference] %></div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
       <table class="ui-ledger-table">
         <thead>
           <tr>
@@ -57,7 +86,7 @@
 
         <%= form_with url: transactions_path, method: :post, local: true, class: "flex flex-wrap items-center gap-2" do |f| %>
           <% @params_for_confirm.each do |key, value| %>
-            <%= hidden_field_tag key, value %>
+            <%= hidden_field_tag "transaction[#{key}]", value %>
           <% end %>
           <button type="submit" class="btn btn-primary">Confirm & Post</button>
           <%= link_to "Cancel", new_transaction_path, class: "btn btn-ghost" %>

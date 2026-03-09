@@ -18,7 +18,8 @@ class PostingEngine
 
   def initialize(transaction_code:, account_id: nil, source_account_id: nil, destination_account_id: nil,
                  amount_cents:, business_date: nil, idempotency_key: nil, created_by_id: nil,
-                 gl_account_id: nil, reversal_of_batch_id: nil, idempotency_context: nil)
+                 gl_account_id: nil, reversal_of_batch_id: nil, idempotency_context: nil,
+                 memo: nil, reason_text: nil, reference_number: nil, external_reference: nil)
     @transaction_code = transaction_code
     @account_id = account_id
     @source_account_id = source_account_id
@@ -30,6 +31,10 @@ class PostingEngine
     @gl_account_id = gl_account_id
     @reversal_of_batch_id = reversal_of_batch_id
     @idempotency_context = idempotency_context
+    @memo = memo
+    @reason_text = reason_text
+    @reference_number = reference_number
+    @external_reference = external_reference
   end
 
   def post!
@@ -129,7 +134,11 @@ class PostingEngine
       business_date: @business_date,
       initiated_at: Time.current,
       posted_at: Time.current,
-      created_by_id: @created_by_id
+      created_by_id: @created_by_id,
+      memo: @memo,
+      reason_text: @reason_text,
+      reference_number: @reference_number,
+      external_reference: @external_reference
     )
 
     batch = PostingBatch.create!(
@@ -210,6 +219,10 @@ class PostingEngine
       destination_account_id: @destination_account_id,
       amount_cents: @amount_cents,
       business_date: @business_date&.to_date&.iso8601,
+      memo: @memo,
+      reason_text: @reason_text,
+      reference_number: @reference_number,
+      external_reference: @external_reference,
       gl_account_id: @gl_account_id,
       reversal_of_batch_id: @reversal_of_batch_id
     }

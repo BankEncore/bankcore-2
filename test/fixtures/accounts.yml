@@ -9,3 +9,14 @@ one:
   opened_on: 2026-03-01
   created_at: <%= ts %>
   updated_at: <%= ts %>
+
+two:
+  account_number: "3001"
+  account_type: savings
+  account_product: savings
+  branch: one
+  currency_code: USD
+  status: active
+  opened_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

@@ -16,21 +16,53 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     get new_transaction_url
     assert_response :success
     assert_select "select#transaction_code"
-    assert_select "input[name=amount]"
+    assert_select "input[name='transaction[amount]']"
   end
 
   test "create posts ADJ_CREDIT and redirects" do
     account = accounts(:one)
     assert_difference "BankingTransaction.count", 1 do
       post transactions_url, params: {
-        transaction_code: "ADJ_CREDIT",
-        account_id: account.id,
-        amount: "100.50"
+        transaction: {
+          transaction_code: "ADJ_CREDIT",
+          account_id: account.id,
+          amount: "100.50",
+          memo: "Courtesy credit",
+          reason_text: "Service recovery",
+          reference_number: "MAN-20260309-001",
+          external_reference: "CASE-42"
+        }
       }
     end
     assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_equal "Courtesy credit", transaction.memo
+    assert_equal "Service recovery", transaction.reason_text
+    assert_equal "MAN-20260309-001", transaction.reference_number
+    assert_equal "CASE-42", transaction.external_reference
     follow_redirect!
     assert_match /posted successfully/i, flash[:notice]
+  end
+
+  test "preview preserves operational metadata for confirm step" do
+    post transactions_url, params: {
+      preview: "1",
+      transaction: {
+        transaction_code: "ADJ_CREDIT",
+        account_id: accounts(:one).id,
+        amount: "25.00",
+        memo: "Preview memo",
+        reason_text: "Preview reason",
+        reference_number: "MAN-20260309-002",
+        external_reference: "CASE-99"
+      }
+    }
+
+    assert_response :success
+    assert_select "input[type=hidden][name='transaction[memo]'][value='Preview memo']"
+    assert_select "input[type=hidden][name='transaction[reason_text]'][value='Preview reason']"
+    assert_select "input[type=hidden][name='transaction[reference_number]'][value='MAN-20260309-002']"
+    assert_select "input[type=hidden][name='transaction[external_reference]'][value='CASE-99']"
   end
 
   test "show renders transaction" do
