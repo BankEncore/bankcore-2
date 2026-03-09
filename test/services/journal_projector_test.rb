@@ -25,8 +25,8 @@ class JournalProjectorTest < ActiveSupport::TestCase
     lines = batch.journal_entries.first.journal_entry_lines.includes(:gl_account).order(:position)
     assert_equal 2, lines.size
     assert_equal %w[5190 2110], lines.map { |line| line.gl_account.gl_number }
-    assert_equal [1_000, 0], [lines.first.debit_cents, lines.first.credit_cents]
-    assert_equal [0, 1_000], [lines.second.debit_cents, lines.second.credit_cents]
+    assert_equal [ 1_000, 0 ], [ lines.first.debit_cents, lines.first.credit_cents ]
+    assert_equal [ 0, 1_000 ], [ lines.second.debit_cents, lines.second.credit_cents ]
   end
 
   test "projects internal transfer across product liability gls" do
@@ -71,7 +71,7 @@ class JournalProjectorTest < ActiveSupport::TestCase
     lines = batch.journal_entries.first.journal_entry_lines.includes(:gl_account).order(:position)
     assert_equal 2, lines.size
     assert_equal %w[2110 2130], lines.map { |line| line.gl_account.gl_number }
-    assert_equal [2_500, 0], [lines.first.debit_cents, lines.first.credit_cents]
-    assert_equal [0, 2_500], [lines.second.debit_cents, lines.second.credit_cents]
+    assert_equal [ 2_500, 0 ], [ lines.first.debit_cents, lines.first.credit_cents ]
+    assert_equal [ 0, 2_500 ], [ lines.second.debit_cents, lines.second.credit_cents ]
   end
 end
