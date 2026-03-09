@@ -1,0 +1,111 @@
+<% content_for :title, "Trial Balance - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Trial Balance</h1>
+      <p class="workspace-subtitle">Review posted GL activity by account using journal projections, then drill into the underlying transaction register.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Filter</h2>
+        <p class="mt-1 text-sm text-base-content/65">Defaulting to the current business date keeps the first slice tight while preserving room for richer report filters later.</p>
+      </div>
+    </div>
+
+    <div class="ui-panel-body">
+      <%= form_with url: trial_balances_path, method: :get, local: true, class: "grid gap-4 lg:grid-cols-3 lg:items-end" do %>
+        <div class="form-control w-full">
+          <label class="label" for="business_date">
+            <span class="label-text text-sm font-medium">Business Date</span>
+          </label>
+          <input type="date" name="business_date" id="business_date" value="<%= @business_date&.iso8601 %>" class="input input-bordered w-full ui-mono">
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label cursor-pointer justify-start gap-3 pt-8">
+            <input type="checkbox" name="include_zero" value="1" <%= "checked" if @include_zero %> class="checkbox checkbox-sm">
+            <span class="label-text text-sm font-medium">Show zero-activity accounts</span>
+          </label>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="submit" class="btn btn-primary">Refresh</button>
+          <%= link_to "Reset", trial_balances_path, class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <div class="grid gap-4 lg:grid-cols-4 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Business Date</div>
+      <div class="ui-metric-value ui-mono"><%= @business_date&.strftime("%Y-%m-%d") %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Total Debits</div>
+      <div class="ui-metric-value ui-mono"><%= number_to_currency(@totals[:debit_cents] / 100.0) %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Total Credits</div>
+      <div class="ui-metric-value ui-mono"><%= number_to_currency(@totals[:credit_cents] / 100.0) %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Difference</div>
+      <div class="ui-metric-value ui-mono"><%= number_to_currency((@totals[:debit_cents] - @totals[:credit_cents]).abs / 100.0) %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">GL Summary</h2>
+        <p class="mt-1 text-sm text-base-content/65">Debit, credit, and net position by active GL account for the selected business date.</p>
+      </div>
+      <span class="ui-status-pill ui-status-pill-neutral"><%= @summary_rows.size %> Rows</span>
+    </div>
+
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>GL Number</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Normal</th>
+            <th class="text-right">Debit</th>
+            <th class="text-right">Credit</th>
+            <th class="text-right">Net</th>
+            <th>Side</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @summary_rows.each do |row| %>
+            <tr>
+              <td class="ui-mono"><%= row.gl_account.gl_number %></td>
+              <td><%= row.gl_account.name %></td>
+              <td><%= row.gl_account.category %></td>
+              <td><%= row.gl_account.normal_balance %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.debit_cents / 100.0) %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.credit_cents / 100.0) %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(row.net_amount_cents / 100.0) %></td>
+              <td><span class="<%= status_pill_class(row.balance_side == "flat" ? "neutral" : "active") %>"><%= row.balance_side %></span></td>
+              <td>
+                <%= link_to "Drilldown", trial_balance_path(row.gl_account, business_date: @business_date, include_zero: (@include_zero ? 1 : 0)), class: "btn btn-ghost btn-xs" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+
+      <% if @summary_rows.empty? %>
+        <p class="mt-4 text-sm text-base-content/60">No trial balance rows for the selected filter.</p>
+      <% end %>
+    </div>
+  </section>
+</div>
