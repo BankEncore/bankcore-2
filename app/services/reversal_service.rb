@@ -20,34 +20,36 @@ class ReversalService
   def reverse!
     raise ReversalError, "Batch is not posted" unless @posting_batch.status == STATUS_POSTED
 
-    if @posting_batch.reversal_batch.present?
-      return @posting_batch.reversal_batch if idempotent_replay?
+    @posting_batch.with_lock do
+      if @posting_batch.reversal_batch.present?
+        return @posting_batch.reversal_batch if idempotent_replay?
 
-      raise ReversalError, "Batch already reversed"
+        raise ReversalError, "Batch already reversed"
+      end
+
+      reversal_code = TransactionCode.find_by(code: @posting_batch.transaction_code)&.reversal_code
+      raise ReversalError, "No reversal code for #{@posting_batch.transaction_code}" if reversal_code.blank?
+
+      override_request = resolve_override_request!
+      emit_reversal_requested!(reversal_code: reversal_code)
+
+      reversal_batch = nil
+      ActiveRecord::Base.transaction do
+        reversal_batch = create_reversal_batch!(reversal_code)
+        OverrideRequestService.use!(override_request: override_request) if override_request.present?
+        AuditEmissionService.emit!(
+          event_type: AuditEmissionService::EVENT_REVERSAL_COMMITTED,
+          action: "reverse",
+          target: reversal_batch,
+          metadata: {
+            original_batch_id: @posting_batch.id,
+            reversal_code: reversal_code,
+            posting_reference: reversal_batch.posting_reference
+          }
+        )
+      end
+      reversal_batch
     end
-
-    reversal_code = TransactionCode.find_by(code: @posting_batch.transaction_code)&.reversal_code
-    raise ReversalError, "No reversal code for #{@posting_batch.transaction_code}" if reversal_code.blank?
-
-    override_request = resolve_override_request!
-    emit_reversal_requested!(reversal_code: reversal_code)
-
-    reversal_batch = nil
-    ActiveRecord::Base.transaction do
-      reversal_batch = create_reversal_batch!(reversal_code)
-      OverrideRequestService.use!(override_request: override_request) if override_request.present?
-      AuditEmissionService.emit!(
-        event_type: AuditEmissionService::EVENT_REVERSAL_COMMITTED,
-        action: "reverse",
-        target: reversal_batch,
-        metadata: {
-          original_batch_id: @posting_batch.id,
-          reversal_code: reversal_code,
-          posting_reference: reversal_batch.posting_reference
-        }
-      )
-    end
-    reversal_batch
   end
 
   private

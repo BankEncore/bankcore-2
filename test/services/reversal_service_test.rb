@@ -126,6 +126,34 @@ class ReversalServiceTest < ActiveSupport::TestCase
     assert_equal [ "reversal_requested", "posting_requested", "posting_committed", "reversal_committed" ], events
   end
 
+  test "concurrent reversal requests produce exactly one reversal batch" do
+    batch = PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: 4000,
+      business_date: @business_date
+    )
+
+    results = []
+    threads = 3.times.map do
+      Thread.new do
+        Thread.current[:result] = begin
+          ReversalService.reverse!(posting_batch: batch)
+        rescue ReversalService::ReversalError => e
+          e
+        end
+      end
+    end
+
+    threads.each(&:join)
+    reversal_batches = threads.map { |t| t[:result] }.select { |r| r.is_a?(PostingBatch) }
+    errors = threads.map { |t| t[:result] }.select { |r| r.is_a?(ReversalService::ReversalError) }
+
+    assert_equal 1, reversal_batches.size, "Exactly one thread should succeed with a reversal batch"
+    assert_equal 2, errors.size, "Other threads should get Batch already reversed"
+    assert_equal 1, PostingBatch.where(reversal_of_batch_id: batch.id).count
+  end
+
   private
 
   def high_value_batch
