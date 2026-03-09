@@ -17,7 +17,7 @@
     <label class="label" for="reference_number">
       <span class="label-text text-sm font-medium">Reference Number</span>
     </label>
-    <input type="text" name="transaction[reference_number]" id="reference_number" value="<%= params.dig(:transaction, :reference_number) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. MAN-20260309-001">
+    <input type="text" name="transaction[reference_number]" id="reference_number" value="<%= params.dig(:transaction, :reference_number) %>" class="input input-bordered w-full ui-mono" placeholder="e.g. MAN-ADJ_CREDIT-250309143052" data-transaction-workstation-target="referenceNumberInput" data-action="input->transaction-workstation#markReferenceUserEdited">
   </div>
 
   <div class="form-control w-full">
