@@ -1,0 +1,64 @@
+<% content_for :title, "Fee Types - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Fee Types</h1>
+      <p class="workspace-subtitle">Manage fee master data used by fee rules, assessments, and downstream income routing.</p>
+    </div>
+    <%= link_to "New Fee Type", new_fee_type_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-3 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Fee Types</div>
+      <div class="ui-metric-value ui-mono"><%= @fee_types.size %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Active</div>
+      <div class="ui-metric-value ui-mono"><%= @fee_types.count { |fee_type| fee_type.status == Bankcore::Enums::STATUS_ACTIVE } %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Linked Rules</div>
+      <div class="ui-metric-value ui-mono"><%= @fee_types.sum { |fee_type| fee_type.fee_rules.size } %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Fee Type Catalog</h2>
+        <p class="mt-1 text-sm text-base-content/65">Master fee definitions used as the baseline for product-specific fee rules.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Name</th>
+            <th class="text-right">Default Amount</th>
+            <th>Income GL</th>
+            <th>Rules</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @fee_types.each do |fee_type| %>
+            <tr>
+              <td class="ui-mono"><%= fee_type.code %></td>
+              <td><%= fee_type.name %></td>
+              <td class="ui-mono text-right"><%= number_to_currency(fee_type.default_amount_cents / 100.0) %></td>
+              <td class="ui-mono"><%= fee_type.gl_account&.gl_number || "—" %></td>
+              <td class="ui-mono"><%= fee_type.fee_rules.size %></td>
+              <td><span class="<%= status_pill_class(fee_type.status) %>"><%= fee_type.status %></span></td>
+              <td><%= link_to "Edit", edit_fee_type_path(fee_type), class: "btn btn-ghost btn-sm" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

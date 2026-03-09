@@ -1,0 +1,17 @@
+<% content_for :title, "New Fee Type - BankCORE" %>
+
+<div class="w-full max-w-4xl">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Fee Types", fee_types_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">New Fee Type</h1>
+      <p class="workspace-subtitle">Create a fee definition that can be reused across fee rules and fee assessment flows.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-body">
+      <%= render "form" %>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,53 @@
+<%= form_with model: @fee_type, local: true, class: "space-y-4" do |f| %>
+  <% if @fee_type.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @fee_type.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="form-control w-full">
+      <label class="label" for="fee_type_code">
+        <span class="label-text">Code</span>
+      </label>
+      <%= f.text_field :code, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_type_name">
+        <span class="label-text">Name</span>
+      </label>
+      <%= f.text_field :name, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_type_default_amount_cents">
+        <span class="label-text">Default Amount (cents)</span>
+      </label>
+      <%= f.number_field :default_amount_cents, class: "input input-bordered w-full ui-mono", min: 0, required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_type_status">
+        <span class="label-text">Status</span>
+      </label>
+      <%= f.select :status, Bankcore::Enums::STATUSES.map { |value| [value.titleize, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+  </div>
+
+  <div class="form-control w-full">
+    <label class="label" for="fee_type_gl_account_id">
+      <span class="label-text">Income GL</span>
+    </label>
+    <%= f.collection_select :gl_account_id, @gl_accounts, :id, :name, { include_blank: "— None —" }, class: "select select-bordered w-full" %>
+  </div>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", fee_types_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>

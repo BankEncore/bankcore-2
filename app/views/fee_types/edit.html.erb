@@ -1,0 +1,17 @@
+<% content_for :title, "Edit #{@fee_type.name} - BankCORE" %>
+
+<div class="w-full max-w-4xl">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Fee Types", fee_types_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Edit Fee Type</h1>
+      <p class="workspace-subtitle">Update fee master data without altering historical fee assessments or posted transactions.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-body">
+      <%= render "form" %>
+    </div>
+  </section>
+</div>
