@@ -85,6 +85,7 @@ class InterestPostingRunnerServiceTest < ActiveSupport::TestCase
     balance = AccountBalance.find_or_initialize_by(account_id: @account.id)
     balance.posted_balance_cents ||= 0
     balance.available_balance_cents ||= 0
+    balance.average_balance_cents ||= 0
     balance.as_of_at ||= Time.current
     balance.save!
   end

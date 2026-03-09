@@ -89,12 +89,21 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show renders account reference" do
+    accounts(:one).account_balances.create!(
+      posted_balance_cents: 10_000,
+      available_balance_cents: 9_500,
+      average_balance_cents: 8_000,
+      as_of_at: Time.current
+    )
+
     get account_url(accounts(:one))
 
     assert_response :success
     assert_select "h2", text: /Account/
     assert_select ".ui-kv-label", text: "Account Reference"
     assert_select ".ui-kv-value", text: /DDA-1001/
+    assert_select ".ui-kv-label", text: "Average Balance"
+    assert_select ".ui-kv-value", text: /\$80\.00/
   end
 
   test "create with duplicate account number re-renders form" do

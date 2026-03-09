@@ -25,6 +25,7 @@ class PostingEngineTest < ActiveSupport::TestCase
     balance = @account.account_balances.first
     assert balance
     assert_equal 5000, balance.posted_balance_cents
+    assert_equal 5000, balance.average_balance_cents
   end
 
   test "creates journal entry and account transaction" do
