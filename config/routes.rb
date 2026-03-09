@@ -18,6 +18,7 @@ Rails.application.routes.draw do
       post :reverse
     end
   end
+  resources :account_lookups, only: %i[index], path: "account-lookups", defaults: { format: :json }
 
   resources :accounts, only: %i[index show new create] do
     resources :account_holds, only: %i[new create], shallow: true

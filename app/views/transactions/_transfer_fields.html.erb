@@ -1,25 +1,17 @@
-<div id="transfer_fields" class="hidden grid gap-4 lg:grid-cols-2">
-  <div class="form-control w-full">
-    <label class="label" for="source_account_id">
-      <span class="label-text text-sm font-medium">From Account</span>
-    </label>
-    <select name="transaction[source_account_id]" id="source_account_id" class="select select-bordered w-full ui-mono">
-      <option value="">— Select account —</option>
-      <% @accounts.each do |acc| %>
-        <option value="<%= acc.id %>" <%= "selected" if params.dig(:transaction, :source_account_id).to_i == acc.id %>><%= acc.account_number %> — <%= acc.account_product&.product_code %></option>
-      <% end %>
-    </select>
-  </div>
+<div id="transfer_fields" class="hidden grid gap-4 lg:grid-cols-2" data-transaction-workstation-target="transferFields">
+  <%= render "transactions/account_picker",
+      field_name: "transaction[source_account_id]",
+      field_id: "source_account_id",
+      label: "From Account",
+      selected_id: params.dig(:transaction, :source_account_id),
+      selected_account: @selected_source_account,
+      picker_target: "sourcePicker" %>
 
-  <div class="form-control w-full">
-    <label class="label" for="destination_account_id">
-      <span class="label-text text-sm font-medium">To Account</span>
-    </label>
-    <select name="transaction[destination_account_id]" id="destination_account_id" class="select select-bordered w-full ui-mono">
-      <option value="">— Select account —</option>
-      <% @accounts.each do |acc| %>
-        <option value="<%= acc.id %>" <%= "selected" if params.dig(:transaction, :destination_account_id).to_i == acc.id %>><%= acc.account_number %> — <%= acc.account_product&.product_code %></option>
-      <% end %>
-    </select>
-  </div>
+  <%= render "transactions/account_picker",
+      field_name: "transaction[destination_account_id]",
+      field_id: "destination_account_id",
+      label: "To Account",
+      selected_id: params.dig(:transaction, :destination_account_id),
+      selected_account: @selected_destination_account,
+      picker_target: "destinationPicker" %>
 </div>

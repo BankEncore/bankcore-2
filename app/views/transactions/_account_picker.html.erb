@@ -1,0 +1,46 @@
+<% selected_label = if selected_account.present?
+  [
+    selected_account.account_number,
+    selected_account.account_reference,
+    selected_account.product_code,
+    selected_account.status
+  ].compact.join(" — ")
+else
+  ""
+end %>
+<% search_input_id = "#{field_id}_lookup" %>
+<% placeholder_text = local_assigns[:placeholder] || "Search by account number or reference" %>
+
+<div class="form-control w-full relative"
+     data-controller="account-picker"
+     data-account-picker-url-value="<%= account_lookups_path %>"
+     data-action="account-picker:reset->account-picker#reset"
+     <% if local_assigns[:picker_target].present? %>data-transaction-workstation-target="<%= picker_target %>"<% end %>>
+  <label class="label" for="<%= search_input_id %>">
+    <span class="label-text text-sm font-medium"><%= label %></span>
+  </label>
+
+  <input type="hidden"
+         name="<%= field_name %>"
+         id="<%= field_id %>"
+         value="<%= selected_account&.id || selected_id %>"
+         data-account-picker-target="hiddenInput">
+
+  <input type="search"
+         id="<%= search_input_id %>"
+         value="<%= selected_label %>"
+         class="input input-bordered w-full ui-mono"
+         placeholder="<%= placeholder_text %>"
+         autocomplete="off"
+         spellcheck="false"
+         data-account-picker-target="queryInput"
+         data-action="input->account-picker#search focus->account-picker#showResults blur->account-picker#hideResults keydown->account-picker#handleKeydown">
+
+  <div class="label pt-1">
+    <span class="label-text-alt">Search by account number or reference.</span>
+  </div>
+
+  <div class="absolute inset-x-0 top-full z-20 mt-1 hidden rounded-lg border border-base-300 bg-base-100 shadow-xl"
+       data-account-picker-target="results">
+  </div>
+</div>
