@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
     t.integer "available_balance_cents"
+    t.integer "average_balance_cents", default: 0, null: false
     t.datetime "created_at", null: false
     t.integer "posted_balance_cents"
     t.datetime "updated_at", null: false

@@ -6,4 +6,5 @@ class AccountBalance < ApplicationRecord
   validates :account_id, presence: true
   validates :posted_balance_cents, presence: true, numericality: { only_integer: true }
   validates :available_balance_cents, presence: true, numericality: { only_integer: true }
+  validates :average_balance_cents, presence: true, numericality: { only_integer: true }
 end

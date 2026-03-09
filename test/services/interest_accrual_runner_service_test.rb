@@ -27,7 +27,11 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
   end
 
   test "skips account with zero balance" do
-    AccountBalance.find_by(account_id: @account.id).update!(posted_balance_cents: 0, available_balance_cents: 0)
+    AccountBalance.find_by(account_id: @account.id).update!(
+      posted_balance_cents: 0,
+      available_balance_cents: 0,
+      average_balance_cents: 0
+    )
 
     results = InterestAccrualRunnerService.run!(accrual_date: @accrual_date)
 
@@ -125,6 +129,7 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
     AccountBalance.find_or_create_by!(account_id: @account.id) do |b|
       b.posted_balance_cents = 100_000 # $1000
       b.available_balance_cents = 100_000
+      b.average_balance_cents = 100_000
       b.as_of_at = Time.current
     end
   end

@@ -22,6 +22,7 @@ class BalanceRefreshServiceTest < ActiveSupport::TestCase
     balance = @account.account_balances.first
     assert balance
     assert_equal 3000, balance.posted_balance_cents
+    assert_equal 3000, balance.average_balance_cents
   end
 
   test "rebuild! reconstructs balance from transactions" do
@@ -43,6 +44,7 @@ class BalanceRefreshServiceTest < ActiveSupport::TestCase
     @account.reload
     balance = @account.account_balances.first
     assert_equal 1500, balance.posted_balance_cents
+    assert_equal 1750, balance.average_balance_cents
   end
 
   test "available_balance subtracts active holds" do
@@ -65,5 +67,6 @@ class BalanceRefreshServiceTest < ActiveSupport::TestCase
     balance = @account.account_balances.first
     assert_equal 10_000, balance.posted_balance_cents
     assert_equal 7_000, balance.available_balance_cents
+    assert_equal 10_000, balance.average_balance_cents
   end
 end

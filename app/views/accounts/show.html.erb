@@ -34,6 +34,10 @@
             <div class="ui-kv-value ui-mono"><%= number_to_currency((@balance&.posted_balance_cents || 0) / 100.0) %></div>
           </div>
           <div class="ui-kv-row">
+            <div class="ui-kv-label">Average Balance</div>
+            <div class="ui-kv-value ui-mono"><%= number_to_currency((@balance&.average_balance_cents || 0) / 100.0) %></div>
+          </div>
+          <div class="ui-kv-row">
             <div class="ui-kv-label">Active Holds</div>
             <div class="ui-kv-value ui-mono"><%= number_to_currency(holds_total_cents / 100.0) %></div>
           </div>

@@ -16,7 +16,8 @@ class BalanceRefreshService
   def refresh!
     @account_ids.each do |account_id|
       balance = compute_balance(account_id)
-      upsert_balance(account_id, balance)
+      average_balance = compute_average_balance(account_id)
+      upsert_balance(account_id, balance, average_balance)
     end
   end
 
@@ -39,7 +40,22 @@ class BalanceRefreshService
     ).sum(:amount_cents)
   end
 
-  def upsert_balance(account_id, balance_cents)
+  def compute_average_balance(account_id)
+    running_balance = 0
+    balance_points = AccountTransaction
+      .where(account_id: account_id)
+      .order(:posted_at, :id)
+      .pluck(:direction, :amount_cents)
+      .map do |direction, amount_cents|
+        running_balance += direction == "credit" ? amount_cents : -amount_cents
+      end
+
+    return 0 if balance_points.empty?
+
+    balance_points.sum / balance_points.size
+  end
+
+  def upsert_balance(account_id, balance_cents, average_balance_cents)
     holds_cents = active_holds_cents(account_id)
     available_cents = [ balance_cents - holds_cents, 0 ].max
 
@@ -47,6 +63,7 @@ class BalanceRefreshService
     balance.assign_attributes(
       posted_balance_cents: balance_cents,
       available_balance_cents: available_cents,
+      average_balance_cents: average_balance_cents,
       as_of_at: Time.current
     )
     balance.save!

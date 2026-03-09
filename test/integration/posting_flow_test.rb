@@ -31,6 +31,7 @@ class PostingFlowTest < ActiveSupport::TestCase
     balance = @account.account_balances.first
     assert balance, "Account balance should exist"
     assert_equal 4_000, balance.posted_balance_cents
+    assert_equal 4_000, balance.average_balance_cents
 
     # 4. Reverse
     reversal_batch = ReversalService.reverse!(posting_batch: batch)
@@ -42,6 +43,7 @@ class PostingFlowTest < ActiveSupport::TestCase
     @account.reload
     balance = @account.account_balances.first
     assert_equal 0, balance.posted_balance_cents
+    assert_equal 2_000, balance.average_balance_cents
   end
 
   test "ADJ_DEBIT posts and affects balance correctly" do
@@ -56,5 +58,6 @@ class PostingFlowTest < ActiveSupport::TestCase
     @account.reload
     balance = @account.account_balances.first
     assert_equal(-5000, balance.posted_balance_cents)
+    assert_equal(-5000, balance.average_balance_cents)
   end
 end
