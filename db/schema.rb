@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_013002) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -68,15 +68,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
     t.bigint "account_id", null: false
     t.integer "amount_cents"
     t.date "business_date"
+    t.bigint "contra_account_id"
     t.datetime "created_at", null: false
     t.string "description"
     t.string "direction"
     t.datetime "posted_at"
     t.bigint "posting_batch_id", null: false
     t.integer "running_balance_cents"
+    t.bigint "transaction_id"
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_account_transactions_on_account_id"
+    t.index ["contra_account_id"], name: "index_account_transactions_on_contra_account_id"
     t.index ["posting_batch_id"], name: "index_account_transactions_on_posting_batch_id"
+    t.index ["transaction_id"], name: "index_account_transactions_on_transaction_id"
   end
 
   create_table "accounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -353,12 +357,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
     t.bigint "created_by_id"
     t.string "external_reference"
     t.datetime "initiated_at"
+    t.text "memo"
     t.datetime "posted_at"
+    t.text "reason_text"
     t.string "reference_number"
     t.string "status"
     t.string "transaction_type"
     t.datetime "updated_at", null: false
     t.index ["branch_id"], name: "index_transactions_on_branch_id"
+    t.index ["business_date", "reference_number"], name: "index_transactions_on_business_date_and_reference_number", unique: true
   end
 
   create_table "user_roles", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -389,7 +396,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
   add_foreign_key "account_products", "gl_accounts", column: "asset_gl_account_id"
   add_foreign_key "account_products", "gl_accounts", column: "liability_gl_account_id"
   add_foreign_key "account_transactions", "accounts"
+  add_foreign_key "account_transactions", "accounts", column: "contra_account_id"
   add_foreign_key "account_transactions", "posting_batches"
+  add_foreign_key "account_transactions", "transactions"
   add_foreign_key "accounts", "account_products"
   add_foreign_key "accounts", "branches"
   add_foreign_key "deposit_accounts", "accounts"

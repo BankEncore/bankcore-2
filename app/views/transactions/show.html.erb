@@ -67,6 +67,18 @@
           <div class="ui-kv-label">Posted At</div>
           <div class="ui-kv-value ui-mono"><%= @transaction.posted_at&.strftime("%Y-%m-%d %H:%M") || "—" %></div>
         </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">External Reference</div>
+          <div class="ui-kv-value ui-mono"><%= @transaction.external_reference.presence || "—" %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Memo</div>
+          <div class="ui-kv-value"><%= @transaction.memo.presence || "—" %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Reason</div>
+          <div class="ui-kv-value"><%= @transaction.reason_text.presence || "—" %></div>
+        </div>
       </div>
     </div>
   </section>

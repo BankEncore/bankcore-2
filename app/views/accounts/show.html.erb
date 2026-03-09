@@ -91,7 +91,7 @@
                 <td class="ui-mono text-right"><%= atx.direction == "credit" ? number_to_currency(atx.amount_cents / 100.0) : "—" %></td>
                 <td class="ui-mono text-right"><%= atx.running_balance_cents.present? ? number_to_currency(atx.running_balance_cents / 100.0) : "—" %></td>
                 <td>
-                  <%= link_to "View", transaction_path(atx.posting_batch&.operational_transaction_id), class: "link link-primary link-hover text-sm" if atx.posting_batch&.operational_transaction_id.present? %>
+                  <%= link_to "View", transaction_path(atx.transaction_id || atx.posting_batch&.operational_transaction_id), class: "link link-primary link-hover text-sm" if (atx.transaction_id || atx.posting_batch&.operational_transaction_id).present? %>
                 </td>
               </tr>
             <% end %>

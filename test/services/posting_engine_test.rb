@@ -39,6 +39,53 @@ class PostingEngineTest < ActiveSupport::TestCase
     assert @account.account_transactions.any?
   end
 
+  test "persists operational metadata into transaction and account history" do
+    batch = PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: 10_000,
+      business_date: @business_date,
+      memo: "Courtesy credit",
+      reason_text: "Service recovery",
+      reference_number: "MAN-20260309-100",
+      external_reference: "CASE-100"
+    )
+
+    transaction = batch.operational_transaction
+    account_transaction = @account.account_transactions.order(:id).last
+
+    assert_equal "Courtesy credit", transaction.memo
+    assert_equal "Service recovery", transaction.reason_text
+    assert_equal "MAN-20260309-100", transaction.reference_number
+    assert_equal "CASE-100", transaction.external_reference
+    assert_equal transaction.id, account_transaction.transaction_id
+    assert_includes account_transaction.description, "Courtesy credit"
+    assert_includes account_transaction.description, "MAN-20260309-100"
+  end
+
+  test "records contra account context for internal transfers" do
+    ensure_internal_transfer_template!
+
+    destination = accounts(:two)
+    batch = PostingEngine.post!(
+      transaction_code: "XFER_INTERNAL",
+      source_account_id: @account.id,
+      destination_account_id: destination.id,
+      amount_cents: 2_500,
+      business_date: @business_date,
+      memo: "Sweep transfer",
+      reference_number: "XFER-20260309-001"
+    )
+
+    source_history = AccountTransaction.find_by!(posting_batch_id: batch.id, account_id: @account.id)
+    destination_history = AccountTransaction.find_by!(posting_batch_id: batch.id, account_id: destination.id)
+
+    assert_equal destination.id, source_history.contra_account_id
+    assert_equal @account.id, destination_history.contra_account_id
+    assert_includes source_history.description, destination.account_number
+    assert_includes destination_history.description, @account.account_number
+  end
+
   test "assigns a unique posting reference to committed batches" do
     batch1 = PostingEngine.post!(
       transaction_code: "ADJ_CREDIT",
@@ -171,6 +218,31 @@ class PostingEngineTest < ActiveSupport::TestCase
   end
 
   private
+
+  def ensure_internal_transfer_template!
+    xfer_code = TransactionCode.find_or_create_by!(code: "XFER_INTERNAL") do |code|
+      code.description = "Internal account transfer"
+      code.active = true
+    end
+
+    xfer_template = PostingTemplate.find_or_create_by!(transaction_code: xfer_code) do |template|
+      template.name = "Internal Transfer"
+      template.description = "Debit source, credit destination"
+      template.active = true
+    end
+
+    PostingTemplateLeg.find_or_create_by!(posting_template: xfer_template, position: 0) do |leg|
+      leg.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
+      leg.account_source = Bankcore::Enums::ACCOUNT_SOURCE_SOURCE
+      leg.description = "Debit source account"
+    end
+
+    PostingTemplateLeg.find_or_create_by!(posting_template: xfer_template, position: 1) do |leg|
+      leg.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
+      leg.account_source = Bankcore::Enums::ACCOUNT_SOURCE_DESTINATION
+      leg.description = "Credit destination account"
+    end
+  end
 
   def with_stubbed_class_method(klass, method_name, replacement)
     original = klass.method(method_name)
