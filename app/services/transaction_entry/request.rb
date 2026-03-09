@@ -16,6 +16,7 @@ module TransactionEntry
       :idempotency_key, :created_by_id, :business_date, :fee_type_id, :fee_rule_id,
       :original_fee_assessment_id, :interest_rule_id, :accrual_date, :posting_cycle,
       :ach_trace_number, :ach_effective_date, :ach_batch_reference,
+      :ach_company_name, :ach_identification_number,
       :authorization_reference, :authorization_source, :override_request_id,
       :reversal_target_transaction_id, :gl_account_id
 
@@ -36,6 +37,18 @@ module TransactionEntry
         transaction_code: transaction_code,
         memo: raw_memo,
         account_numbers: account_numbers
+      )
+      memo = default_ach_memo_if_blank(
+        transaction_code: transaction_code,
+        memo: memo,
+        ach_company_name: normalize_string(raw_params[:ach_company_name]),
+        ach_identification_number: normalize_string(raw_params[:ach_identification_number])
+      )
+
+      raw_batch = normalize_string(raw_params[:ach_batch_reference])
+      ach_batch_reference = default_ach_batch_reference_if_blank(
+        transaction_code: transaction_code,
+        ach_batch_reference: raw_batch
       )
 
       new(
@@ -60,7 +73,9 @@ module TransactionEntry
         posting_cycle: normalize_string(raw_params[:posting_cycle]),
         ach_trace_number: normalize_string(raw_params[:ach_trace_number]),
         ach_effective_date: normalize_date(raw_params[:ach_effective_date]),
-        ach_batch_reference: normalize_string(raw_params[:ach_batch_reference]),
+        ach_batch_reference: ach_batch_reference,
+        ach_company_name: normalize_string(raw_params[:ach_company_name]),
+        ach_identification_number: normalize_string(raw_params[:ach_identification_number]),
         authorization_reference: normalize_string(raw_params[:authorization_reference]),
         authorization_source: normalize_string(raw_params[:authorization_source]),
         override_request_id: normalize_integer(raw_params[:override_request_id]),
@@ -102,6 +117,24 @@ module TransactionEntry
       return nil unless source_num.present? && dest_num.present?
 
       "Internal transfer: #{source_num} → #{dest_num}"
+    end
+
+    def self.default_ach_memo_if_blank(transaction_code:, memo:, ach_company_name:, ach_identification_number:)
+      return memo if memo.present?
+      return nil unless ACH_CODES.include?(transaction_code)
+
+      company = ach_company_name.to_s.strip.presence
+      id_num = ach_identification_number.to_s.strip.presence
+      return nil unless company.present? && id_num.present?
+
+      "#{company} - #{id_num}"
+    end
+
+    def self.default_ach_batch_reference_if_blank(transaction_code:, ach_batch_reference:)
+      return ach_batch_reference if ach_batch_reference.present?
+      return nil unless ACH_CODES.include?(transaction_code)
+
+      "ACH#{Time.current.strftime("%y%m%d%H%M%S")}"
     end
 
     def self.normalize_string(value)
@@ -180,6 +213,8 @@ module TransactionEntry
         ach_trace_number: ach_trace_number,
         ach_effective_date: ach_effective_date&.iso8601,
         ach_batch_reference: ach_batch_reference,
+        ach_company_name: ach_company_name,
+        ach_identification_number: ach_identification_number,
         authorization_reference: authorization_reference,
         authorization_source: authorization_source,
         override_request_id: override_request_id,

@@ -263,6 +263,8 @@ class TransactionWorkstationController extends Controller {
     "achTrace",
     "achEffectiveDate",
     "achBatch",
+    "achCompanyName",
+    "achIdentificationNumber",
     "authRef",
     "singlePicker",
     "sourcePicker",
@@ -321,7 +323,12 @@ class TransactionWorkstationController extends Controller {
       this.achTraceTarget.value = ""
       this.achEffectiveDateTarget.value = ""
       this.achBatchTarget.value = ""
+      if (this.hasAchCompanyNameTarget) this.achCompanyNameTarget.value = ""
+      if (this.hasAchIdentificationNumberTarget) this.achIdentificationNumberTarget.value = ""
       this.authRefTarget.value = ""
+    } else {
+      this.updateAchBatchAutofill()
+      this.updateAchMemoAutofill()
     }
 
     if (!isFee) {
@@ -343,29 +350,61 @@ class TransactionWorkstationController extends Controller {
 
   updateMemoAutofill(code) {
     if (!this.hasMemoInputTarget) return
-    if (code !== "XFER_INTERNAL") {
-      if (this.memoInputTarget.dataset.memoAutofilled === "1") {
-        delete this.memoInputTarget.dataset.memoAutofilled
+    if (code === "XFER_INTERNAL") {
+      const sourceAccount = this.pickerAccount(this.sourcePickerTarget)
+      const destinationAccount = this.pickerAccount(this.destinationPickerTarget)
+      const sourceNum = sourceAccount?.account_number?.trim()
+      const destNum = destinationAccount?.account_number?.trim()
+      if (!sourceNum || !destNum) {
+        if (this.memoInputTarget.dataset.memoAutofilled === "1") delete this.memoInputTarget.dataset.memoAutofilled
+        return
+      }
+      const input = this.memoInputTarget
+      const currentValue = (input.value || "").trim()
+      const wasAutofilled = input.dataset.memoAutofilled === "1"
+      const transferMemoPattern = /^Internal transfer: .+ → .+$/
+      const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && transferMemoPattern.test(currentValue)))
+      if (shouldAutofill) {
+        input.value = `Internal transfer: ${sourceNum} → ${destNum}`
+        input.dataset.memoAutofilled = "1"
       }
       return
     }
+    if (ACH_TYPES.includes(code)) {
+      this.updateAchMemoAutofill()
+      return
+    }
+    if (this.memoInputTarget.dataset.memoAutofilled === "1") delete this.memoInputTarget.dataset.memoAutofilled
+  }
 
-    const sourceAccount = this.pickerAccount(this.sourcePickerTarget)
-    const destinationAccount = this.pickerAccount(this.destinationPickerTarget)
-    const sourceNum = sourceAccount?.account_number?.trim()
-    const destNum = destinationAccount?.account_number?.trim()
-    if (!sourceNum || !destNum) return
+  updateAchMemoAutofill() {
+    if (!this.hasMemoInputTarget || !this.hasAchCompanyNameTarget || !this.hasAchIdentificationNumberTarget) return
+    const company = (this.achCompanyNameTarget.value || "").trim()
+    const idNum = (this.achIdentificationNumberTarget.value || "").trim()
+    if (!company || !idNum) return
 
     const input = this.memoInputTarget
     const currentValue = (input.value || "").trim()
     const wasAutofilled = input.dataset.memoAutofilled === "1"
-    const transferMemoPattern = /^Internal transfer: .+ → .+$/
-    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && transferMemoPattern.test(currentValue)))
-
+    const achMemoPattern = /.+ - .+/
+    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && achMemoPattern.test(currentValue)))
     if (shouldAutofill) {
-      input.value = `Internal transfer: ${sourceNum} → ${destNum}`
+      input.value = `${company} - ${idNum}`
       input.dataset.memoAutofilled = "1"
     }
+  }
+
+  syncAchMemoFromOriginator() {
+    this.updateAchMemoAutofill()
+  }
+
+  updateAchBatchAutofill() {
+    if (!this.hasAchBatchTarget) return
+    const currentValue = (this.achBatchTarget.value || "").trim()
+    if (currentValue !== "") return
+    const ts = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7) + new Date().toISOString().slice(8, 10) + new Date().toISOString().slice(11, 13) + new Date().toISOString().slice(14, 16) + new Date().toISOString().slice(17, 19)
+    this.achBatchTarget.value = `ACH${ts}`
+    this.achBatchTarget.dataset.achBatchAutofilled = "1"
   }
 
   updateReferenceAutofill(code) {

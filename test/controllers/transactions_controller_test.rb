@@ -380,6 +380,31 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ACH-987654321098765-260310", BankingTransaction.last.reference_number
   end
 
+  test "create posts ACH with default batch reference and originator memo when blank" do
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ACH_DEBIT",
+        account_id: accounts(:one).id,
+        amount: "25.00",
+        memo: "",
+        ach_trace_number: "111222333444555",
+        ach_effective_date: "2026-03-12",
+        ach_batch_reference: "",
+        ach_company_name: "Acme Corp",
+        ach_identification_number: "ID-789",
+        authorization_reference: "AUTH-ORIG",
+        authorization_source: "form"
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_match /\AACH\d{12}\z/, transaction.transaction_references.find { |r| r.reference_type == "ach_batch_reference" }&.reference_value
+    assert_equal "Acme Corp - ID-789", transaction.memo
+    assert_includes transaction.transaction_references.map(&:reference_type), "ach_company_name"
+    assert_includes transaction.transaction_references.map(&:reference_type), "ach_identification_number"
+  end
+
   test "create routes ach entries through ach workflow" do
     post transactions_url, params: {
       transaction: {
