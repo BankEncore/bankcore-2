@@ -65,6 +65,85 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ui-kv-value.ui-mono", text: /\$250\.00/
   end
 
+  test "create posts ADJ_CREDIT with server-generated reference when blank" do
+    account = accounts(:one)
+    assert_difference "BankingTransaction.count", 1 do
+      post transactions_url, params: {
+        transaction: {
+          transaction_code: "ADJ_CREDIT",
+          account_id: account.id,
+          amount: "50.00",
+          memo: "Auto ref test",
+          reason_text: "Server default",
+          reference_number: "",
+          external_reference: nil
+        }
+      }
+    end
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_match /\AMAN-ADJ_CREDIT-\d{12}\z/, transaction.reference_number
+    follow_redirect!
+    assert_match /posted successfully/i, flash[:notice]
+  end
+
+  test "create preserves operator-supplied reference_number" do
+    account = accounts(:one)
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ADJ_CREDIT",
+        account_id: account.id,
+        amount: "75.00",
+        memo: "Override test",
+        reason_text: "Operator ref",
+        reference_number: "CUSTOM-REF-999",
+        external_reference: nil
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    assert_equal "CUSTOM-REF-999", BankingTransaction.last.reference_number
+  end
+
+  test "preview with blank reference generates default and preserves through confirm post" do
+    account = accounts(:one)
+    post transactions_url, params: {
+      preview: "1",
+      transaction: {
+        transaction_code: "ADJ_CREDIT",
+        account_id: account.id,
+        amount: "33.00",
+        memo: "Preview ref test",
+        reason_text: "Generated default",
+        reference_number: "",
+        external_reference: nil
+      }
+    }
+
+    assert_response :success
+    assert_select "input[type=hidden][name='transaction[reference_number]']", 1
+    doc = Nokogiri::HTML(response.body)
+    input = doc.at_css("input[type=hidden][name='transaction[reference_number]']")
+    assert input, "hidden reference_number field should be present"
+    generated_ref = input["value"]
+    assert_match /\AMAN-ADJ_CREDIT-\d{12}\z/, generated_ref
+
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "ADJ_CREDIT",
+        account_id: account.id,
+        amount: "33.00",
+        memo: "Preview ref test",
+        reason_text: "Generated default",
+        reference_number: generated_ref,
+        external_reference: nil
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    assert_equal generated_ref, BankingTransaction.last.reference_number
+  end
+
   test "create posts ADJ_CREDIT and redirects" do
     account = accounts(:one)
     assert_difference "BankingTransaction.count", 1 do
@@ -217,7 +296,8 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
         "ach_effective_date",
         "ach_trace_number",
         "authorization_reference",
-        "authorization_source"
+        "authorization_source",
+        "reference_number"
       ],
       transaction.transaction_references.order(:reference_type).pluck(:reference_type)
     )

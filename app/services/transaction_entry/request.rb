@@ -20,8 +20,15 @@ module TransactionEntry
       :reversal_target_transaction_id, :gl_account_id
 
     def self.from_form(raw_params:, created_by_id:, business_date: nil)
+      transaction_code = normalize_string(raw_params[:transaction_code])
+      raw_ref = normalize_string(raw_params[:reference_number])
+      reference_number = default_reference_if_blank(
+        transaction_code: transaction_code,
+        reference_number: raw_ref
+      )
+
       new(
-        transaction_code: normalize_string(raw_params[:transaction_code]),
+        transaction_code: transaction_code,
         account_id: normalize_integer(raw_params[:account_id]),
         source_account_id: normalize_integer(raw_params[:source_account_id]),
         destination_account_id: normalize_integer(raw_params[:destination_account_id]),
@@ -29,7 +36,7 @@ module TransactionEntry
         amount_cents: normalize_amount(raw_params[:amount]),
         memo: normalize_string(raw_params[:memo]),
         reason_text: normalize_string(raw_params[:reason_text]),
-        reference_number: normalize_string(raw_params[:reference_number]),
+        reference_number: reference_number,
         external_reference: normalize_string(raw_params[:external_reference]),
         idempotency_key: normalize_string(raw_params[:idempotency_key]),
         created_by_id: created_by_id,
@@ -49,6 +56,18 @@ module TransactionEntry
         reversal_target_transaction_id: normalize_integer(raw_params[:reversal_target_transaction_id]),
         gl_account_id: normalize_integer(raw_params[:gl_account_id])
       )
+    end
+
+    def self.default_reference_if_blank(transaction_code:, reference_number:)
+      return reference_number if reference_number.present?
+      return nil unless transaction_code.present? && MANUAL_ENTRY_CODES.include?(transaction_code)
+
+      generate_default_reference(transaction_code)
+    end
+
+    def self.generate_default_reference(transaction_code)
+      ts = Time.current.strftime("%y%m%d%H%M%S")
+      "MAN-#{transaction_code}-#{ts}"
     end
 
     def self.normalize_string(value)

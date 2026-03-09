@@ -9,6 +9,7 @@ const TRANSFER_TYPES = ["XFER_INTERNAL"]
 const ADJUSTMENT_TYPES = ["ADJ_CREDIT", "ADJ_DEBIT"]
 const FEE_TYPES = ["FEE_POST"]
 const ACH_TYPES = ["ACH_CREDIT", "ACH_DEBIT"]
+const MANUAL_ENTRY_CODES = [...TRANSFER_TYPES, ...ADJUSTMENT_TYPES, ...FEE_TYPES, ...ACH_TYPES]
 
 class AccountPickerController extends Controller {
   static targets = ["hiddenInput", "queryInput", "results"]
@@ -265,10 +266,12 @@ class TransactionWorkstationController extends Controller {
     "authRef",
     "singlePicker",
     "sourcePicker",
-    "destinationPicker"
+    "destinationPicker",
+    "referenceNumberInput"
   ]
 
   connect() {
+    this.referenceUserEdited = false
     this.updateFields()
   }
 
@@ -323,7 +326,33 @@ class TransactionWorkstationController extends Controller {
       this.feeTypeSelectTarget.value = ""
     }
 
+    this.updateReferenceAutofill(code)
     this.updateContext()
+  }
+
+  markReferenceUserEdited() {
+    this.referenceUserEdited = true
+  }
+
+  updateReferenceAutofill(code) {
+    if (!this.hasReferenceNumberInputTarget) return
+    if (!MANUAL_ENTRY_CODES.includes(code)) return
+
+    const input = this.referenceNumberInputTarget
+    const currentValue = (input.value || "").trim()
+    const wasAutofilled = input.dataset.referenceAutofilled === "1"
+    const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && /^MAN-[A-Z0-9_]+-\d{12}$/.test(currentValue)))
+
+    if (shouldAutofill) {
+      const ts = new Date().toISOString().slice(2, 4) +
+        new Date().toISOString().slice(5, 7) +
+        new Date().toISOString().slice(8, 10) +
+        new Date().toISOString().slice(11, 13) +
+        new Date().toISOString().slice(14, 16) +
+        new Date().toISOString().slice(17, 19)
+      input.value = `MAN-${code}-${ts}`
+      input.dataset.referenceAutofilled = "1"
+    }
   }
 
   updateContext() {
