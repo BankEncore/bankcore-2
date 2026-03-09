@@ -1,13 +1,4 @@
-<% selected_label = if selected_account.present?
-  [
-    selected_account.account_number,
-    selected_account.account_reference,
-    selected_account.product_code,
-    selected_account.status
-  ].compact.join(" — ")
-else
-  ""
-end %>
+<% selected_label = selected_account_payload&.fetch(:display_label, "") || "" %>
 <% search_input_id = "#{field_id}_lookup" %>
 <% placeholder_text = local_assigns[:placeholder] || "Search by account number or reference" %>
 
@@ -15,6 +6,7 @@ end %>
      data-controller="account-picker"
      data-account-picker-url-value="<%= account_lookups_path %>"
      data-action="account-picker:reset->account-picker#reset"
+     <% if selected_account_payload.present? %>data-account-picker-initial-account-value="<%= json_escape(selected_account_payload.to_json) %>"<% end %>
      <% if local_assigns[:picker_target].present? %>data-transaction-workstation-target="<%= picker_target %>"<% end %>>
   <label class="label" for="<%= search_input_id %>">
     <span class="label-text text-sm font-medium"><%= label %></span>
@@ -23,7 +15,7 @@ end %>
   <input type="hidden"
          name="<%= field_name %>"
          id="<%= field_id %>"
-         value="<%= selected_account&.id || selected_id %>"
+         value="<%= selected_account_payload&.fetch(:id, nil) || selected_id %>"
          data-account-picker-target="hiddenInput">
 
   <input type="search"

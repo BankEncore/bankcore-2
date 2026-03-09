@@ -1,0 +1,17 @@
+<% if transfer_mode %>
+  <div class="space-y-3">
+    <%= render "transactions/account_context_panel",
+        title: "From Account",
+        account_payload: source_account_payload,
+        empty_text: "Select the source account" %>
+    <%= render "transactions/account_context_panel",
+        title: "To Account",
+        account_payload: destination_account_payload,
+        empty_text: "Select the destination account" %>
+  </div>
+<% else %>
+  <%= render "transactions/account_context_panel",
+      title: "Selected Account",
+      account_payload: single_account_payload,
+      empty_text: "Waiting for account selection" %>
+<% end %>

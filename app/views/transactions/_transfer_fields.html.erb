@@ -4,7 +4,7 @@
       field_id: "source_account_id",
       label: "From Account",
       selected_id: params.dig(:transaction, :source_account_id),
-      selected_account: @selected_source_account,
+      selected_account_payload: @selected_source_account_payload,
       picker_target: "sourcePicker" %>
 
   <%= render "transactions/account_picker",
@@ -12,6 +12,6 @@
       field_id: "destination_account_id",
       label: "To Account",
       selected_id: params.dig(:transaction, :destination_account_id),
-      selected_account: @selected_destination_account,
+      selected_account_payload: @selected_destination_account_payload,
       picker_target: "destinationPicker" %>
 </div>
