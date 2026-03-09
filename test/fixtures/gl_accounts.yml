@@ -80,6 +80,24 @@ nine:
   created_at: <%= ts %>
   updated_at: <%= ts %>
 
+ten:
+  gl_number: "4540"
+  name: NSF / Overdraft Fees
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+eleven:
+  gl_number: "4560"
+  name: Miscellaneous Income
+  category: income
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
 three:
   gl_number: "4510"
   name: Deposit Service Charges

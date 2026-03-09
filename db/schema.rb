@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_050000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -159,14 +159,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_040000) do
     t.integer "amount_cents", null: false
     t.date "assessed_on", null: false
     t.datetime "created_at", null: false
+    t.bigint "fee_rule_id"
     t.bigint "fee_type_id", null: false
     t.bigint "posting_batch_id"
     t.string "status", default: "posted", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "assessed_on"], name: "index_fee_assessments_on_account_id_and_assessed_on"
     t.index ["account_id"], name: "index_fee_assessments_on_account_id"
+    t.index ["fee_rule_id"], name: "index_fee_assessments_on_fee_rule_id"
     t.index ["fee_type_id"], name: "index_fee_assessments_on_fee_type_id"
     t.index ["posting_batch_id"], name: "index_fee_assessments_on_posting_batch_id"
+  end
+
+  create_table "fee_rules", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "account_product_id", null: false
+    t.integer "amount_cents"
+    t.text "conditions_json"
+    t.datetime "created_at", null: false
+    t.date "effective_on"
+    t.date "ends_on"
+    t.bigint "fee_type_id", null: false
+    t.bigint "gl_account_id"
+    t.string "method", default: "fixed_amount", null: false
+    t.integer "priority", default: 100, null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_product_id"], name: "index_fee_rules_on_account_product_id"
+    t.index ["fee_type_id", "account_product_id", "priority"], name: "index_fee_rules_on_fee_type_product_priority", unique: true
+    t.index ["fee_type_id"], name: "index_fee_rules_on_fee_type_id"
+    t.index ["gl_account_id"], name: "index_fee_rules_on_gl_account_id"
   end
 
   create_table "fee_types", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -408,8 +428,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_040000) do
   add_foreign_key "accounts", "branches"
   add_foreign_key "deposit_accounts", "accounts"
   add_foreign_key "fee_assessments", "accounts"
+  add_foreign_key "fee_assessments", "fee_rules"
   add_foreign_key "fee_assessments", "fee_types"
   add_foreign_key "fee_assessments", "posting_batches"
+  add_foreign_key "fee_rules", "account_products"
+  add_foreign_key "fee_rules", "fee_types"
+  add_foreign_key "fee_rules", "gl_accounts"
   add_foreign_key "fee_types", "gl_accounts"
   add_foreign_key "gl_accounts", "gl_accounts", column: "parent_gl_account_id"
   add_foreign_key "interest_accruals", "accounts"

@@ -123,6 +123,34 @@ class FeePostingServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "stores fee rule linkage and uses rule gl override when provided" do
+    rule = FeeRule.create!(
+      fee_type: @fee_type,
+      account_product: accounts(:two).account_product,
+      gl_account: GlAccount.find_by!(gl_number: "4560"),
+      priority: 100,
+      method: FeeRule::METHOD_FIXED_AMOUNT,
+      amount_cents: 700,
+      effective_on: @business_date
+    )
+
+    batch = FeePostingService.assess!(
+      account_id: accounts(:two).id,
+      fee_type_id: @fee_type.id,
+      fee_rule_id: rule.id,
+      amount_cents: rule.amount_cents_for_assessment,
+      gl_account_id: rule.gl_account_id_for_posting,
+      business_date: @business_date
+    )
+
+    assessment = FeeAssessment.find_by!(posting_batch_id: batch.id)
+    gl_numbers = batch.posting_legs.includes(:gl_account).order(:position).map { |leg| leg.gl_account&.gl_number }.compact
+
+    assert_equal rule.id, assessment.fee_rule_id
+    assert_equal 700, assessment.amount_cents
+    assert_equal [ "4560" ], gl_numbers
+  end
+
   private
 
   def with_stubbed_class_method(klass, method_name, replacement)
@@ -152,16 +180,21 @@ class FeePostingServiceTest < ActiveSupport::TestCase
       t.description = "Debit account, Credit fee income"
       t.active = true
     end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 0) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
-      l.description = "Debit customer account"
-    end
-    PostingTemplateLeg.find_or_create_by!(posting_template_id: tpl.id, position: 1) do |l|
-      l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
-      l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
-      l.gl_account_id = gl.id
-      l.description = "Credit fee income"
-    end
+    debit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 0)
+    debit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+      description: "Debit customer account"
+    )
+    debit_leg.save!
+
+    credit_leg = PostingTemplateLeg.find_or_initialize_by(posting_template_id: tpl.id, position: 1)
+    credit_leg.assign_attributes(
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account_id: nil,
+      description: "Credit fee income"
+    )
+    credit_leg.save!
   end
 end

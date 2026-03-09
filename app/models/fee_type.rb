@@ -5,6 +5,7 @@ class FeeType < ApplicationRecord
 
   belongs_to :gl_account, optional: true
   has_many :fee_assessments, dependent: :restrict_with_error
+  has_many :fee_rules, dependent: :restrict_with_error
 
   validates :code, presence: true, uniqueness: true
   validates :name, presence: true

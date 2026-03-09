@@ -1,0 +1,21 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+maintenance_dda:
+  fee_type: maintenance
+  account_product: dda
+  priority: 100
+  method: fixed_amount
+  amount_cents: 1500
+  effective_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+service_charge_savings:
+  fee_type: service_charge
+  account_product: savings
+  gl_account: eleven
+  priority: 100
+  method: fixed_amount
+  amount_cents: 700
+  effective_on: 2026-03-01
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
