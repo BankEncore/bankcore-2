@@ -4,6 +4,7 @@ class OverrideRequestsController < ApplicationController
   include Bankcore::Enums
 
   before_action :set_override_request, only: %i[show approve deny]
+  before_action -> { require_permission(:approve_overrides) }, only: %i[approve deny]
 
   def index
     @override_requests = OverrideRequest

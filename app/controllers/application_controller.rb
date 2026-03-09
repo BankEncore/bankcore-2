@@ -17,4 +17,10 @@ class ApplicationController < ActionController::Base
 
     redirect_to login_path, alert: "Please sign in to continue."
   end
+
+  def require_permission(permission_code)
+    return if current_user&.has_permission?(permission_code)
+
+    redirect_to root_path, alert: "You do not have permission to perform this action.", status: :forbidden
+  end
 end

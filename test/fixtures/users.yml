@@ -5,5 +5,16 @@ one:
   email: test@example.com
   status: active
   primary_branch: one
+  password_digest: <%= BCrypt::Password.create("secret", cost: 4) %>
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+two:
+  username: limiteduser
+  display_name: Limited User
+  email: limited@example.com
+  status: active
+  primary_branch: one
+  password_digest: <%= BCrypt::Password.create("secret", cost: 4) %>
   created_at: <%= ts %>
   updated_at: <%= ts %>

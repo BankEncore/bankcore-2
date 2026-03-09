@@ -3,6 +3,10 @@
 require "test_helper"
 
 class TransactionsControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    post login_url, params: { username: "testuser", password: "secret" }
+  end
+
   test "index renders" do
     get transactions_url
     assert_response :success
@@ -38,6 +42,23 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     )
     get transaction_url(txn)
     assert_response :success
+  end
+
+  test "reverse requires reverse_transactions permission" do
+    batch = PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: accounts(:one).id,
+      amount_cents: 4000,
+      business_date: business_dates(:one).business_date
+    )
+    txn = batch.operational_transaction
+
+    delete logout_url
+    post login_url, params: { username: "limiteduser", password: "secret" }
+    post reverse_transaction_url(txn)
+
+    assert_response :forbidden
+    assert_match /do not have permission/i, flash[:alert]
   end
 
   test "reverse redirects to override request when threshold exceeded without approval" do

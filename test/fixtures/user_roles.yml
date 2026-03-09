@@ -4,3 +4,15 @@ one:
   role: one
   created_at: <%= ts %>
   updated_at: <%= ts %>
+
+two:
+  user: one
+  role: two
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+three:
+  user: two
+  role: three
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

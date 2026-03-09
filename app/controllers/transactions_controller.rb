@@ -2,6 +2,7 @@
 
 class TransactionsController < ApplicationController
   before_action :set_transaction, only: %i[show reverse]
+  before_action -> { require_permission(:reverse_transactions) }, only: %i[reverse]
 
   def index
     @transactions = BankingTransaction

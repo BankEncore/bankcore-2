@@ -11,4 +11,10 @@ class User < ApplicationRecord
 
   validates :username, presence: true, uniqueness: true
   validates :status, inclusion: { in: Bankcore::Enums::STATUSES }, allow_nil: true
+
+  def has_permission?(permission_code)
+    return false if nil?
+
+    roles.joins(:role_permissions).where(role_permissions: { permission_code: permission_code.to_s }).exists?
+  end
 end

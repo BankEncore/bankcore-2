@@ -395,14 +395,37 @@ if defined?(FeeType)
   end
 end
 
-# 7. Seed user for authentication (username: ops, password: password)
+# 7. Roles and permissions
+if defined?(Role)
+  back_office = Role.find_or_create_by!(code: "back_office") do |r|
+    r.name = "Back Office"
+    r.description = "Can post and reverse manual transactions"
+  end
+  %w[post_transactions reverse_transactions].each do |code|
+    RolePermission.find_or_create_by!(role: back_office, permission_code: code)
+  end
+
+  supervisor = Role.find_or_create_by!(code: "supervisor") do |r|
+    r.name = "Supervisor"
+    r.description = "Can approve override requests"
+  end
+  RolePermission.find_or_create_by!(role: supervisor, permission_code: "approve_overrides")
+end
+
+# 8. Seed user for authentication (username: ops, password: password)
 if defined?(User) && User.column_names.include?("password_digest")
-  User.find_or_create_by!(username: "ops") do |u|
+  ops_user = User.find_or_create_by!(username: "ops") do |u|
     u.display_name = "Operations User"
     u.status = Bankcore::Enums::STATUS_ACTIVE
     u.primary_branch_id = branch.id
     u.password = "password"
     u.password_confirmation = "password"
+  end
+  if defined?(UserRole) && defined?(Role)
+    [ "back_office", "supervisor" ].each do |role_code|
+      role = Role.find_by(code: role_code)
+      UserRole.find_or_create_by!(user: ops_user, role: role) if role
+    end
   end
 end
 
