@@ -1,6 +1,6 @@
 # ADR-0007: Use Account Products as the Primary Configuration Unit
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-03-08
 
 ## Context

@@ -15,17 +15,18 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form"
     assert_select "input[name='account[account_number]']"
-    assert_select "select[name='account[account_type]']"
+    assert_select "select[name='account[account_product_id]']"
     assert_select "select[name='account[branch_id]']"
   end
 
   test "create creates account and redirects" do
     branch = branches(:one)
+    product = account_products(:dda)
     assert_difference "Account.count", 1 do
       post accounts_url, params: {
         account: {
           account_number: "2001",
-          account_type: "dda",
+          account_product_id: product.id,
           branch_id: branch.id,
           currency_code: "USD"
         }
@@ -34,6 +35,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to account_path(Account.last)
     account = Account.last
     assert_equal "2001", account.account_number
+    assert_equal product.id, account.account_product_id
     assert_equal "dda", account.account_type
     assert_equal branch.id, account.branch_id
     assert_not_nil account.deposit_account
@@ -42,11 +44,12 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
   test "create with primary party creates account owner" do
     branch = branches(:one)
     party = parties(:one)
+    product = account_products(:dda)
     assert_difference [ "Account.count", "AccountOwner.count" ], 1 do
       post accounts_url, params: {
         account: {
           account_number: "2002",
-          account_type: "dda",
+          account_product_id: product.id,
           branch_id: branch.id,
           currency_code: "USD",
           primary_party_id: party.id
@@ -60,10 +63,11 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
 
   test "create with duplicate account number re-renders form" do
     branch = branches(:one)
+    product = account_products(:dda)
     post accounts_url, params: {
       account: {
         account_number: "1001",
-        account_type: "dda",
+        account_product_id: product.id,
         branch_id: branch.id,
         currency_code: "USD"
       }

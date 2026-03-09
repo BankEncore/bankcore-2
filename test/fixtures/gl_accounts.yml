@@ -44,6 +44,33 @@ five:
   created_at: <%= ts %>
   updated_at: <%= ts %>
 
+six:
+  gl_number: "2110"
+  name: Noninterest-Bearing Demand Deposits (DDA)
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+seven:
+  gl_number: "2120"
+  name: Interest-Bearing Demand Deposits (NOW)
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+eight:
+  gl_number: "2130"
+  name: Savings / Money Market Accounts
+  category: liability
+  normal_balance: credit
+  status: active
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
 three:
   gl_number: "4510"
   name: Deposit Service Charges

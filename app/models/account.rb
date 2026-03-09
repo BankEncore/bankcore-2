@@ -6,6 +6,7 @@ class Account < ApplicationRecord
   attr_accessor :primary_party_id
 
   belongs_to :branch
+  belongs_to :account_product, optional: true
   has_many :account_owners
   has_many :parties, through: :account_owners
   has_one :deposit_account, dependent: :destroy
@@ -21,4 +22,8 @@ class Account < ApplicationRecord
   validates :branch_id, presence: true
   validates :currency_code, presence: true
   validates :status, presence: true, inclusion: { in: Bankcore::Enums::STATUSES }
+
+  def product_code
+    account_product&.product_code || account_type
+  end
 end

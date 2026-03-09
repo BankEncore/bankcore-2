@@ -24,6 +24,12 @@ class AccountTest < ActiveSupport::TestCase
     assert_equal branches(:one), account.branch
   end
 
+  test "optionally belongs to account product" do
+    account = accounts(:one)
+    assert_equal account_products(:dda), account.account_product
+    assert_equal "dda", account.product_code
+  end
+
   test "has many account_owners" do
     account = accounts(:one)
     assert_respond_to account, :account_owners

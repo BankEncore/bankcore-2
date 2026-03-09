@@ -51,14 +51,34 @@ gl_accounts_data.each do |attrs|
   end
 end
 
-# 3. Business Date
+# 3. Account Products
+account_products_data = [
+  { product_code: "dda", name: "Noninterest-Bearing DDA", product_family: "deposit", currency_code: "USD", liability_gl_number: "2110" },
+  { product_code: "now", name: "Interest-Bearing Demand", product_family: "deposit", currency_code: "USD", liability_gl_number: "2120" },
+  { product_code: "savings", name: "Savings", product_family: "deposit", currency_code: "USD", liability_gl_number: "2130" },
+  { product_code: "cd", name: "Time Deposit", product_family: "deposit", currency_code: "USD", liability_gl_number: "2130" }
+]
+
+account_products_data.each do |attrs|
+  liability_gl = GlAccount.find_by!(gl_number: attrs.delete(:liability_gl_number))
+
+  AccountProduct.find_or_create_by!(product_code: attrs[:product_code]) do |product|
+    product.name = attrs[:name]
+    product.product_family = attrs[:product_family]
+    product.currency_code = attrs[:currency_code]
+    product.status = Bankcore::Enums::STATUS_ACTIVE
+    product.liability_gl_account = liability_gl
+  end
+end
+
+# 4. Business Date
 today = Date.current
 BusinessDate.find_or_create_by!(business_date: today) do |bd|
   bd.status = Bankcore::Enums::BUSINESS_DATE_OPEN
   bd.opened_at = Time.current
 end
 
-# 4. Sample Party and Account (for manual transaction entry)
+# 5. Sample Party and Account (for manual transaction entry)
 party = Party.find_or_create_by!(party_number: "P001") do |p|
   p.party_type = Bankcore::Enums::PARTY_TYPE_PERSON
   p.display_name = "Sample Customer"
@@ -68,6 +88,7 @@ party = Party.find_or_create_by!(party_number: "P001") do |p|
 end
 
 account = Account.find_or_create_by!(account_number: "1001") do |a|
+  a.account_product_id = AccountProduct.find_by!(product_code: "dda").id
   a.branch_id = branch.id
   a.account_type = "dda"
   a.currency_code = "USD"
@@ -86,7 +107,7 @@ DepositAccount.find_or_create_by!(account_id: account.id) do |da|
   da.interest_bearing = false
 end
 
-# 5. Transaction Codes
+# 6. Transaction Codes
 transaction_codes_data = [
   { code: "ADJ_CREDIT", description: "Manual account credit", reversal_code: "ADJ_DEBIT" },
   { code: "ADJ_DEBIT", description: "Manual account debit", reversal_code: "ADJ_CREDIT" },
@@ -109,7 +130,7 @@ transaction_codes_data.each do |attrs|
   end
 end
 
-# 5. Posting Templates (Phase 2 + Phase 4)
+# 6. Posting Templates (Phase 2 + Phase 4)
 if defined?(PostingTemplate)
   gl_5190 = GlAccount.find_by!(gl_number: "5190")
   gl_1180 = GlAccount.find_by!(gl_number: "1180")
@@ -330,7 +351,7 @@ if defined?(PostingTemplate)
   end
 end
 
-# 6. Sample Party and Account (for manual transaction entry UI)
+# 7. Sample Party and Account (for manual transaction entry UI)
 party = Party.find_or_create_by!(party_number: "P001") do |p|
   p.party_type = Bankcore::Enums::PARTY_TYPE_PERSON
   p.display_name = "Sample Customer"
@@ -340,6 +361,7 @@ party = Party.find_or_create_by!(party_number: "P001") do |p|
 end
 
 account = Account.find_or_create_by!(account_number: "1001") do |a|
+  a.account_product_id = AccountProduct.find_by!(product_code: "dda").id
   a.branch_id = branch.id
   a.account_type = "dda"
   a.currency_code = "USD"
@@ -360,8 +382,9 @@ end
 
 # Second account for internal transfers
 account2 = Account.find_or_create_by!(account_number: "1002") do |a|
+  a.account_product_id = AccountProduct.find_by!(product_code: "savings").id
   a.branch_id = branch.id
-  a.account_type = "dda"
+  a.account_type = "savings"
   a.currency_code = "USD"
   a.status = Bankcore::Enums::STATUS_ACTIVE
   a.opened_on = Date.current
@@ -374,11 +397,11 @@ AccountOwner.find_or_create_by!(account_id: account2.id, party_id: party.id) do 
 end
 
 DepositAccount.find_or_create_by!(account_id: account2.id) do |da|
-  da.deposit_type = "dda"
-  da.interest_bearing = false
+  da.deposit_type = "savings"
+  da.interest_bearing = true
 end
 
-# 6. Fee Types (Phase 5)
+# 8. Fee Types (Phase 5)
 if defined?(FeeType)
   gl_4510 = GlAccount.find_by!(gl_number: "4510")
   FeeType.find_or_create_by!(code: "MAINTENANCE") do |ft|
@@ -395,7 +418,7 @@ if defined?(FeeType)
   end
 end
 
-# 7. Roles and permissions
+# 9. Roles and permissions
 if defined?(Role)
   back_office = Role.find_or_create_by!(code: "back_office") do |r|
     r.name = "Back Office"
@@ -412,7 +435,7 @@ if defined?(Role)
   RolePermission.find_or_create_by!(role: supervisor, permission_code: "approve_overrides")
 end
 
-# 8. Seed user for authentication (username: ops, password: password)
+# 10. Seed user for authentication (username: ops, password: password)
 if defined?(User) && User.column_names.include?("password_digest")
   ops_user = User.find_or_create_by!(username: "ops") do |u|
     u.display_name = "Operations User"
@@ -429,4 +452,4 @@ if defined?(User) && User.column_names.include?("password_digest")
   end
 end
 
-puts "BankCORE seeds complete: 1 branch, #{GlAccount.count} GL accounts, 1 business date, #{TransactionCode.count} transaction codes, #{PostingTemplate.count} posting templates, #{Party.count} parties, #{Account.count} accounts#{', ' + FeeType.count.to_s + ' fee types' if defined?(FeeType)}#{User.column_names.include?('password_digest') ? ", 1 ops user (username: ops, password: password)" : ''}."
+puts "BankCORE seeds complete: 1 branch, #{GlAccount.count} GL accounts, #{AccountProduct.count} account products, 1 business date, #{TransactionCode.count} transaction codes, #{PostingTemplate.count} posting templates, #{Party.count} parties, #{Account.count} accounts#{', ' + FeeType.count.to_s + ' fee types' if defined?(FeeType)}#{User.column_names.include?('password_digest') ? ", 1 ops user (username: ops, password: password)" : ''}."

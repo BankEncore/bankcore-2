@@ -32,6 +32,7 @@ class AccountsController < ApplicationController
     @account = Account.new(account_params)
     @account.opened_on ||= Date.current
     @account.status ||= Bankcore::Enums::STATUS_ACTIVE
+    apply_product_defaults!
 
     if @account.save
       create_deposit_account_if_needed!
@@ -51,7 +52,7 @@ class AccountsController < ApplicationController
   end
 
   def account_params
-    params.require(:account).permit(:account_number, :account_type, :branch_id, :currency_code)
+    params.require(:account).permit(:account_number, :account_product_id, :branch_id, :currency_code)
   end
 
   def create_deposit_account_if_needed!
@@ -67,6 +68,7 @@ class AccountsController < ApplicationController
   def set_form_options
     @branches = Branch.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:branch_code)
     @parties = Party.order(:display_name).limit(200)
+    @account_products = AccountProduct.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:name)
   end
 
   def create_primary_owner_if_provided!
@@ -80,5 +82,12 @@ class AccountsController < ApplicationController
       is_primary: true,
       effective_on: Date.current
     )
+  end
+
+  def apply_product_defaults!
+    return if @account.account_product.blank?
+
+    @account.account_type = @account.account_product.product_code
+    @account.currency_code = @account.account_product.currency_code if @account.currency_code.blank?
   end
 end

@@ -17,10 +17,16 @@
   </div>
 
   <div class="form-control w-full">
-    <label class="label" for="account_account_type">
-      <span class="label-text">Account Type</span>
+    <label class="label" for="account_account_product_id">
+      <span class="label-text">Account Product</span>
     </label>
-    <%= f.select :account_type, Bankcore::ACCOUNT_TYPES.map { |t| [t.upcase, t] }, {}, class: "select select-bordered w-full", required: true %>
+    <%= f.collection_select :account_product_id,
+        @account_products,
+        :id,
+        :name,
+        { include_blank: "— Select product —" },
+        class: "select select-bordered w-full",
+        required: true %>
   </div>
 
   <div class="form-control w-full">
