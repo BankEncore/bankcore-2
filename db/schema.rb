@@ -49,6 +49,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
     t.index ["party_id"], name: "index_account_owners_on_party_id"
   end
 
+  create_table "account_products", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "asset_gl_account_id"
+    t.datetime "created_at", null: false
+    t.string "currency_code", default: "USD", null: false
+    t.bigint "liability_gl_account_id"
+    t.string "name", null: false
+    t.string "product_code", null: false
+    t.string "product_family", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "updated_at", null: false
+    t.index ["asset_gl_account_id"], name: "index_account_products_on_asset_gl_account_id"
+    t.index ["liability_gl_account_id"], name: "index_account_products_on_liability_gl_account_id"
+    t.index ["product_code"], name: "index_account_products_on_product_code", unique: true
+  end
+
   create_table "account_transactions", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.integer "amount_cents"
@@ -66,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
 
   create_table "accounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.string "account_number", null: false
+    t.bigint "account_product_id"
     t.string "account_type", null: false
     t.bigint "branch_id", null: false
     t.date "closed_on"
@@ -75,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
     t.string "status", default: "active", null: false
     t.datetime "updated_at", null: false
     t.index ["account_number"], name: "index_accounts_on_account_number", unique: true
+    t.index ["account_product_id"], name: "index_accounts_on_account_product_id"
     t.index ["branch_id"], name: "index_accounts_on_branch_id"
   end
 
@@ -369,8 +386,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_002855) do
   add_foreign_key "account_holds", "accounts"
   add_foreign_key "account_owners", "accounts"
   add_foreign_key "account_owners", "parties"
+  add_foreign_key "account_products", "gl_accounts", column: "asset_gl_account_id"
+  add_foreign_key "account_products", "gl_accounts", column: "liability_gl_account_id"
   add_foreign_key "account_transactions", "accounts"
   add_foreign_key "account_transactions", "posting_batches"
+  add_foreign_key "accounts", "account_products"
   add_foreign_key "accounts", "branches"
   add_foreign_key "deposit_accounts", "accounts"
   add_foreign_key "fee_assessments", "accounts"

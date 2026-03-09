@@ -25,15 +25,15 @@ It focuses on practical compliance of the current posting engine, reversal flow,
 | Positive leg amounts | Complete | `PostingValidator` and `PostingLeg` both enforce positive amounts | Low | Keep dual validation at service + model layer |
 | Supported MVP target scopes | Complete | `PostingEngine` builds only `account` and `gl` legs, matching MVP boundary | Low | Extend only when teller/cash scope is intentionally added |
 | Account-side projection from posting | Complete | `AccountProjector` derives `account_transactions` from account-facing `posting_legs` | Low | Maintain projection-only design |
-| GL-side projection from posting | Complete | `JournalProjector` derives `journal_entries` and `journal_entry_lines` from GL-facing `posting_legs` | Low | Maintain one-journal-per-batch MVP rule |
+| GL-side projection from posting | Complete | `JournalProjector` derives `journal_entries` and `journal_entry_lines` from explicit GL legs and product-resolved customer-account effects | Low | Maintain one-journal-per-batch MVP rule and keep product GL resolution explicit |
 | No direct balance authority outside posting history | Complete | `BalanceRefreshService` rebuilds from `account_transactions`; `account_balances` behaves as projection/cache | Low | Keep using `account_transactions` as source of truth |
 | Reversal uses new linked batch | Complete | `ReversalService` creates a new posting via `PostingEngine.post!` and links with `reversal_of_batch_id` | Low | Add more policy checks as reversal scope expands |
 | Atomic posting of batch, legs, journal, account projection | Partial | `PostingEngine.post!` wraps posting, projections, and audit emission in one transaction | Good core behavior, but not all related side effects are included | Keep transaction boundary around all required posting effects |
 | Atomic fee/interest linkage rows | Partial | `FeePostingService` and `InterestAccrualService` post first, then create linkage rows afterward | If linkage row creation fails, financial posting is already committed | Wrap posting + linkage row creation in one outer transaction or move linkage creation into posting workflow |
-| Idempotent duplicate replay | Partial | Existing posted batch is returned when `idempotency_key` already exists | Safe for exact retry, but no payload comparison | Store/compare semantic fingerprint or operational request payload |
-| Idempotency conflict rejection | Gap | Same key with different payload is not rejected | Silent cross-request collision can return wrong prior batch | Add semantic payload comparison and raise conflict on mismatch |
+| Idempotent duplicate replay | Complete | Existing posted batch is returned when `idempotency_key` already exists and the semantic payload fingerprint matches | Low | Keep semantic fingerprint comparison as the baseline idempotency rule |
+| Idempotency conflict rejection | Complete | `PostingEngine` raises `IdempotencyConflictError` when the same key is reused with a different semantic payload | Low | Keep coverage around payload canonicalization and conflict paths |
 | Business date validation | Complete | `PostingValidator` requires open business date | Low | Keep current rule and expand later for governed override/backdating windows |
-| Posting reference uniqueness | Gap | `posting_reference` exists on `posting_batches`, but `PostingEngine` does not populate it | Traceability does not meet reference rule fully | Generate unique posting reference for every committed batch |
+| Posting reference uniqueness | Complete | `PostingBatch` assigns a unique `posting_reference` before validation on create and tests cover uniqueness | Low | Keep the unique index and regression coverage |
 | Exactly one primary posting batch per operational event | Partial | `PostingEngine` creates one batch per created `BankingTransaction` | Works for current engine path, but not strongly enforced by DB constraint or richer workflow state machine | Add uniqueness/consistency rule if multiple posting paths are introduced |
 | Traceability from source event to financial output | Partial | `PostingBatch.operational_transaction_id`, `AccountTransaction.posting_batch_id`, and `JournalEntry.posting_batch_id` provide good linkage | No richer reference registry, no dedicated transaction references, limited operational metadata | Add `transaction_references` or stronger reference model when external flows mature |
 | Operational lifecycle states (`draft -> validated -> approved -> posted`) | Gap | Current flow generally goes straight to posting on success | Lifecycle doc expects explicit intermediate states and exception paths | Introduce stored transaction lifecycle states only when needed for operational workflow visibility |
@@ -44,13 +44,13 @@ It focuses on practical compliance of the current posting engine, reversal flow,
 | Reversal eligibility checks | Partial | `ReversalService` checks original batch is posted and not already reversed | Does not yet enforce reversal window, business-date restrictions, or broader policy eligibility | Add reversal policy validator before constructing inverse posting |
 | Journal balancing guarantee | Partial | GL journal lines are derived from already balanced GL legs, which is structurally good | No explicit post-build journal balance assertion | Add journal-level balance assertion and regression test |
 | Fail closed / no partial posting | Partial | Core posting transaction should rollback if batch/legs/projection/journal creation fails | Material failure audits and linkage-row atomicity are incomplete | Add tests that intentionally fail projector/linkage creation and assert zero committed financial rows |
-| Immutability of posted history | Gap | Design uses reversals rather than edits, but models do not block update/delete on posted rows | Posted financial records can still be mutated or destroyed by application code | Enforce readonly behavior or guards on posted `PostingBatch`, `PostingLeg`, `JournalEntry`, `JournalEntryLine`, `AccountTransaction` |
-| Audit on posting committed | Complete | `PostingEngine` emits `posting_succeeded` | Low | Keep as baseline lifecycle audit |
-| Audit on reversal committed | Complete | `ReversalService` emits `reversal_created` after reversal posting succeeds | Naming is acceptable, though “reversal_committed” may better match doc language | Consider aligning event names with lifecycle document |
-| Audit on posting requested | Gap | No explicit event on request initiation | Reduced observability for operator intent vs posted result | Emit request/initiation audit in transaction entry flow |
-| Audit on posting failure | Gap | Posting failures raise errors, but no material failure audit is emitted | Harder to review failed attempts and control exceptions | Emit `posting_failed` for material validation/commit failures |
-| Audit on approval granted / denied / override use | Partial | Override state changes are persisted; reversal controller uses approved overrides | No audit emission around approve/deny/use transitions | Emit audit events from `OverrideRequestService` |
-| Audit on reversal requested | Gap | Only committed reversal is audited | Missing requested vs completed distinction from lifecycle doc | Emit reversal-requested audit before actual reversal posting |
+| Immutability of posted history | Complete | Posted financial models include `PostedRecordImmutable`, and tests confirm update/delete are rejected for posted rows | Low | Keep immutability guards and extend them to any future posted financial models |
+| Audit on posting committed | Complete | `PostingEngine` emits `posting_committed` after successful posting | Low | Keep as baseline lifecycle audit |
+| Audit on reversal committed | Complete | `ReversalService` emits `reversal_committed` after reversal posting succeeds | Low | Keep lifecycle naming aligned with the current audit event vocabulary |
+| Audit on posting requested | Complete | `PostingEngine` emits `posting_requested` before committing the financial event | Low | Keep requested vs committed distinction |
+| Audit on posting failure | Complete | `PostingEngine` emits `posting_failed` for material failures | Low | Keep failure audit emission in the core posting path |
+| Audit on approval granted / denied / override use | Complete | `OverrideRequestService` emits approval, denial, and use audit events | Low | Keep override lifecycle audit coverage |
+| Audit on reversal requested | Complete | `ReversalService` emits `reversal_requested` before constructing the inverse posting | Low | Keep requested vs committed reversal distinction |
 | EOD inclusion and business date close control | Partial | `BusinessDateEodService` blocks close when transactions are not posted/reversed and emits close audit | No GL summary/export inclusion layer yet | Good for current phase; extend when GL batch/export work begins |
 | External/reference key capture at initiation | Partial | `idempotency_key` is accepted through UI/service path | No dedicated reference table and not all trace fields are persisted on operational transaction | Add structured reference capture when external channels expand |
 
@@ -65,15 +65,18 @@ It focuses on practical compliance of the current posting engine, reversal flow,
 - posting-derived subledger and GL projection
 - reversal-as-new-batch pattern
 - derivative balance cache design
+- semantic idempotency and conflict rejection
+- posting reference generation
+- lifecycle audit coverage for posting, reversal, and override flows
+- immutability guards on posted financial rows
 
 ### Biggest compliance gaps
 
-- immutable-history enforcement at the model/data layer
-- idempotency conflict detection for reused keys with different payloads
 - atomic inclusion of fee/interest linkage rows
-- fuller audit coverage for requested/failed/approved lifecycle states
 - proactive eligibility validation for accounts, GL targets, and reversal policy
-- required `posting_reference` generation
+- centralized policy/approval gating outside the reversal path
+- richer operational reference capture and transaction metadata
+- explicit journal-level post-build balance assertion
 
 ### Overall assessment
 
@@ -89,22 +92,20 @@ That means the system already follows the most important financial invariants we
 But it does **not yet fully implement** the broader operational control model described in the reference documents:
 
 - explicit lifecycle state tracking
-- full audit trail coverage
-- strict immutability enforcement
 - richer policy / approval gating
-- complete idempotency semantics
+- fuller operational reference capture
+- richer exception and workflow visibility
 
 ---
 
 ## Suggested Remediation Order
 
-1. Enforce immutability for posted financial rows
-2. Add idempotency conflict detection for same key + different payload
-3. Populate unique `posting_reference` on every committed batch
-4. Wrap fee / interest linkage rows into the same atomic commit boundary
-5. Add proactive target eligibility validation for accounts, GL accounts, and reversal policy
-6. Expand audit coverage for request, failure, approval, override use, and reversal request events
-7. Introduce richer lifecycle states only if/when operator workflow visibility requires them
+1. Wrap fee / interest linkage rows into the same atomic commit boundary
+2. Add proactive target eligibility validation for accounts, GL accounts, and reversal policy
+3. Centralize policy / approval checks for posting paths beyond reversal
+4. Add richer operational reference capture and transaction metadata
+5. Add explicit journal-level balance assertion and regression coverage
+6. Introduce richer lifecycle states only if/when operator workflow visibility requires them
 
 ---
 

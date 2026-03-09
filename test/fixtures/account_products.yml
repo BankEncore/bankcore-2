@@ -1,0 +1,30 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+dda:
+  product_code: dda
+  name: Noninterest-Bearing DDA
+  product_family: deposit
+  currency_code: USD
+  status: active
+  liability_gl_account: six
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+now:
+  product_code: now
+  name: Interest-Bearing Demand
+  product_family: deposit
+  currency_code: USD
+  status: active
+  liability_gl_account: seven
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+savings:
+  product_code: savings
+  name: Savings
+  product_family: deposit
+  currency_code: USD
+  status: active
+  liability_gl_account: eight
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

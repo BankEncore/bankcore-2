@@ -1,6 +1,6 @@
 # ADR-0008: Resolve Customer Balance GL Effects Through Account Products
 
-**Status:** Proposed  
+**Status:** Accepted  
 **Date:** 2026-03-08
 
 ## Context

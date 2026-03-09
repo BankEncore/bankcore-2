@@ -313,7 +313,43 @@ The following metadata categories should be considered first-class as operationa
 
 ---
 
-# 7. Relationship to Future Operational Tables
+# 7. Next Operational Metadata Increment
+
+Now that product identity and product-linked GL behavior are in place, the next operational increment should stay intentionally small and focus on traceability rather than trying to implement the entire deferred transaction-detail model at once.
+
+## 7.1 Near-term scope
+
+The next increment should add or standardize:
+
+- persisted memo and reason text on manual transaction entry paths
+- durable transaction references for alternate lookup and external traceability
+- direct transaction traceability from `account_transactions` back to the operational transaction
+- contra-account context for bilateral transactions such as `XFER_INTERNAL`
+
+## 7.2 Concrete targets
+
+| Need | Suggested implementation target |
+|---|---|
+| Manual memo / reason capture | carry memo or reason through `transactions` and account-history description logic |
+| External and alternate references | add `transaction_references` |
+| Direct traceability from account history | add `account_transactions.transaction_id` |
+| Better transfer explainability | add contra-account context, either through `transaction_lines` or a focused account-history field |
+
+## 7.3 Explicit deferral
+
+This increment does **not** require full teller-era operational richness yet.
+
+The following can remain deferred until broader operational workflows justify them:
+
+- full `transaction_lines` coverage for every transaction family
+- instrument-heavy `transaction_items`
+- complete `transaction_exceptions` workflow modeling
+
+The immediate goal is to make posted transactions easier for operators to understand and trace, especially for internal transfers and externally referenced activity.
+
+---
+
+# 8. Relationship to Future Operational Tables
 
 As the operational layer matures, this specification is expected to map naturally to:
 
@@ -325,7 +361,7 @@ As the operational layer matures, this specification is expected to map naturall
 
 ---
 
-# 8. Practical Conclusion
+# 9. Practical Conclusion
 
 The transaction catalog should remain **controlled and system-defined**, while transaction instances are created by users, services, and jobs.
 

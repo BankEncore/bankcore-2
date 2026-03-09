@@ -54,9 +54,9 @@ These effectively replace a dedicated draft-style `gl_mappings` or transaction m
 
 ---
 
-## Priority 1: Missing Tables Worth Adding Soon
+## Priority 1: Near-Term Schema Work
 
-These are the missing draft tables that are most likely to become useful in the near term without dragging the app into teller/cash complexity too early.
+These are the draft-domain structures most likely to matter in the near term without dragging the app into teller/cash complexity too early. Some remain missing, while others now exist in a first-cut form and need follow-on expansion.
 
 ### 1. `transaction_references`
 
@@ -107,8 +107,9 @@ Right now, account behavior is mostly encoded through account type, deposit attr
 
 **Current substitute**
 
-- Not implemented
-- Useful next when fee and interest rules become more configurable
+- Core implementation now exists
+- `accounts.account_product_id` is in place and products can carry liability / asset GL linkage
+- Still incomplete relative to the draft: statement cycle, overdraft defaults, fee rules, and interest rules remain future work
 
 ### 4. `fee_rules`
 
@@ -166,9 +167,8 @@ Potential next additions:
 Draft fields not currently present:
 
 - `account_reference`
-- `account_product_id`
 
-These become more valuable once product configuration or alternate operational identifiers matter.
+`account_product_id` is now present. `account_reference` remains a useful future addition once alternate operational identifiers matter more.
 
 ### `account_balances`
 
@@ -320,12 +320,10 @@ If the goal is to improve schema fidelity without overbuilding, the next best ad
 
 1. Add `transaction_references`
 2. Add `transaction_exceptions`
-3. Add `account_products`
-4. Add `fee_rules`
-5. Add `interest_rules`
+3. Add `fee_rules`
+4. Add `interest_rules`
 6. Backfill selected fields on existing tables:
    - `accounts.account_reference`
-   - `accounts.account_product_id`
    - `account_balances.average_balance_cents`
    - optional direct `transaction_id` traceability on `account_transactions`
 
