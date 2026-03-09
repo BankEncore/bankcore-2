@@ -22,7 +22,8 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
     batch = InterestAccrualService.accrue!(
       account_id: @account.id,
       amount_cents: 150,
-      accrual_date: @accrual_date
+      accrual_date: @accrual_date,
+      interest_rule_id: interest_rules(:now_default).id
     )
 
     assert batch.persisted?
@@ -31,6 +32,7 @@ class InterestAccrualServiceTest < ActiveSupport::TestCase
     assert accrual
     assert_equal 150, accrual.amount_cents
     assert_equal batch.id, accrual.posting_batch_id
+    assert_equal interest_rules(:now_default).id, accrual.interest_rule_id
   end
 
   test "raises when amount is negative" do

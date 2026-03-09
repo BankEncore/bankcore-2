@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_09_060000) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -221,12 +221,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_050000) do
     t.date "accrual_date", null: false
     t.integer "amount_cents", null: false
     t.datetime "created_at", null: false
+    t.bigint "interest_rule_id"
     t.bigint "posting_batch_id"
     t.string "status", default: "posted", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id", "accrual_date"], name: "index_interest_accruals_on_account_id_and_accrual_date"
     t.index ["account_id"], name: "index_interest_accruals_on_account_id"
+    t.index ["interest_rule_id"], name: "index_interest_accruals_on_interest_rule_id"
     t.index ["posting_batch_id"], name: "index_interest_accruals_on_posting_batch_id"
+  end
+
+  create_table "interest_rules", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "account_product_id", null: false
+    t.datetime "created_at", null: false
+    t.string "day_count_method", default: "actual_365", null: false
+    t.date "effective_on"
+    t.date "ends_on"
+    t.string "posting_cadence", default: "monthly", null: false
+    t.decimal "rate", precision: 8, scale: 6, null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_product_id", "effective_on"], name: "index_interest_rules_on_product_and_effective_on"
+    t.index ["account_product_id"], name: "index_interest_rules_on_account_product_id"
   end
 
   create_table "journal_entries", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -437,7 +452,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_050000) do
   add_foreign_key "fee_types", "gl_accounts"
   add_foreign_key "gl_accounts", "gl_accounts", column: "parent_gl_account_id"
   add_foreign_key "interest_accruals", "accounts"
+  add_foreign_key "interest_accruals", "interest_rules"
   add_foreign_key "interest_accruals", "posting_batches"
+  add_foreign_key "interest_rules", "account_products"
   add_foreign_key "journal_entries", "posting_batches"
   add_foreign_key "journal_entry_lines", "branches"
   add_foreign_key "journal_entry_lines", "gl_accounts"

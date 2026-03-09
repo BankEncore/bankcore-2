@@ -6,6 +6,7 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
   def setup
     @account = accounts(:two)
     @accrual_date = business_dates(:one).business_date
+    @interest_rule = interest_rules(:savings_default)
     ensure_int_accrual_template!
     ensure_interest_bearing_deposit!
     ensure_balance!
@@ -17,10 +18,12 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
     assert_equal 1, results[:accrued].size
     assert results[:accrued].first[:amount_cents].positive?
     assert_equal @account.id, results[:accrued].first[:account_id]
+    assert_equal @interest_rule.id, results[:accrued].first[:interest_rule_id]
 
     accrual = InterestAccrual.find_by(account_id: @account.id, accrual_date: @accrual_date)
     assert accrual
     assert accrual.amount_cents.positive?
+    assert_equal @interest_rule.id, accrual.interest_rule_id
   end
 
   test "skips account with zero balance" do
@@ -41,11 +44,27 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
   end
 
   test "skips non-interest-bearing accounts" do
-    DepositAccount.find_by!(account_id: @account.id).update!(interest_bearing: false, interest_rate_basis_points: 0)
+    DepositAccount.find_by!(account_id: @account.id).update!(interest_bearing: false, interest_rate_basis_points: nil)
 
     results = InterestAccrualRunnerService.run!(accrual_date: @accrual_date)
 
     assert_equal 0, results[:accrued].size
+  end
+
+  test "uses product interest rule when deposit account has no rate override" do
+    DepositAccount.find_by!(account_id: @account.id).update!(interest_rate_basis_points: nil)
+
+    results = InterestAccrualRunnerService.run!(accrual_date: @accrual_date)
+
+    assert_equal 10, results[:accrued].first[:amount_cents]
+  end
+
+  test "uses deposit account rate override when present" do
+    DepositAccount.find_by!(account_id: @account.id).update!(interest_rate_basis_points: 730)
+
+    results = InterestAccrualRunnerService.run!(accrual_date: @accrual_date)
+
+    assert_equal 20, results[:accrued].first[:amount_cents]
   end
 
   private
@@ -98,7 +117,7 @@ class InterestAccrualRunnerServiceTest < ActiveSupport::TestCase
     deposit_account = DepositAccount.find_or_initialize_by(account_id: @account.id)
     deposit_account.deposit_type ||= @account.account_product.default_deposit_type
     deposit_account.interest_bearing = true
-    deposit_account.interest_rate_basis_points = 365 # ~3.65% annual = ~0.01% daily, 100000 cents = $1000 -> ~1 cent/day
+    deposit_account.interest_rate_basis_points = nil
     deposit_account.save!
   end
 

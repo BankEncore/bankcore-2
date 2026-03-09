@@ -112,6 +112,43 @@ account_products_data.each do |attrs|
   product.save!
 end
 
+if defined?(InterestRule)
+  [
+    {
+      account_product: AccountProduct.find_by!(product_code: "now"),
+      rate: BigDecimal("0.0100"),
+      day_count_method: InterestRule::DAY_COUNT_METHOD_ACTUAL_365,
+      posting_cadence: InterestRule::POSTING_CADENCE_MONTHLY,
+      effective_on: Date.current.beginning_of_month
+    },
+    {
+      account_product: AccountProduct.find_by!(product_code: "savings"),
+      rate: BigDecimal("0.0200"),
+      day_count_method: InterestRule::DAY_COUNT_METHOD_ACTUAL_365,
+      posting_cadence: InterestRule::POSTING_CADENCE_MONTHLY,
+      effective_on: Date.current.beginning_of_month
+    },
+    {
+      account_product: AccountProduct.find_by!(product_code: "cd"),
+      rate: BigDecimal("0.0300"),
+      day_count_method: InterestRule::DAY_COUNT_METHOD_ACTUAL_365,
+      posting_cadence: InterestRule::POSTING_CADENCE_MONTHLY,
+      effective_on: Date.current.beginning_of_month
+    }
+  ].each do |attrs|
+    interest_rule = InterestRule.find_or_initialize_by(
+      account_product: attrs[:account_product],
+      effective_on: attrs[:effective_on]
+    )
+    interest_rule.assign_attributes(
+      rate: attrs[:rate],
+      day_count_method: attrs[:day_count_method],
+      posting_cadence: attrs[:posting_cadence]
+    )
+    interest_rule.save!
+  end
+end
+
 # 4. Business Date
 today = Date.current
 BusinessDate.find_or_create_by!(business_date: today) do |bd|
