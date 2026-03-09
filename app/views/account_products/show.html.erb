@@ -1,0 +1,141 @@
+<% content_for :title, "#{@account_product.name} - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Products", account_products_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Product Configuration</h1>
+      <p class="workspace-subtitle">Review product defaults, GL ownership, and active fee and interest rules for this account product.</p>
+    </div>
+    <%= link_to "Edit Product", edit_account_product_path(@account_product), class: "btn btn-primary" %>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-4 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Product Code</div>
+      <div class="ui-metric-value ui-mono"><%= @account_product.product_code %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Statement Cycle</div>
+      <div class="ui-metric-value"><%= @account_product.statement_cycle %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Fee Rules</div>
+      <div class="ui-metric-value ui-mono"><%= @fee_rules.size %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Interest Rules</div>
+      <div class="ui-metric-value ui-mono"><%= @interest_rules.size %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Core Product Settings</h2>
+        <p class="mt-1 text-sm text-base-content/65">Primary configuration values used by account creation and posting resolution.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <div class="grid gap-4 lg:grid-cols-3">
+        <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
+          <div class="ui-kv-row"><div class="ui-kv-label">Name</div><div class="ui-kv-value"><%= @account_product.name %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Family</div><div class="ui-kv-value"><%= @account_product.product_family %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Currency</div><div class="ui-kv-value ui-mono"><%= @account_product.currency_code %></div></div>
+        </div>
+        <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
+          <div class="ui-kv-row"><div class="ui-kv-label">Liability GL</div><div class="ui-kv-value ui-mono"><%= @account_product.liability_gl_account&.gl_number || "—" %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Asset GL</div><div class="ui-kv-value ui-mono"><%= @account_product.asset_gl_account&.gl_number || "—" %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Interest Expense GL</div><div class="ui-kv-value ui-mono"><%= @account_product.interest_expense_gl_account&.gl_number || "—" %></div></div>
+        </div>
+        <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
+          <div class="ui-kv-row"><div class="ui-kv-label">Deposit Product</div><div class="ui-kv-value"><%= @account_product.deposit_product? ? "Yes" : "No" %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Default Overdraft</div><div class="ui-kv-value"><%= @account_product.default_overdraft_policy || "—" %></div></div>
+          <div class="ui-kv-row"><div class="ui-kv-label">Status</div><div class="ui-kv-value"><span class="<%= status_pill_class(@account_product.status) %>"><%= @account_product.status %></span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Fee Rules</h2>
+        <p class="mt-1 text-sm text-base-content/65">Rule-driven fee eligibility and optional amount or GL overrides for this product.</p>
+      </div>
+      <%= link_to "New Fee Rule", new_account_product_fee_rule_path(@account_product), class: "btn btn-outline btn-sm" %>
+    </div>
+    <div class="ui-panel-body">
+      <% if @fee_rules.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Fee Type</th>
+              <th>Priority</th>
+              <th>Amount</th>
+              <th>GL Override</th>
+              <th>Effective</th>
+              <th>Ends</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @fee_rules.each do |fee_rule| %>
+              <tr>
+                <td><%= fee_rule.fee_type.name %></td>
+                <td class="ui-mono"><%= fee_rule.priority %></td>
+                <td class="ui-mono"><%= number_to_currency(fee_rule.amount_cents_for_assessment / 100.0) %></td>
+                <td class="ui-mono"><%= fee_rule.gl_account&.gl_number || "Default" %></td>
+                <td class="ui-mono"><%= fee_rule.effective_on&.strftime("%Y-%m-%d") || "—" %></td>
+                <td class="ui-mono"><%= fee_rule.ends_on&.strftime("%Y-%m-%d") || "—" %></td>
+                <td><%= link_to "Edit", edit_fee_rule_path(fee_rule), class: "btn btn-ghost btn-sm" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No fee rules configured for this product yet.</p>
+      <% end %>
+    </div>
+  </section>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Interest Rules</h2>
+        <p class="mt-1 text-sm text-base-content/65">Default accrual rate, day count method, and posting cadence used for interest-bearing accounts on this product.</p>
+      </div>
+      <%= link_to "New Interest Rule", new_account_product_interest_rule_path(@account_product), class: "btn btn-outline btn-sm" %>
+    </div>
+    <div class="ui-panel-body">
+      <% if @interest_rules.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Rate</th>
+              <th>Day Count</th>
+              <th>Cadence</th>
+              <th>Effective</th>
+              <th>Ends</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @interest_rules.each do |interest_rule| %>
+              <tr>
+                <td class="ui-mono"><%= number_to_percentage(interest_rule.rate.to_f * 100, precision: 3, strip_insignificant_zeros: true) %></td>
+                <td><%= interest_rule.day_count_method %></td>
+                <td><%= interest_rule.posting_cadence %></td>
+                <td class="ui-mono"><%= interest_rule.effective_on&.strftime("%Y-%m-%d") || "—" %></td>
+                <td class="ui-mono"><%= interest_rule.ends_on&.strftime("%Y-%m-%d") || "—" %></td>
+                <td><%= link_to "Edit", edit_interest_rule_path(interest_rule), class: "btn btn-ghost btn-sm" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No interest rules configured for this product yet.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

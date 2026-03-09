@@ -68,6 +68,9 @@
 
             <div class="app-sidebar-section">
               <div class="app-sidebar-label">Back Office Review</div>
+              <%= link_to account_products_path, class: app_nav_link_class(account_products_path) do %>
+                <span>Account Products</span>
+              <% end %>
               <%= link_to gl_accounts_path, class: app_nav_link_class(gl_accounts_path) do %>
                 <span>GL Accounts</span>
               <% end %>

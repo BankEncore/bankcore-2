@@ -1,0 +1,17 @@
+<% content_for :title, "Edit Fee Rule - BankCORE" %>
+
+<div class="w-full max-w-5xl">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Product", account_product_path(@account_product), class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Edit Fee Rule</h1>
+      <p class="workspace-subtitle">Update fee behavior for <%= @account_product.name %> while preserving prior assessed postings.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-body">
+      <%= render "form" %>
+    </div>
+  </section>
+</div>

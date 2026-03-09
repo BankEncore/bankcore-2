@@ -1,0 +1,54 @@
+<%= form_with model: (@interest_rule.persisted? ? @interest_rule : [@account_product, @interest_rule]), local: true, class: "space-y-4" do |f| %>
+  <% if @interest_rule.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @interest_rule.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="form-control w-full">
+      <label class="label" for="interest_rule_rate">
+        <span class="label-text">Annual Rate</span>
+      </label>
+      <%= f.number_field :rate, class: "input input-bordered w-full", step: "0.000001", min: "0.000001", required: true %>
+      <label class="label"><span class="label-text-alt">Store rates as decimal values such as <span class="ui-mono">0.0200</span> for 2.00%.</span></label>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="interest_rule_day_count_method">
+        <span class="label-text">Day Count Method</span>
+      </label>
+      <%= f.select :day_count_method, InterestRule::DAY_COUNT_METHODS.map { |value| [value, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="interest_rule_posting_cadence">
+        <span class="label-text">Posting Cadence</span>
+      </label>
+      <%= f.select :posting_cadence, InterestRule::POSTING_CADENCES.map { |value| [value.titleize, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="interest_rule_effective_on">
+        <span class="label-text">Effective On</span>
+      </label>
+      <%= f.date_field :effective_on, class: "input input-bordered w-full" %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="interest_rule_ends_on">
+        <span class="label-text">Ends On</span>
+      </label>
+      <%= f.date_field :ends_on, class: "input input-bordered w-full" %>
+    </div>
+  </div>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", account_product_path(@account_product), class: "btn btn-ghost" %>
+  </div>
+<% end %>

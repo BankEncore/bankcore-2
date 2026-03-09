@@ -20,6 +20,12 @@ Rails.application.routes.draw do
     resources :account_holds, only: %i[new create], shallow: true
     resources :account_owners, only: %i[new create], shallow: true
   end
+  resources :account_products, only: %i[index show new create edit update] do
+    resources :fee_rules, only: %i[new create]
+    resources :interest_rules, only: %i[new create]
+  end
+  resources :fee_rules, only: %i[edit update]
+  resources :interest_rules, only: %i[edit update]
   post "account_holds/:id/release", to: "account_holds#release", as: :release_account_hold
 
   resources :business_dates, only: %i[index show] do

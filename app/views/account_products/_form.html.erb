@@ -1,0 +1,90 @@
+<%= form_with model: @account_product, local: true, class: "space-y-4" do |f| %>
+  <% if @account_product.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @account_product.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="form-control w-full">
+      <label class="label" for="account_product_product_code">
+        <span class="label-text">Product Code</span>
+      </label>
+      <%= f.text_field :product_code, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_name">
+        <span class="label-text">Name</span>
+      </label>
+      <%= f.text_field :name, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_product_family">
+        <span class="label-text">Product Family</span>
+      </label>
+      <%= f.text_field :product_family, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_currency_code">
+        <span class="label-text">Currency</span>
+      </label>
+      <%= f.text_field :currency_code, class: "input input-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_statement_cycle">
+        <span class="label-text">Statement Cycle</span>
+      </label>
+      <%= f.select :statement_cycle, AccountProduct::STATEMENT_CYCLES.map { |value| [value.titleize, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_status">
+        <span class="label-text">Status</span>
+      </label>
+      <%= f.select :status, Bankcore::Enums::STATUSES.map { |value| [value.titleize, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label cursor-pointer justify-start gap-3" for="account_product_allow_overdraft">
+        <%= f.check_box :allow_overdraft, class: "checkbox checkbox-primary" %>
+        <span class="label-text">Allow overdraft by default</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="form-control w-full">
+      <label class="label" for="account_product_liability_gl_account_id">
+        <span class="label-text">Liability GL</span>
+      </label>
+      <%= f.collection_select :liability_gl_account_id, @gl_accounts, :id, :name, { include_blank: "— None —" }, class: "select select-bordered w-full" %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_asset_gl_account_id">
+        <span class="label-text">Asset GL</span>
+      </label>
+      <%= f.collection_select :asset_gl_account_id, @gl_accounts, :id, :name, { include_blank: "— None —" }, class: "select select-bordered w-full" %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="account_product_interest_expense_gl_account_id">
+        <span class="label-text">Interest Expense GL</span>
+      </label>
+      <%= f.collection_select :interest_expense_gl_account_id, @gl_accounts, :id, :name, { include_blank: "— None —" }, class: "select select-bordered w-full" %>
+    </div>
+  </div>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", @account_product.persisted? ? account_product_path(@account_product) : account_products_path, class: "btn btn-ghost" %>
+  </div>
+<% end %>
