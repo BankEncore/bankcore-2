@@ -95,7 +95,9 @@ class ReversalService
   end
 
   def override_required?
-    @posting_batch.posting_legs.sum(:amount_cents) >= Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS
+    # Use debit-leg sum (economic amount), not total leg sum which doubles for balanced two-leg postings
+    economic_amount_cents = @posting_batch.posting_legs.where(leg_type: LEG_TYPE_DEBIT).sum(:amount_cents)
+    economic_amount_cents >= Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS
   end
 
   def override_required_message
