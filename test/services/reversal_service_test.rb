@@ -85,6 +85,22 @@ class ReversalServiceTest < ActiveSupport::TestCase
     assert_match(/require supervisor approval/i, error.message)
   end
 
+  test "below-threshold reversal does not require override" do
+    # Economic amount (single leg) below threshold; sum of legs would incorrectly double it
+    below_threshold_cents = Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS / 2
+    batch = PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: below_threshold_cents,
+      business_date: @business_date
+    )
+
+    reversal_batch = ReversalService.reverse!(posting_batch: batch)
+
+    assert reversal_batch.persisted?
+    assert_equal "posted", reversal_batch.status
+  end
+
   test "uses an existing approved override from service policy" do
     high_value_batch = high_value_batch()
     override = OverrideRequest.create!(
