@@ -42,7 +42,7 @@ module TransactionEntry
         transaction_code: transaction_code,
         memo: memo,
         ach_company_name: normalize_string(raw_params[:ach_company_name]),
-        ach_identification_number: normalize_string(raw_params[:ach_identification_number])
+        ach_trace_number: normalize_string(raw_params[:ach_trace_number])
       )
 
       raw_batch = normalize_string(raw_params[:ach_batch_reference])
@@ -119,15 +119,15 @@ module TransactionEntry
       "Internal transfer: #{source_num} → #{dest_num}"
     end
 
-    def self.default_ach_memo_if_blank(transaction_code:, memo:, ach_company_name:, ach_identification_number:)
+    def self.default_ach_memo_if_blank(transaction_code:, memo:, ach_company_name:, ach_trace_number:)
       return memo if memo.present?
       return nil unless ACH_CODES.include?(transaction_code)
 
       company = ach_company_name.to_s.strip.presence
-      id_num = ach_identification_number.to_s.strip.presence
-      return nil unless company.present? && id_num.present?
+      ref_num = ach_trace_number.to_s.strip.presence
+      return nil unless company.present? && ref_num.present?
 
-      "#{company} - #{id_num}"
+      "#{company} - #{ref_num}"
     end
 
     def self.default_ach_batch_reference_if_blank(transaction_code:, ach_batch_reference:)

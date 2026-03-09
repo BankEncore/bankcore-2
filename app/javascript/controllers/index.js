@@ -378,10 +378,10 @@ class TransactionWorkstationController extends Controller {
   }
 
   updateAchMemoAutofill() {
-    if (!this.hasMemoInputTarget || !this.hasAchCompanyNameTarget || !this.hasAchIdentificationNumberTarget) return
+    if (!this.hasMemoInputTarget || !this.hasAchCompanyNameTarget || !this.hasAchTraceTarget) return
     const company = (this.achCompanyNameTarget.value || "").trim()
-    const idNum = (this.achIdentificationNumberTarget.value || "").trim()
-    if (!company || !idNum) return
+    const refNum = (this.achTraceTarget.value || "").trim()
+    if (!company || !refNum) return
 
     const input = this.memoInputTarget
     const currentValue = (input.value || "").trim()
@@ -389,7 +389,7 @@ class TransactionWorkstationController extends Controller {
     const achMemoPattern = /.+ - .+/
     const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && achMemoPattern.test(currentValue)))
     if (shouldAutofill) {
-      input.value = `${company} - ${idNum}`
+      input.value = `${company} - ${refNum}`
       input.dataset.memoAutofilled = "1"
     }
   }

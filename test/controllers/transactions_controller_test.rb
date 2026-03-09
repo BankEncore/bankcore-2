@@ -400,7 +400,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to transaction_path(BankingTransaction.last)
     transaction = BankingTransaction.last
     assert_match /\AACH\d{12}\z/, transaction.transaction_references.find { |r| r.reference_type == "ach_batch_reference" }&.reference_value
-    assert_equal "Acme Corp - ID-789", transaction.memo
+    assert_equal "Acme Corp - 111222333444555", transaction.memo
     assert_includes transaction.transaction_references.map(&:reference_type), "ach_company_name"
     assert_includes transaction.transaction_references.map(&:reference_type), "ach_identification_number"
   end
