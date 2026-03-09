@@ -1,0 +1,73 @@
+<% content_for :title, "Account Products - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Account Products</h1>
+      <p class="workspace-subtitle">Manage product-level deposit behavior, GL mappings, and the fee and interest rules that drive automated processing.</p>
+    </div>
+    <%= link_to "New Product", new_account_product_path, class: "btn btn-primary" %>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-4 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Products</div>
+      <div class="ui-metric-value ui-mono"><%= @account_products.size %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Active</div>
+      <div class="ui-metric-value ui-mono"><%= @account_products.count { |product| product.status == Bankcore::Enums::STATUS_ACTIVE } %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Fee Rules</div>
+      <div class="ui-metric-value ui-mono"><%= @account_products.sum { |product| product.fee_rules.size } %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Interest Rules</div>
+      <div class="ui-metric-value ui-mono"><%= @account_products.sum { |product| product.interest_rules.size } %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Product Catalog</h2>
+        <p class="mt-1 text-sm text-base-content/65">Configured products with GL ownership and rule coverage.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <table class="ui-ledger-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Family</th>
+            <th>Currency</th>
+            <th>Liability GL</th>
+            <th>Interest GL</th>
+            <th>Rules</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @account_products.each do |product| %>
+            <tr>
+              <td>
+                <div class="font-medium"><%= product.name %></div>
+                <div class="ui-mono text-xs text-base-content/60"><%= product.product_code %></div>
+              </td>
+              <td><%= product.product_family %></td>
+              <td class="ui-mono"><%= product.currency_code %></td>
+              <td class="ui-mono"><%= product.liability_gl_account&.gl_number || "—" %></td>
+              <td class="ui-mono"><%= product.interest_expense_gl_account&.gl_number || "—" %></td>
+              <td class="ui-mono"><%= "#{product.fee_rules.size} / #{product.interest_rules.size}" %></td>
+              <td><span class="<%= status_pill_class(product.status) %>"><%= product.status %></span></td>
+              <td><%= link_to "View", account_product_path(product), class: "btn btn-ghost btn-sm" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

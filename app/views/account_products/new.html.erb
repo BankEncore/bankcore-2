@@ -1,0 +1,17 @@
+<% content_for :title, "New Account Product - BankCORE" %>
+
+<div class="w-full max-w-5xl">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Products", account_products_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">New Account Product</h1>
+      <p class="workspace-subtitle">Create a product definition that can drive account defaults, GL routing, and rule-based automation.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-body">
+      <%= render "form" %>
+    </div>
+  </section>
+</div>

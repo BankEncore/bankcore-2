@@ -1,0 +1,68 @@
+<%= form_with model: (@fee_rule.persisted? ? @fee_rule : [@account_product, @fee_rule]), local: true, class: "space-y-4" do |f| %>
+  <% if @fee_rule.errors.any? %>
+    <div class="alert alert-error mb-4">
+      <ul class="list-disc list-inside">
+        <% @fee_rule.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_fee_type_id">
+        <span class="label-text">Fee Type</span>
+      </label>
+      <%= f.collection_select :fee_type_id, @fee_types, :id, :name, { include_blank: "— Select fee type —" }, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_priority">
+        <span class="label-text">Priority</span>
+      </label>
+      <%= f.number_field :priority, class: "input input-bordered w-full", min: 1, required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_method">
+        <span class="label-text">Method</span>
+      </label>
+      <%= f.select :method, FeeRule::METHODS.map { |value| [value.titleize, value] }, {}, class: "select select-bordered w-full", required: true %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_amount_cents">
+        <span class="label-text">Amount Override (cents)</span>
+      </label>
+      <%= f.number_field :amount_cents, class: "input input-bordered w-full", min: 1 %>
+      <label class="label"><span class="label-text-alt">Leave blank to use the fee type default amount.</span></label>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_gl_account_id">
+        <span class="label-text">GL Override</span>
+      </label>
+      <%= f.collection_select :gl_account_id, @gl_accounts, :id, :name, { include_blank: "— Use fee type default —" }, class: "select select-bordered w-full" %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_effective_on">
+        <span class="label-text">Effective On</span>
+      </label>
+      <%= f.date_field :effective_on, class: "input input-bordered w-full" %>
+    </div>
+
+    <div class="form-control w-full">
+      <label class="label" for="fee_rule_ends_on">
+        <span class="label-text">Ends On</span>
+      </label>
+      <%= f.date_field :ends_on, class: "input input-bordered w-full" %>
+    </div>
+  </div>
+
+  <div class="flex gap-2 pt-4">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", account_product_path(@account_product), class: "btn btn-ghost" %>
+  </div>
+<% end %>
