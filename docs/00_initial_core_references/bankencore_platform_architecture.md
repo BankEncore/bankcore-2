@@ -4,6 +4,11 @@
 **Scope:** Executive and architectural reference  
 **Purpose:** Provide a single top-level architecture view of the BankCORE / BankEncore platform, tying together the financial kernel, operational modules, control layers, and institutional services into one coherent system model.
 
+**Related documents:**
+- [../architecture/adr_backlog.md](../architecture/adr_backlog.md)
+- [ledger_boundaries.md](ledger_boundaries.md)
+- [layer_responsibility_map.md](layer_responsibility_map.md)
+
 ---
 
 # 1. Executive Summary

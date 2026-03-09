@@ -38,7 +38,7 @@ class AccountHoldService
     raise HoldError, "Amount must be positive" if @amount_cents.to_i <= 0
     raise HoldError, "Invalid hold type" unless HOLD_TYPES.include?(@hold_type)
 
-    AccountHold.create!(
+    hold = AccountHold.create!(
       account_id: @account_id,
       hold_type: @hold_type,
       amount_cents: @amount_cents,
@@ -47,15 +47,19 @@ class AccountHoldService
       effective_on: @effective_on,
       release_on: @release_on
     )
+    BalanceRefreshService.refresh!(account_ids: [ @account_id ])
+    hold
   end
 
   def release!
     raise HoldError, "Hold is not active" unless @account_hold.status == HOLD_STATUS_ACTIVE
 
+    account_id = @account_hold.account_id
     @account_hold.update!(
       status: HOLD_STATUS_RELEASED,
       released_at: @released_at
     )
+    BalanceRefreshService.refresh!(account_ids: [ account_id ])
     @account_hold
   end
 end

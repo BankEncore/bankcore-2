@@ -4,6 +4,12 @@
 **Scope:** BankCORE / BankEncore Posting Engine  
 **Purpose:** Define the posting template structure that maps transaction codes to balanced posting legs.
 
+**Related documents:**
+- [transaction_catalog_spec.md](transaction_catalog_spec.md)
+- [transaction_posting_spec.md](transaction_posting_spec.md)
+- [first_transaction_types.md](first_transaction_types.md)
+- [product_configuration_roadmap.md](product_configuration_roadmap.md)
+
 ---
 
 # 1. Overview

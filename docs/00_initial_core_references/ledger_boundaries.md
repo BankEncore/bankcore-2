@@ -4,6 +4,12 @@
 **Scope:** BankCORE / BankEncore architecture reference  
 **Purpose:** Define the boundaries and responsibilities between operational records, the account subledger, the internal posting engine, and the institution general ledger.
 
+**Related documents:**
+- [layer_responsibility_map.md](layer_responsibility_map.md)
+- [transaction_catalog_spec.md](transaction_catalog_spec.md)
+- [transaction_posting_spec.md](transaction_posting_spec.md)
+- [../architecture/adr_backlog.md](../architecture/adr_backlog.md)
+
 ---
 
 # 1. Why Ledger Boundaries Matter

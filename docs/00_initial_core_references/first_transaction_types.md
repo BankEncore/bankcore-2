@@ -4,6 +4,11 @@
 **Scope:** BankCORE / BankEncore MVP transaction catalog  
 **Purpose:** Define the initial set of transaction types that the posting engine must support for the ledger-first / back-office-first MVP.
 
+**Related documents:**
+- [transaction_catalog_spec.md](transaction_catalog_spec.md)
+- [transaction_posting_spec.md](transaction_posting_spec.md)
+- [posting_templates.md](posting_templates.md)
+
 ---
 
 # 1. Overview

@@ -70,4 +70,28 @@ class AccountHoldServiceTest < ActiveSupport::TestCase
       AccountHoldService.release!(account_hold: hold)
     end
   end
+
+  test "release! updates available balance" do
+    PostingEngine.post!(
+      transaction_code: "ADJ_CREDIT",
+      account_id: @account.id,
+      amount_cents: 10_000,
+      business_date: BusinessDateService.current
+    )
+    hold = AccountHoldService.place!(
+      account_id: @account.id,
+      amount_cents: 3_000
+    )
+
+    balance_before = @account.account_balances.first
+    assert_equal 10_000, balance_before.posted_balance_cents
+    assert_equal 7_000, balance_before.available_balance_cents
+
+    AccountHoldService.release!(account_hold: hold)
+
+    @account.reload
+    balance_after = @account.account_balances.first
+    assert_equal 10_000, balance_after.posted_balance_cents
+    assert_equal 10_000, balance_after.available_balance_cents, "Available balance should increase when hold is released"
+  end
 end
