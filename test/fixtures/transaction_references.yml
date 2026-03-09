@@ -1,0 +1,14 @@
+<% ts = Time.zone.parse("2026-03-07 12:00:00") %>
+txn_one_reference_number:
+  operational_transaction: one
+  reference_type: reference_number
+  reference_value: TXN-001
+  created_at: <%= ts %>
+  updated_at: <%= ts %>
+
+txn_two_reference_number:
+  operational_transaction: two
+  reference_type: reference_number
+  reference_value: TXN-002
+  created_at: <%= ts %>
+  updated_at: <%= ts %>

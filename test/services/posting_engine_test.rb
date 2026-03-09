@@ -61,6 +61,8 @@ class PostingEngineTest < ActiveSupport::TestCase
     assert_equal transaction.id, account_transaction.transaction_id
     assert_includes account_transaction.description, "Courtesy credit"
     assert_includes account_transaction.description, "MAN-20260309-100"
+    assert_equal "MAN-20260309-100", transaction.transaction_references.find_by(reference_type: TransactionReference::REFERENCE_TYPE_REFERENCE_NUMBER)&.reference_value
+    assert_equal "CASE-100", transaction.transaction_references.find_by(reference_type: TransactionReference::REFERENCE_TYPE_EXTERNAL_REFERENCE)&.reference_value
   end
 
   test "records contra account context for internal transfers" do
@@ -135,6 +137,7 @@ class PostingEngineTest < ActiveSupport::TestCase
     )
 
     assert_equal batch1.id, batch2.id
+    assert_equal key, batch1.operational_transaction.transaction_references.find_by(reference_type: TransactionReference::REFERENCE_TYPE_IDEMPOTENCY_KEY)&.reference_value
   end
 
   test "idempotency rejects conflicting payload reuse" do

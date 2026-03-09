@@ -53,7 +53,7 @@
               <tr>
                 <td class="ui-mono"><%= txn.business_date&.strftime("%Y-%m-%d") %></td>
                 <td><%= txn.transaction_type %></td>
-                <td class="ui-mono"><%= txn.reference_number.presence || "—" %></td>
+                <td class="ui-mono"><%= txn.transaction_references.find { |reference| reference.reference_type == TransactionReference::REFERENCE_TYPE_REFERENCE_NUMBER }&.reference_value || txn.reference_number.presence || "—" %></td>
                 <td><span class="<%= status_pill_class(txn.status) %>"><%= txn.status %></span></td>
                 <td><%= txn.branch&.branch_code %></td>
                 <td><%= link_to "View", transaction_path(txn), class: "link link-primary text-sm" %></td>

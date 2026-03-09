@@ -83,6 +83,37 @@
     </div>
   </section>
 
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Structured References</h2>
+        <p class="mt-1 text-sm text-base-content/65">Alternate lookup keys and external traceability values captured for this operational transaction.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <% if @transaction_references.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @transaction_references.each do |reference| %>
+              <tr>
+                <td><%= reference.reference_type %></td>
+                <td class="ui-mono"><%= reference.reference_value %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No structured references captured.</p>
+      <% end %>
+    </div>
+  </section>
+
   <% if reversible && batch_total_cents >= Bankcore::REVERSAL_OVERRIDE_THRESHOLD_CENTS %>
     <section class="ui-override-box mb-6">
       <div class="space-y-2">

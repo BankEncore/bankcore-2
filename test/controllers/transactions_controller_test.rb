@@ -22,17 +22,19 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
   test "create posts ADJ_CREDIT and redirects" do
     account = accounts(:one)
     assert_difference "BankingTransaction.count", 1 do
-      post transactions_url, params: {
-        transaction: {
-          transaction_code: "ADJ_CREDIT",
-          account_id: account.id,
-          amount: "100.50",
-          memo: "Courtesy credit",
-          reason_text: "Service recovery",
-          reference_number: "MAN-20260309-001",
-          external_reference: "CASE-42"
+      assert_difference "TransactionReference.count", 2 do
+        post transactions_url, params: {
+          transaction: {
+            transaction_code: "ADJ_CREDIT",
+            account_id: account.id,
+            amount: "100.50",
+            memo: "Courtesy credit",
+            reason_text: "Service recovery",
+            reference_number: "MAN-20260309-001",
+            external_reference: "CASE-42"
+          }
         }
-      }
+      end
     end
     assert_redirected_to transaction_path(BankingTransaction.last)
     transaction = BankingTransaction.last
@@ -40,6 +42,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Service recovery", transaction.reason_text
     assert_equal "MAN-20260309-001", transaction.reference_number
     assert_equal "CASE-42", transaction.external_reference
+    assert_equal [ "external_reference", "reference_number" ], transaction.transaction_references.order(:reference_type).pluck(:reference_type)
     follow_redirect!
     assert_match /posted successfully/i, flash[:notice]
   end
@@ -74,6 +77,15 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     )
     get transaction_url(txn)
     assert_response :success
+  end
+
+  test "show renders structured references" do
+    get transaction_url(BankingTransaction.find_by!(reference_number: "TXN-002"))
+
+    assert_response :success
+    assert_select "h2", text: /Structured References/
+    assert_select "td", text: "reference_number"
+    assert_select "td", text: "TXN-002"
   end
 
   test "reverse requires reverse_transactions permission" do
