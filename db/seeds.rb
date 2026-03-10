@@ -23,6 +23,7 @@ gl_accounts_data = [
   { gl_number: "2120", name: "Interest-Bearing Demand Deposits (NOW)", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2130", name: "Savings / Money Market Accounts", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2150", name: "Check Clearing", category: "liability", normal_balance: "credit", allow_direct_posting: true },
+  { gl_number: "2160", name: "Official Checks Outstanding", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2170", name: "ACH Settlement Clearing", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2190", name: "Suspense / Unidentified Deposits", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2510", name: "Accrued Interest Payable – Deposits", category: "liability", normal_balance: "credit", allow_direct_posting: true },
@@ -207,7 +208,9 @@ transaction_codes_data = [
   { code: "ACH_CREDIT", description: "Incoming ACH", reversal_code: "ACH_DEBIT" },
   { code: "ACH_DEBIT", description: "Outgoing ACH", reversal_code: "ACH_CREDIT" },
   { code: "CHK_POST", description: "Check posting", reversal_code: "CHK_POST_REVERSAL" },
-  { code: "CHK_POST_REVERSAL", description: "Check posting reversal", reversal_code: nil }
+  { code: "CHK_POST_REVERSAL", description: "Check posting reversal", reversal_code: nil },
+  { code: "DRAFT_ISSUE", description: "Bank draft issuance", reversal_code: "DRAFT_ISSUE_REVERSAL" },
+  { code: "DRAFT_ISSUE_REVERSAL", description: "Bank draft issuance reversal", reversal_code: nil }
 ]
 
 transaction_codes_data.each do |attrs|
@@ -227,6 +230,7 @@ if defined?(PostingTemplate)
   gl_2510 = GlAccount.find_by!(gl_number: "2510")
   gl_1120 = GlAccount.find_by!(gl_number: "1120")
   gl_2150 = GlAccount.find_by!(gl_number: "2150")
+  gl_2160 = GlAccount.find_by!(gl_number: "2160")
   gl_2170 = GlAccount.find_by!(gl_number: "2170")
 
   # ADJ_CREDIT: Debit 5190, Credit customer_account
@@ -483,6 +487,44 @@ if defined?(PostingTemplate)
     l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
     l.gl_account_id = gl_2150.id
     l.description = "Debit check clearing"
+  end
+
+  # DRAFT_ISSUE: Debit customer_account, Credit 2160 Official Checks Outstanding
+  draft_issue_code = TransactionCode.find_by!(code: "DRAFT_ISSUE")
+  draft_issue_tpl = PostingTemplate.find_or_create_by!(transaction_code_id: draft_issue_code.id) do |t|
+    t.name = "Bank Draft Issuance"
+    t.description = "Debit account, Credit official checks outstanding"
+    t.active = true
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: draft_issue_tpl.id, position: 0) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
+    l.description = "Debit customer account"
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: draft_issue_tpl.id, position: 1) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
+    l.gl_account_id = gl_2160.id
+    l.description = "Credit official checks outstanding"
+  end
+
+  # DRAFT_ISSUE_REVERSAL: Credit customer_account, Debit 2160 (inverse of DRAFT_ISSUE)
+  draft_rev_code = TransactionCode.find_by!(code: "DRAFT_ISSUE_REVERSAL")
+  draft_rev_tpl = PostingTemplate.find_or_create_by!(transaction_code_id: draft_rev_code.id) do |t|
+    t.name = "Bank Draft Issuance Reversal"
+    t.description = "Credit account, Debit official checks outstanding"
+    t.active = true
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: draft_rev_tpl.id, position: 0) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
+    l.description = "Credit customer account"
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: draft_rev_tpl.id, position: 1) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
+    l.gl_account_id = gl_2160.id
+    l.description = "Debit official checks outstanding"
   end
 end
 

@@ -11,6 +11,7 @@ class BankingTransaction < ApplicationRecord
   has_many :transaction_exceptions, foreign_key: :transaction_id, dependent: :restrict_with_error
   has_many :transaction_references, foreign_key: :transaction_id, dependent: :restrict_with_error
   has_many :check_items, foreign_key: :operational_transaction_id, dependent: :restrict_with_error
+  has_one :bank_draft, foreign_key: :operational_transaction_id, dependent: :restrict_with_error
   has_one :posting_batch, foreign_key: :operational_transaction_id
 
   validates :transaction_type, presence: true

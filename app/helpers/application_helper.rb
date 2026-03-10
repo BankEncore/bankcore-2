@@ -56,6 +56,7 @@ module ApplicationHelper
         label: "Primary Workspace",
         links: [
           AppNavLink.new(label: "Transactions", path: transactions_path),
+          AppNavLink.new(label: "Bank Drafts", path: bank_drafts_path),
           AppNavLink.new(label: "Business Dates", path: business_dates_path),
           AppNavLink.new(label: "Overrides", path: override_requests_path)
         ]

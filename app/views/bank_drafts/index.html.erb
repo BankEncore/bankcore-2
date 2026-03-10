@@ -1,0 +1,49 @@
+<% content_for :title, "Bank Drafts - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <h1 class="workspace-title">Bank Drafts</h1>
+      <p class="workspace-subtitle">Cashier's checks and money orders. Issue, void, and track clearing.</p>
+    </div>
+    <%= link_to "Issue Draft", new_bank_draft_path, class: "btn btn-primary" %>
+  </div>
+
+  <section class="ui-panel">
+    <div class="ui-panel-body">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>Instrument</th>
+              <th>Amount</th>
+              <th>Payee</th>
+              <th>Remitter</th>
+              <th>Issue Date</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @bank_drafts.each do |draft| %>
+              <tr>
+                <td>
+                  <span class="ui-mono"><%= draft.instrument_type.titleize %> #<%= draft.instrument_number %></span>
+                </td>
+                <td class="ui-mono"><%= number_to_currency(draft.amount_cents / 100.0) %></td>
+                <td><%= draft.payee_name %></td>
+                <td><%= draft.remitter_party&.display_name %></td>
+                <td class="ui-mono"><%= draft.issue_date&.strftime("%Y-%m-%d") %></td>
+                <td><span class="<%= status_pill_class(draft.status) %>"><%= draft.status %></span></td>
+                <td><%= link_to "View", bank_draft_path(draft), class: "link link-primary" %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <% if @bank_drafts.empty? %>
+        <p class="py-8 text-center text-base-content/60">No bank drafts yet.</p>
+      <% end %>
+    </div>
+  </section>
+</div>

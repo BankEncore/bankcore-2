@@ -1,0 +1,10 @@
+# BankDraftSequence fixtures for #73
+one:
+  branch: one
+  instrument_type: cashiers_check
+  last_number: 1000
+
+two:
+  branch: one
+  instrument_type: money_order
+  last_number: 500

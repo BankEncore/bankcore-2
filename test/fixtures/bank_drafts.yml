@@ -1,0 +1,12 @@
+# BankDraft fixtures for #73 — use unique instrument_numbers per type to avoid conflicts
+one:
+  instrument_type: cashiers_check
+  instrument_number: "1001"
+  amount_cents: 10000
+  currency_code: USD
+  payee_name: Test Payee
+  issue_date: 2026-03-10
+  status: issued
+  remitter_party: one
+  branch: one
+  account: one

@@ -38,6 +38,7 @@ class ReversalService
       ActiveRecord::Base.transaction do
         reversal_batch = create_reversal_batch!(reversal_code)
         mark_check_items_reversed! if @posting_batch.transaction_code == "CHK_POST"
+        mark_bank_drafts_voided! if @posting_batch.transaction_code == "DRAFT_ISSUE"
         OverrideRequestService.use!(override_request: override_request) if override_request.present?
         AuditEmissionService.emit!(
           event_type: AuditEmissionService::EVENT_REVERSAL_COMMITTED,
@@ -137,6 +138,13 @@ class ReversalService
 
   def mark_check_items_reversed!
     CheckItem.where(posting_batch_id: @posting_batch.id).update_all(status: CheckItem::STATUS_REVERSED)
+  end
+
+  def mark_bank_drafts_voided!
+    BankDraft.where(posting_batch_id: @posting_batch.id).update_all(
+      status: BankDraft::STATUS_VOIDED,
+      voided_at: Time.current
+    )
   end
 
   def create_override_required_exception!

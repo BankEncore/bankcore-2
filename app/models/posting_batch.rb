@@ -11,6 +11,7 @@ class PostingBatch < ApplicationRecord
   has_many :fee_assessments
   has_many :interest_accruals
   has_many :interest_posting_applications, dependent: :restrict_with_error
+  has_one :bank_draft, foreign_key: :posting_batch_id, dependent: :restrict_with_error
   has_one :reversal_batch, class_name: "PostingBatch", foreign_key: :reversal_of_batch_id
 
   validates :status, presence: true, inclusion: { in: Bankcore::Enums::POSTING_STATUSES }
