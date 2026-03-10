@@ -1,0 +1,2 @@
+# CheckItem records are created by CheckEntryService when posting CHK_POST.
+# No seed fixtures required; use CheckEntryService or integration tests to create.

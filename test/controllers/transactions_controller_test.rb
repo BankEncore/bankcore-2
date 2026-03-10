@@ -8,6 +8,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     ensure_ach_template!
     ensure_fee_post_template!
     ensure_internal_transfer_template!
+    ensure_chk_post_template!
   end
 
   test "index renders" do
@@ -24,6 +25,7 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='transaction[amount]']"
     assert_select "select[name='transaction[fee_type_id]']"
     assert_select "input[name='transaction[ach_trace_number]']"
+    assert_select "input[name='transaction[check_number]']"
     assert_select "a[href='#{interest_accruals_path}']"
   end
 
@@ -405,6 +407,35 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
     assert_includes transaction.transaction_references.map(&:reference_type), "ach_identification_number"
   end
 
+  test "create routes check entries through check workflow" do
+    account = accounts(:one)
+    upsert_balance(account, posted_balance_cents: 5000, available_balance_cents: 5000, average_balance_cents: 4000)
+
+    post transactions_url, params: {
+      transaction: {
+        transaction_code: "CHK_POST",
+        account_id: account.id,
+        amount: "25.00",
+        check_number: "1001",
+        memo: "Check # 1001",
+        reference_number: ""
+      }
+    }
+
+    assert_redirected_to transaction_path(BankingTransaction.last)
+    transaction = BankingTransaction.last
+    assert_equal "CHK_POST", transaction.transaction_type
+    assert_includes transaction.transaction_references.map(&:reference_type), "check_number"
+    assert_equal "1001", transaction.transaction_references.find { |r| r.reference_type == "check_number" }&.reference_value
+    check_item = CheckItem.find_by(operational_transaction_id: transaction.id)
+    assert check_item, "CheckItem should be created"
+    assert_equal "1001", check_item.check_number
+    assert_equal 2500, check_item.amount_cents
+    assert_equal "posted", check_item.status
+    follow_redirect!
+    assert_match /posted successfully/i, flash[:notice]
+  end
+
   test "create routes ach entries through ach workflow" do
     post transactions_url, params: {
       transaction: {
@@ -539,6 +570,71 @@ class TransactionsControllerTest < ActionDispatch::IntegrationTest
       account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
       gl_account: gl_accounts(:three),
       description: "Credit fee income",
+      position: 1
+    )
+  end
+
+  def ensure_chk_post_template!
+    return if PostingTemplate.joins(:transaction_code).exists?(transaction_codes: { code: "CHK_POST" })
+
+    chk_code = TransactionCode.find_or_create_by!(code: "CHK_POST") do |record|
+      record.description = "Check posting"
+      record.reversal_code = "CHK_POST_REVERSAL"
+      record.active = true
+    end
+    gl_2150 = GlAccount.find_or_create_by!(gl_number: "2150") do |g|
+      g.name = "Check Clearing"
+      g.category = "liability"
+      g.normal_balance = "credit"
+      g.status = Bankcore::Enums::STATUS_ACTIVE
+      g.allow_direct_posting = true
+    end
+    template = PostingTemplate.create!(
+      transaction_code: chk_code,
+      name: "Check Post",
+      description: "Debit customer account, credit check clearing",
+      active: true
+    )
+    PostingTemplateLeg.create!(
+      posting_template: template,
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+      description: "Debit customer account",
+      position: 0
+    )
+    PostingTemplateLeg.create!(
+      posting_template: template,
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account: gl_2150,
+      description: "Credit check clearing",
+      position: 1
+    )
+
+    rev_code = TransactionCode.find_or_create_by!(code: "CHK_POST_REVERSAL") do |record|
+      record.description = "Check posting reversal"
+      record.reversal_code = nil
+      record.active = true
+    end
+    rev_template = PostingTemplate.create!(
+      transaction_code: rev_code,
+      name: "Check Post Reversal",
+      description: "Credit customer, debit check clearing",
+      active: true
+    )
+    PostingTemplateLeg.create!(
+      posting_template: rev_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_CREDIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER,
+      description: "Credit customer account",
+      position: 0
+    )
+    PostingTemplateLeg.create!(
+      posting_template: rev_template,
+      leg_type: Bankcore::Enums::LEG_TYPE_DEBIT,
+      account_source: Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL,
+      gl_account: gl_2150,
+      description: "Debit check clearing",
       position: 1
     )
   end

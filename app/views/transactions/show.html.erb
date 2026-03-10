@@ -110,6 +110,41 @@
     </div>
   </section>
 
+  <% if @transaction.transaction_type == "CHK_POST" && @transaction.check_items.any? %>
+    <section class="ui-panel mb-6">
+      <div class="ui-panel-header">
+        <div>
+          <h2 class="text-lg font-semibold text-base-content">Check Items</h2>
+          <p class="mt-1 text-sm text-base-content/65">Side records for check lifecycle tracking.</p>
+        </div>
+      </div>
+      <div class="ui-panel-body">
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Check Number</th>
+              <th>Account</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Business Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @transaction.check_items.each do |check_item| %>
+              <tr>
+                <td class="ui-mono"><%= check_item.check_number %></td>
+                <td class="ui-mono"><%= check_item.account&.account_number %></td>
+                <td class="ui-mono text-right"><%= number_to_currency(check_item.amount_cents / 100.0) %></td>
+                <td><span class="<%= status_pill_class(check_item.status == "posted" ? "active" : check_item.status) %>"><%= check_item.status %></span></td>
+                <td class="ui-mono"><%= check_item.business_date&.strftime("%Y-%m-%d") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% end %>
+
   <section class="ui-panel mb-6">
     <div class="ui-panel-header">
       <div>

@@ -30,6 +30,12 @@ class Account < ApplicationRecord
     account_product&.product_code || account_type
   end
 
+  def check_writing_eligible?
+    return deposit_account.resolved_check_writing_eligible if deposit_account.present?
+
+    account_product&.check_writing_eligible? || false
+  end
+
   private
 
   def default_account_reference

@@ -60,7 +60,37 @@
             </div>
           </div>
         <% end %>
+        <% if @override_request.request_type == "check_overdraft" && @override_request.context_json.present? %>
+          <% ctx = JSON.parse(@override_request.context_json) rescue {} %>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Account</div>
+            <div class="ui-kv-value ui-mono"><%= Account.find_by(id: ctx["account_id"])&.account_number || "##{ctx['account_id']}" %></div>
+          </div>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Check Number</div>
+            <div class="ui-kv-value ui-mono"><%= ctx["check_number"] %></div>
+          </div>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Amount</div>
+            <div class="ui-kv-value ui-mono"><%= number_to_currency((ctx["amount_cents"] || 0) / 100.0) %></div>
+          </div>
+        <% end %>
       </div>
+
+      <% if @override_request.status == "approved" && @override_request.request_type == "check_overdraft" && @override_request.used_at.blank? %>
+        <% ctx = JSON.parse(@override_request.context_json) rescue {} %>
+        <% if ctx["account_id"].present? && ctx["amount_cents"].present? && ctx["check_number"].present? %>
+          <div class="ui-actionbar mt-5">
+            <%= link_to "Post this check", new_transaction_path(transaction: {
+              transaction_code: "CHK_POST",
+              account_id: ctx["account_id"],
+              amount: (ctx["amount_cents"].to_f / 100).to_s,
+              check_number: ctx["check_number"],
+              override_request_id: @override_request.id
+            }), class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      <% end %>
 
       <% if @override_request.status == "pending" %>
         <div class="ui-actionbar mt-5">

@@ -1,0 +1,15 @@
+<div id="check_fields" class="hidden grid gap-4 lg:grid-cols-2" data-transaction-workstation-target="checkFields">
+  <div class="form-control w-full">
+    <label class="label" for="check_number">
+      <span class="label-text text-sm font-medium">Check Number</span>
+    </label>
+    <input type="text" name="transaction[check_number]" id="check_number" value="<%= params.dig(:transaction, :check_number) %>" class="input input-bordered w-full ui-mono" placeholder="Serial number on check" data-transaction-workstation-target="checkNumber" data-action="input->transaction-workstation#syncCheckMemo change->transaction-workstation#syncCheckMemo input->transaction-workstation#syncReferenceFromCheck change->transaction-workstation#syncReferenceFromCheck">
+  </div>
+  <div class="form-control w-full">
+    <label class="label" for="confirmation_number">
+      <span class="label-text text-sm font-medium">Confirmation Number</span>
+      <span class="label-text-alt text-base-content/60">Required when posting duplicate check</span>
+    </label>
+    <input type="text" name="transaction[confirmation_number]" id="confirmation_number" value="<%= params.dig(:transaction, :confirmation_number) %>" class="input input-bordered w-full ui-mono" placeholder="Enter if duplicate check">
+  </div>
+</div>

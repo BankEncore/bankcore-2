@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_000002) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -53,6 +53,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
   create_table "account_products", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.boolean "allow_overdraft", default: false, null: false
     t.bigint "asset_gl_account_id"
+    t.boolean "check_writing_eligible", default: false, null: false
     t.datetime "created_at", null: false
     t.string "currency_code", default: "USD", null: false
     t.bigint "interest_expense_gl_account_id"
@@ -145,8 +146,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
     t.index ["business_date"], name: "index_business_dates_on_business_date", unique: true
   end
 
+  create_table "check_items", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "account_id", null: false
+    t.integer "amount_cents", null: false
+    t.date "business_date", null: false
+    t.string "check_number", null: false
+    t.datetime "created_at", null: false
+    t.bigint "operational_transaction_id", null: false
+    t.bigint "posting_batch_id", null: false
+    t.string "status", default: "posted", null: false
+    t.datetime "updated_at", null: false
+    t.index ["account_id"], name: "index_check_items_on_account_id"
+    t.index ["operational_transaction_id"], name: "index_check_items_on_operational_transaction_id"
+    t.index ["posting_batch_id"], name: "index_check_items_on_posting_batch_id"
+  end
+
   create_table "deposit_accounts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
+    t.boolean "check_writing_eligible"
     t.datetime "created_at", null: false
     t.string "deposit_type"
     t.boolean "interest_bearing"
@@ -288,6 +305,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
   create_table "override_requests", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "approved_by_id"
     t.bigint "branch_id"
+    t.text "context_json"
     t.datetime "created_at", null: false
     t.datetime "expires_at"
     t.bigint "operational_transaction_id"
@@ -482,6 +500,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_09_094500) do
   add_foreign_key "account_transactions", "transactions"
   add_foreign_key "accounts", "account_products"
   add_foreign_key "accounts", "branches"
+  add_foreign_key "check_items", "accounts"
+  add_foreign_key "check_items", "posting_batches"
+  add_foreign_key "check_items", "transactions", column: "operational_transaction_id"
   add_foreign_key "deposit_accounts", "accounts"
   add_foreign_key "fee_assessments", "accounts"
   add_foreign_key "fee_assessments", "fee_rules"

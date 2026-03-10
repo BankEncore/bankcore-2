@@ -6,14 +6,15 @@ class OverrideRequestService
   class OverrideError < StandardError; end
 
   def self.request!(request_type:, requested_by_id: nil, branch_id: nil, operational_transaction_id: nil,
-                    reason_text: nil, expires_at: nil)
+                    reason_text: nil, expires_at: nil, context_json: nil)
     new(
       request_type: request_type,
       requested_by_id: requested_by_id,
       branch_id: branch_id,
       operational_transaction_id: operational_transaction_id,
       reason_text: reason_text,
-      expires_at: expires_at
+      expires_at: expires_at,
+      context_json: context_json
     ).request!
   end
 
@@ -25,12 +26,12 @@ class OverrideRequestService
     new(override_request: override_request, approved_by_id: approved_by_id).deny!
   end
 
-  def self.use!(override_request:)
-    new(override_request: override_request).use!
+  def self.use!(override_request:, context_for_validation: nil)
+    new(override_request: override_request, context_for_validation: context_for_validation).use!
   end
 
   def initialize(override_request: nil, approved_by_id: nil, request_type: nil, requested_by_id: nil,
-                 branch_id: nil, operational_transaction_id: nil, reason_text: nil, expires_at: nil)
+                 branch_id: nil, operational_transaction_id: nil, reason_text: nil, expires_at: nil, context_json: nil, context_for_validation: nil)
     @override_request = override_request
     @approved_by_id = approved_by_id
     @request_type = request_type
@@ -39,6 +40,8 @@ class OverrideRequestService
     @operational_transaction_id = operational_transaction_id
     @reason_text = reason_text
     @expires_at = expires_at
+    @context_json = context_json
+    @context_for_validation = context_for_validation
   end
 
   def request!
@@ -51,7 +54,8 @@ class OverrideRequestService
       branch_id: @branch_id,
       operational_transaction_id: @operational_transaction_id,
       reason_text: @reason_text,
-      expires_at: @expires_at
+      expires_at: @expires_at,
+      context_json: @context_json
     )
     ensure_transaction_exception_open!
 
@@ -97,9 +101,10 @@ class OverrideRequestService
     raise OverrideError, "Override is not approved" unless @override_request.status == OVERRIDE_STATUS_APPROVED
     raise OverrideError, "Override already used" if @override_request.used_at.present?
     raise OverrideError, "Override has expired" if expired?(@override_request)
+    validate_check_overdraft_context! if @override_request.request_type == OVERRIDE_TYPE_CHECK_OVERDRAFT
 
     @override_request.update!(status: OVERRIDE_STATUS_USED, used_at: Time.current)
-    resolve_transaction_exceptions!(resolved_by_id: @override_request.approved_by_id)
+    resolve_transaction_exceptions!(resolved_by_id: @override_request.approved_by_id) unless check_overdraft?
     emit_override_event!(AuditEmissionService::EVENT_OVERRIDE_USED, "use")
     @override_request
   end
@@ -174,5 +179,23 @@ class OverrideRequestService
 
   def requires_override_for_request?(request_type)
     request_type == OVERRIDE_TYPE_REVERSAL
+  end
+
+  def check_overdraft?
+    @override_request.request_type == OVERRIDE_TYPE_CHECK_OVERDRAFT
+  end
+
+  def validate_check_overdraft_context!
+    return unless @context_for_validation.present?
+
+    stored = @override_request.context_json.present? ? JSON.parse(@override_request.context_json) : {}
+    stored = stored.with_indifferent_access
+    req_account = @context_for_validation[:account_id]&.to_s
+    req_amount = @context_for_validation[:amount_cents]&.to_i
+    req_check = @context_for_validation[:check_number].to_s
+
+    raise OverrideError, "Override context does not match: account mismatch" if req_account != stored["account_id"]&.to_s
+    raise OverrideError, "Override context does not match: amount mismatch" if req_amount != stored["amount_cents"]&.to_i
+    raise OverrideError, "Override context does not match: check number mismatch" if req_check != stored["check_number"]&.to_s
   end
 end

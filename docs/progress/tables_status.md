@@ -35,6 +35,7 @@ These tables form the current ledger-first MVP backbone and are already in use:
 - `interest_accruals`
 - `audit_events`
 - `override_requests`
+- `check_items`
 - `account_holds`
 - `branches`
 - `users`

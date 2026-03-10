@@ -20,6 +20,9 @@ class TransactionsController < ApplicationController
     ach_batch_reference
     ach_company_name
     ach_identification_number
+    check_number
+    confirmation_number
+    override_request_id
     authorization_reference
     authorization_source
   ].freeze
@@ -40,6 +43,7 @@ class TransactionsController < ApplicationController
     @transaction_exceptions = @transaction.transaction_exceptions.includes(:resolved_by).order(created_at: :desc)
     @transaction_references = @transaction.transaction_references.order(:reference_type, :id)
     @posting_legs = @posting_batch&.posting_legs&.includes(:account, :gl_account) || []
+    @transaction.check_items.includes(:account).load if @transaction.transaction_type == "CHK_POST"
   end
 
   def reverse
@@ -68,6 +72,13 @@ class TransactionsController < ApplicationController
     request = transaction_entry_request
     batch = TransactionEntry::Dispatcher.post!(request: request)
     redirect_to transaction_path(batch.operational_transaction_id), notice: "Transaction posted successfully."
+  rescue TransactionEntry::CheckOverdraftOverrideRequiredError => e
+    redirect_to new_override_request_path(
+      request_type: Bankcore::Enums::OVERRIDE_TYPE_CHECK_OVERDRAFT,
+      account_id: e.account_id,
+      amount_cents: e.amount_cents,
+      check_number: e.check_number
+    ), alert: e.message
   rescue PostingEngine::PostingError, PostingValidator::ValidationError, TransactionEntry::Error, ArgumentError => e
     load_form_dependencies
     flash.now[:alert] = e.message

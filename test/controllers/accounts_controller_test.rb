@@ -45,6 +45,7 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "dda", account.deposit_account.deposit_type
     assert_equal false, account.deposit_account.interest_bearing
     assert_equal "allow", account.deposit_account.overdraft_policy
+    assert account.check_writing_eligible?
   end
 
   test "create uses product defaults for interest-bearing deposit products" do

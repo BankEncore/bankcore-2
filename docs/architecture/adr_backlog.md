@@ -49,6 +49,9 @@ The following ADRs have now been created under `docs/adr/`:
 - `0010-derived-account-balances.md`
 - `0011-defer-full-operational-transaction-detail-model.md`
 - `0012-phase-product-configuration-evolution.md`
+- `0013-shared-operational-account-lookup-primitive.md`
+- `0014-check-clearing-operational-family.md`
+- `0015-check-overdraft-override-context.md`
 
 These files should now be treated as the primary home for the corresponding decisions.
 

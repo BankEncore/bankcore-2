@@ -62,7 +62,8 @@ class AccountsController < ApplicationController
       account_id: @account.id,
       deposit_type: product.default_deposit_type,
       interest_bearing: product.default_interest_bearing?,
-      overdraft_policy: product.default_overdraft_policy
+      overdraft_policy: product.default_overdraft_policy,
+      check_writing_eligible: product.check_writing_eligible?
     )
   end
 

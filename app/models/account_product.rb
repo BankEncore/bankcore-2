@@ -41,6 +41,10 @@ class AccountProduct < ApplicationRecord
     allow_overdraft ? "allow" : "disallow"
   end
 
+  def check_writing_eligible?
+    check_writing_eligible == true
+  end
+
   def resolved_interest_expense_gl_account
     interest_expense_gl_account
   end

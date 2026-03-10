@@ -271,6 +271,24 @@ Credit
 
 ---
 
+## Check Post
+
+Transaction Code
+
+CHK_POST
+
+Template
+
+Debit
+
+- customer_account
+
+Credit
+
+- GL: 2150 Check Clearing
+
+---
+
 # 6. Posting Engine Execution
 
 When executing a transaction:

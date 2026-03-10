@@ -91,6 +91,7 @@ If a transaction cannot be understood by operations staff from its recorded meta
 | `INT_POST_REVERSAL` | Reverse interest posting | original interest posting reference, amount | Existing reversible interest posting | original posting reference, reason | Controlled/manual if needed | Terminal reversal; idempotency on original posting reference | Operator or system |
 | `ACH_CREDIT` | Incoming external credit | `account_id`, `amount`, external reference | Accounts/products eligible for ACH credit | ACH trace, originator, file/batch reference, effective date | Exception path for blocked or invalid account | Opposite debit/return flow later; idempotency on trace, file, account, amount | System or back office |
 | `ACH_DEBIT` | Outgoing external debit | `account_id`, `amount`, external reference | Accounts/products eligible for ACH debit | ACH trace, authorization reference, file/batch reference, effective date | Stronger policy and authorization checks | Opposite credit/return flow later; idempotency on trace, file, account, amount | System or back office |
+| `CHK_POST` | Check posting against account | `account_id`, `amount`, `check_number` | Check-writing-eligible deposit accounts | check_number, memo, reference | OD override above threshold; confirmation for duplicate checks | `CHK_POST_REVERSAL`; idempotency on service, account_id, check_number, amount | Operator |
 
 ---
 
@@ -296,6 +297,40 @@ Represent external settlement activity entering or leaving customer deposit acco
 **Reversal notes**
 
 - eventual design may distinguish normal reversal from return-item or dispute workflows
+
+---
+
+## 5.7 `CHK_POST`
+
+**Purpose**
+
+Post a check drawn against an eligible DDA/NOW account.
+
+**Required inputs**
+
+- `account_id`
+- `amount`
+- `check_number`
+
+**Eligibility**
+
+- account must be check-writing eligible (product or account override)
+- overdraft policy applies: disallow fails closed; allow may require override above threshold
+
+**Required metadata**
+
+- check_number (serial on check)
+- memo (default "Check # {check_number}")
+- reference (default CHK-{check_number}-{timestamp})
+
+**Approval and exception notes**
+
+- overdraft above threshold requires supervisor override (context_json stores account_id, amount_cents, check_number)
+- duplicate check (same account, same check_number) requires confirmation_number
+
+**Reversal notes**
+
+- `CHK_POST_REVERSAL` mirrors legs; CheckItem status updated to `reversed`
 
 ---
 

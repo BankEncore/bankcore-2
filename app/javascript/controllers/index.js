@@ -9,7 +9,8 @@ const TRANSFER_TYPES = ["XFER_INTERNAL"]
 const ADJUSTMENT_TYPES = ["ADJ_CREDIT", "ADJ_DEBIT"]
 const FEE_TYPES = ["FEE_POST"]
 const ACH_TYPES = ["ACH_CREDIT", "ACH_DEBIT"]
-const MANUAL_ENTRY_CODES = [...TRANSFER_TYPES, ...ADJUSTMENT_TYPES, ...FEE_TYPES, ...ACH_TYPES]
+const CHECK_TYPES = ["CHK_POST"]
+const MANUAL_ENTRY_CODES = [...TRANSFER_TYPES, ...ADJUSTMENT_TYPES, ...FEE_TYPES, ...ACH_TYPES, ...CHECK_TYPES]
 
 class AccountPickerController extends Controller {
   static targets = ["hiddenInput", "queryInput", "results"]
@@ -255,6 +256,7 @@ class TransactionWorkstationController extends Controller {
     "adjustmentFields",
     "feeFields",
     "achFields",
+    "checkFields",
     "amountInput",
     "amountLabel",
     "accountContextPanels",
@@ -262,6 +264,7 @@ class TransactionWorkstationController extends Controller {
     "feeTypeSelect",
     "achTrace",
     "achEffectiveDate",
+    "checkNumber",
     "achBatch",
     "achCompanyName",
     "achIdentificationNumber",
@@ -285,6 +288,7 @@ class TransactionWorkstationController extends Controller {
     const isAdjustment = ADJUSTMENT_TYPES.includes(code)
     const isFee = FEE_TYPES.includes(code)
     const isAch = ACH_TYPES.includes(code)
+    const isCheck = CHECK_TYPES.includes(code)
     const isAchDebit = code === "ACH_DEBIT"
 
     this.accountFieldsTarget.classList.toggle("hidden", isTransfer)
@@ -292,6 +296,7 @@ class TransactionWorkstationController extends Controller {
     this.adjustmentFieldsTarget.classList.toggle("hidden", !isAdjustment)
     this.feeFieldsTarget.classList.toggle("hidden", !isFee)
     this.achFieldsTarget.classList.toggle("hidden", !isAch)
+    this.checkFieldsTarget.classList.toggle("hidden", !isCheck)
 
     this.togglePickerRequired(this.singlePickerTarget, !isTransfer)
     this.togglePickerRequired(this.sourcePickerTarget, isTransfer)
@@ -301,6 +306,7 @@ class TransactionWorkstationController extends Controller {
     this.toggleRequired(this.achEffectiveDateTarget, isAch)
     this.toggleRequired(this.achBatchTarget, isAch)
     this.toggleRequired(this.authRefTarget, isAchDebit)
+    this.toggleRequired(this.checkNumberTarget, isCheck)
 
     if (isFee) {
       this.amountLabelTarget.textContent = "Amount Override (USD)"
@@ -329,6 +335,12 @@ class TransactionWorkstationController extends Controller {
     } else {
       this.updateAchBatchAutofill()
       this.updateAchMemoAutofill()
+    }
+
+    if (!isCheck) {
+      if (this.hasCheckNumberTarget) this.checkNumberTarget.value = ""
+    } else {
+      this.updateCheckMemoAutofill()
     }
 
     if (!isFee) {
@@ -374,7 +386,35 @@ class TransactionWorkstationController extends Controller {
       this.updateAchMemoAutofill()
       return
     }
+    if (CHECK_TYPES.includes(code)) {
+      this.updateCheckMemoAutofill()
+      return
+    }
     if (this.memoInputTarget.dataset.memoAutofilled === "1") delete this.memoInputTarget.dataset.memoAutofilled
+  }
+
+  updateCheckMemoAutofill() {
+    if (!this.hasMemoInputTarget || !this.hasCheckNumberTarget) return
+    const checkNum = (this.checkNumberTarget.value || "").trim()
+    if (!checkNum) return
+
+    const input = this.memoInputTarget
+    const currentValue = (input.value || "").trim()
+    const wasAutofilled = input.dataset.memoAutofilled === "1"
+    const checkMemoPattern = /^Check # .+$/
+    const shouldAutofill = !this.memoUserEdited && (currentValue === "" || (wasAutofilled && checkMemoPattern.test(currentValue)))
+    if (shouldAutofill) {
+      input.value = `Check # ${checkNum}`
+      input.dataset.memoAutofilled = "1"
+    }
+  }
+
+  syncCheckMemo() {
+    this.updateCheckMemoAutofill()
+  }
+
+  syncReferenceFromCheck() {
+    if (this.hasTypeSelectTarget) this.updateReferenceAutofill(this.typeSelectTarget.value)
   }
 
   updateAchMemoAutofill() {
@@ -416,16 +456,22 @@ class TransactionWorkstationController extends Controller {
     const wasAutofilled = input.dataset.referenceAutofilled === "1"
     const manPattern = /^MAN-[A-Z0-9_]+-\d{12}$/
     const achPattern = /^ACH-.+-[0-9]{6}-[0-9]{6}$/
-    const isAutofillPattern = manPattern.test(currentValue) || achPattern.test(currentValue)
+    const chkPattern = /^CHK-.+-\d{12}$/
+    const isAutofillPattern = manPattern.test(currentValue) || achPattern.test(currentValue) || chkPattern.test(currentValue)
     const shouldAutofill = !this.referenceUserEdited && (currentValue === "" || (wasAutofilled && isAutofillPattern))
 
     if (!shouldAutofill) return
 
     const trace = this.hasAchTraceTarget ? this.achTraceTarget.value?.trim() : ""
     const effectiveDate = this.hasAchEffectiveDateTarget ? this.achEffectiveDateTarget.value?.trim() : ""
+    const checkNum = this.hasCheckNumberTarget ? this.checkNumberTarget.value?.trim() : ""
     const useAchFormat = ACH_TYPES.includes(code) && trace && effectiveDate
+    const useChkFormat = CHECK_TYPES.includes(code) && checkNum
 
-    if (useAchFormat) {
+    if (useChkFormat) {
+      const ts = new Date().toISOString().slice(2, 4) + new Date().toISOString().slice(5, 7) + new Date().toISOString().slice(8, 10) + new Date().toISOString().slice(11, 13) + new Date().toISOString().slice(14, 16) + new Date().toISOString().slice(17, 19)
+      input.value = `CHK-${checkNum}-${ts}`
+    } else if (useAchFormat) {
       const yymmdd = effectiveDate.replace(/-/g, "").slice(2, 8)
       const now = new Date()
       const hhmmss = String(now.getHours()).padStart(2, "0") + String(now.getMinutes()).padStart(2, "0") + String(now.getSeconds()).padStart(2, "0")
@@ -467,6 +513,8 @@ class TransactionWorkstationController extends Controller {
       this.guidanceTarget.textContent = "Fee mode. The dispatcher will resolve the active fee rule for the selected account product."
     } else if (ACH_TYPES.includes(code)) {
       this.guidanceTarget.textContent = "ACH mode. Trace, effective date, and batch references are captured as structured transaction references."
+    } else if (CHECK_TYPES.includes(code)) {
+      this.guidanceTarget.textContent = "Check posting mode. Check number and account must be provided. Account must be check-writing eligible."
     } else {
       this.guidanceTarget.textContent = "Choose a transaction code to load the required controls."
     }

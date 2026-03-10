@@ -16,6 +16,8 @@ module TransactionEntry
         TransactionEntry::Policies::InterestPostPolicy
       when :ach
         TransactionEntry::Policies::AchPolicy
+      when :check
+        TransactionEntry::Policies::CheckPolicy
       when :reversal
         TransactionEntry::Policies::ReversalPolicy
       else
