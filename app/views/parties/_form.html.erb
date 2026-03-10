@@ -1,4 +1,7 @@
 <%= form_with model: @party, local: true, class: "space-y-4" do |f| %>
+  <% if params[:return_to].present? %>
+    <%= hidden_field_tag :return_to, params[:return_to] %>
+  <% end %>
   <% if @party.errors.any? %>
     <div class="alert alert-error mb-4">
       <ul class="list-disc list-inside">
@@ -48,6 +51,6 @@
 
   <div class="flex gap-2 pt-4">
     <%= f.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", @party.persisted? ? party_path(@party) : parties_path, class: "btn btn-ghost" %>
+    <%= link_to "Cancel", (params[:return_to].presence || (@party.persisted? ? party_path(@party) : parties_path)), class: "btn btn-ghost" %>
   </div>
 <% end %>

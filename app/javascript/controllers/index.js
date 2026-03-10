@@ -248,6 +248,242 @@ class AccountPickerController extends Controller {
   }
 }
 
+class PartyPickerController extends Controller {
+  static targets = ["hiddenInput", "queryInput", "results"]
+  static values = { url: String, initialParty: Object }
+
+  connect() {
+    this.abortController = null
+    this.results = []
+    this.highlightedIndex = -1
+    this.searchTimeout = null
+    this.party = this.hasInitialPartyValue ? this.initialPartyValue : null
+    this.selectedLabel = this.party?.display_label || this.queryInputTarget.value.trim()
+    this.queryInputTarget.value = this.selectedLabel
+    this.storeParty(this.party)
+  }
+
+  disconnect() {
+    this.cancelPendingSearch()
+  }
+
+  search() {
+    const query = this.queryInputTarget.value.trim()
+    this.queryInputTarget.setCustomValidity("")
+
+    if (this.hiddenInputTarget.value && query !== this.selectedLabel) {
+      this.hiddenInputTarget.value = ""
+      this.selectedLabel = ""
+      this.storeParty(null)
+      this.dispatch("changed", { detail: { id: "", label: "", party: null } })
+    }
+
+    if (query.length < 2) {
+      this.results = []
+      this.highlightedIndex = -1
+      this.renderResults()
+      return
+    }
+
+    clearTimeout(this.searchTimeout)
+    this.searchTimeout = window.setTimeout(() => {
+      this.performSearch(query)
+    }, SEARCH_DEBOUNCE_MS)
+  }
+
+  showResults() {
+    if (this.results.length > 0 || this.resultsTarget.innerHTML.trim() !== "") {
+      this.resultsTarget.classList.remove("hidden")
+    }
+  }
+
+  hideResults() {
+    window.setTimeout(() => {
+      if (!this.hiddenInputTarget.value) {
+        this.queryInputTarget.value = ""
+      } else {
+        this.queryInputTarget.value = this.selectedLabel
+      }
+
+      this.resultsTarget.classList.add("hidden")
+    }, 150)
+  }
+
+  handleKeydown(event) {
+    if (this.resultsTarget.classList.contains("hidden")) return
+
+    switch (event.key) {
+    case "ArrowDown":
+      event.preventDefault()
+      this.highlightResult(this.highlightedIndex + 1)
+      break
+    case "ArrowUp":
+      event.preventDefault()
+      this.highlightResult(this.highlightedIndex - 1)
+      break
+    case "Enter":
+      if (this.highlightedIndex >= 0 && this.results[this.highlightedIndex]) {
+        event.preventDefault()
+        this.selectParty(this.results[this.highlightedIndex])
+      }
+      break
+    case "Escape":
+      event.preventDefault()
+      this.resultsTarget.classList.add("hidden")
+      break
+    }
+  }
+
+  choose(event) {
+    const option = event.target.closest("[data-party-id]")
+    if (!option) return
+
+    event.preventDefault()
+    this.selectParty(this.results[Number(option.dataset.partyIndex)])
+  }
+
+  preventBlur(event) {
+    if (!event.target.closest("[data-party-id]")) return
+
+    event.preventDefault()
+  }
+
+  reset(event) {
+    const { id = "", label = "" } = event.detail || {}
+
+    this.cancelPendingSearch()
+    this.results = []
+    this.highlightedIndex = -1
+    this.hiddenInputTarget.value = id
+    this.queryInputTarget.value = label
+    this.queryInputTarget.setCustomValidity("")
+    this.selectedLabel = label
+    this.storeParty(null)
+    this.renderResults()
+    this.dispatch("changed", { detail: { id: id.toString(), label, party: null } })
+  }
+
+  async performSearch(query) {
+    this.cancelPendingSearch()
+    this.abortController = new AbortController()
+
+    try {
+      const response = await fetch(`${this.urlValue}?q=${encodeURIComponent(query)}`, {
+        headers: { Accept: "application/json" },
+        signal: this.abortController.signal
+      })
+
+      if (!response.ok) {
+        throw new Error(`Lookup failed with status ${response.status}`)
+      }
+
+      const payload = await response.json()
+      this.results = payload.parties || []
+      this.highlightedIndex = this.results.length > 0 ? 0 : -1
+      this.renderResults()
+    } catch (error) {
+      if (error.name === "AbortError") return
+
+      this.results = []
+      this.highlightedIndex = -1
+      this.resultsTarget.innerHTML = "<div class=\"px-4 py-3 text-sm text-error\">Unable to load customer matches.</div>"
+      this.resultsTarget.classList.remove("hidden")
+    }
+  }
+
+  selectParty(party) {
+    if (!party) return
+
+    const partyId = party.id.toString()
+    const partyLabel = party.display_label
+
+    this.cancelPendingSearch()
+    this.hiddenInputTarget.value = partyId
+    this.queryInputTarget.value = partyLabel
+    this.queryInputTarget.setCustomValidity("")
+    this.selectedLabel = partyLabel
+    this.storeParty(party)
+    this.results = []
+    this.highlightedIndex = -1
+    this.renderResults()
+    this.dispatch("changed", { detail: { id: partyId, label: partyLabel, party } })
+  }
+
+  highlightResult(index) {
+    if (this.results.length === 0) return
+
+    const boundedIndex = Math.max(0, Math.min(index, this.results.length - 1))
+    this.highlightedIndex = boundedIndex
+    this.renderResults()
+  }
+
+  renderResults() {
+    if (this.queryInputTarget.value.trim().length < 2) {
+      this.resultsTarget.innerHTML = ""
+      this.resultsTarget.classList.add("hidden")
+      return
+    }
+
+    if (this.results.length === 0) {
+      this.resultsTarget.innerHTML = "<div class=\"px-4 py-3 text-sm text-base-content/70\">No matching active customers.</div>"
+      this.resultsTarget.classList.remove("hidden")
+      return
+    }
+
+    const optionsMarkup = this.results.map((party, index) => {
+      const activeClasses = index === this.highlightedIndex ? "bg-base-200" : ""
+      const branchSummary = party.branch_code || "No branch"
+      const relationshipSummary = `${party.linked_account_count} linked account${party.linked_account_count === 1 ? "" : "s"}`
+
+      return `
+        <button
+          type="button"
+          class="flex w-full items-start justify-between gap-3 px-4 py-3 text-left text-sm hover:bg-base-200 ${activeClasses}"
+          data-party-id="${party.id}"
+          data-party-index="${index}"
+        >
+          <span class="min-w-0 flex-1">
+            <span class="block font-medium">${this.escapeHtml(party.display_name)}</span>
+            <span class="mt-1 block text-xs text-base-content/65">${this.escapeHtml(party.party_number)} · ${this.escapeHtml(branchSummary)} · ${this.escapeHtml(relationshipSummary)}</span>
+          </span>
+        </button>
+      `
+    }).join("")
+
+    this.resultsTarget.innerHTML = `
+      <div data-action="mousedown->party-picker#preventBlur click->party-picker#choose">
+        ${optionsMarkup}
+      </div>
+    `
+    this.resultsTarget.classList.remove("hidden")
+  }
+
+  cancelPendingSearch() {
+    clearTimeout(this.searchTimeout)
+
+    if (this.abortController) {
+      this.abortController.abort()
+      this.abortController = null
+    }
+  }
+
+  storeParty(party) {
+    this.party = party
+    this.element.dataset.partyPickerSelectedLabel = party?.display_label || ""
+    this.element.dataset.partyPickerParty = party ? JSON.stringify(party) : ""
+  }
+
+  escapeHtml(value) {
+    return value
+      .toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;")
+  }
+}
+
 class TransactionWorkstationController extends Controller {
   static targets = [
     "typeSelect",
@@ -664,4 +900,5 @@ class TransactionWorkstationController extends Controller {
 }
 
 application.register("account-picker", AccountPickerController)
+application.register("party-picker", PartyPickerController)
 application.register("transaction-workstation", TransactionWorkstationController)

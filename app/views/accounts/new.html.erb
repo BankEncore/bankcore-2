@@ -6,6 +6,13 @@
   <div class="card bg-base-200 shadow-sm">
     <div class="card-body">
       <h1 class="card-title text-xl mb-4">New Account</h1>
+      <% if @selected_primary_party.present? %>
+        <div class="mb-4 rounded-lg border border-base-300 bg-base-100 px-4 py-3 text-sm">
+          Opening an account for
+          <%= link_to @selected_primary_party.display_name, party_path(@selected_primary_party), class: "link link-primary font-medium" %>
+          <span class="ui-mono text-base-content/60">(<%= @selected_primary_party.party_number %>)</span>.
+        </div>
+      <% end %>
       <%= render "form" %>
     </div>
   </div>

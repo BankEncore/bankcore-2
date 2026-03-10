@@ -12,6 +12,9 @@ class AccountsController < ApplicationController
 
   def show
     @balance = @account.account_balances.first
+    @primary_owner = @account.account_owners.includes(:party).to_a.min_by do |owner|
+      [ owner.is_primary ? 0 : 1, owner.id || 0 ]
+    end
     @active_holds = @account.account_holds.where(status: Bankcore::Enums::HOLD_STATUS_ACTIVE).order(created_at: :desc)
     @transactions = @account.account_transactions
       .includes(:posting_batch)
@@ -24,6 +27,7 @@ class AccountsController < ApplicationController
       status: Bankcore::Enums::STATUS_ACTIVE,
       opened_on: Date.current
     )
+    @account.primary_party_id = params[:party_id].presence
     set_form_options
   end
 
@@ -47,7 +51,9 @@ class AccountsController < ApplicationController
   private
 
   def set_account
-    @account = Account.find(params[:id])
+    @account = Account
+      .includes(:branch, :account_balances, account_owners: :party)
+      .find(params[:id])
   end
 
   def account_params
@@ -69,8 +75,9 @@ class AccountsController < ApplicationController
 
   def set_form_options
     @branches = Branch.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:branch_code)
-    @parties = Party.order(:display_name).limit(200)
     @account_products = AccountProduct.where(status: Bankcore::Enums::STATUS_ACTIVE).order(:name)
+    @selected_primary_party = selected_primary_party
+    @selected_primary_party_payload = PartyContextPayloadBuilder.build(@selected_primary_party) if @selected_primary_party.present?
   end
 
   def create_primary_owner_if_provided!
@@ -91,5 +98,12 @@ class AccountsController < ApplicationController
 
     @account.account_type = @account.account_product.product_code
     @account.currency_code = @account.account_product.currency_code
+  end
+
+  def selected_primary_party
+    party_id = @account.primary_party_id.presence || params[:party_id].presence || params.dig(:account, :primary_party_id).presence
+    return if party_id.blank?
+
+    Party.find_by(id: party_id)
   end
 end

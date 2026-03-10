@@ -45,6 +45,16 @@
 
         <div class="space-y-3 rounded-lg border border-base-300 bg-base-100 p-4">
           <div class="ui-kv-row">
+            <div class="ui-kv-label">Customer</div>
+            <div class="ui-kv-value">
+              <% if @primary_owner&.party.present? %>
+                <%= link_to @primary_owner.party.display_name, party_path(@primary_owner.party), class: "link link-primary" %>
+              <% else %>
+                —
+              <% end %>
+            </div>
+          </div>
+          <div class="ui-kv-row">
             <div class="ui-kv-label">Account Reference</div>
             <div class="ui-kv-value ui-mono"><%= @account.account_reference %></div>
           </div>
@@ -60,7 +70,10 @@
       </div>
 
       <div class="ui-actionbar mt-5">
-        <%= link_to "New Transaction", new_transaction_path(account_id: @account.id), class: "btn btn-primary btn-sm" %>
+        <% if @primary_owner&.party.present? %>
+          <%= link_to "View Customer", party_path(@primary_owner.party), class: "btn btn-outline btn-sm" %>
+        <% end %>
+        <%= link_to "Post to Account", new_transaction_path(account_id: @account.id), class: "btn btn-primary btn-sm" %>
         <%= link_to "Place Hold", new_account_account_hold_path(@account), class: "btn btn-outline btn-sm" %>
         <%= link_to "Fee History", fee_assessments_path(account_id: @account.id), class: "btn btn-ghost btn-sm" %>
         <%= link_to "Accrual History", interest_accruals_path(account_id: @account.id), class: "btn btn-ghost btn-sm" %>

@@ -18,7 +18,17 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='account[account_reference]']"
     assert_select "select[name='account[account_product_id]']"
     assert_select "select[name='account[branch_id]']"
+    assert_select "input[name='account[primary_party_id]'][type='hidden']"
+    assert_select "input#account_primary_party_id_lookup[type='search']"
     assert_select "input[name='account[currency_code]']", count: 0
+  end
+
+  test "new preselects party context from query param" do
+    get new_account_url(party_id: parties(:one).id)
+
+    assert_response :success
+    assert_select "input[name='account[primary_party_id]'][value='#{parties(:one).id}']"
+    assert_select "input#account_primary_party_id_lookup[value*='#{parties(:one).display_name}']"
   end
 
   test "create creates account with product-driven deposit defaults and redirects" do
@@ -105,6 +115,8 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ui-kv-value", text: /DDA-1001/
     assert_select ".ui-kv-label", text: "Average Balance"
     assert_select ".ui-kv-value", text: /\$80\.00/
+    assert_select "a", text: "View Customer"
+    assert_select "a[href='#{party_path(parties(:one))}']"
   end
 
   test "create with duplicate account number re-renders form" do

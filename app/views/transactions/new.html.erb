@@ -1,6 +1,7 @@
 <% content_for :title, "New Transaction - BankCORE" %>
 
 <div class="w-full">
+  <% selected_customer_owner = @selected_account&.account_owners&.to_a&.min_by { |owner| [ owner.is_primary ? 0 : 1, owner.id || 0 ] } %>
   <div class="workspace-header">
     <div>
       <%= link_to "← Back to Transactions", transactions_path, class: "link link-primary mb-2 inline-block text-sm" %>
@@ -50,6 +51,14 @@
         <div class="ui-panel-body space-y-3 text-sm text-base-content/75">
           <p>All workstation submissions fail closed if the business date is closed, the amount is invalid, or the routing targets do not resolve.</p>
           <p>Preview lets you inspect the derived posting legs before any operational transaction or side record is created.</p>
+          <% if @selected_account.present? %>
+            <div class="flex flex-wrap gap-2 pt-2">
+              <%= link_to "Back to Account", account_path(@selected_account), class: "btn btn-ghost btn-sm" %>
+              <% if selected_customer_owner&.party.present? %>
+                <%= link_to "View Customer", party_path(selected_customer_owner.party), class: "btn btn-ghost btn-sm" %>
+              <% end %>
+            </div>
+          <% end %>
         </div>
       </section>
 

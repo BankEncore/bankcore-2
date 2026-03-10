@@ -44,15 +44,18 @@
   </div>
 
   <div class="form-control w-full">
-    <label class="label" for="account_primary_party_id">
-      <span class="label-text">Primary Owner (optional)</span>
-    </label>
-    <%= f.select :primary_party_id,
-        options_from_collection_for_select(@parties, :id, :display_name, f.object.primary_party_id),
-        { include_blank: "— None —" },
-        class: "select select-bordered w-full" %>
+    <% account_return_path = @selected_primary_party.present? ? new_account_path(party_id: @selected_primary_party.id) : new_account_path %>
+    <%= render "party_picker",
+        field_name: "account[primary_party_id]",
+        field_id: "account_primary_party_id",
+        label: "Primary Owner (optional)",
+        selected_id: f.object.primary_party_id,
+        selected_party_payload: @selected_primary_party_payload %>
     <label class="label">
-      <span class="label-text-alt">Currency, deposit defaults, and overdraft behavior come from the selected product</span>
+      <span class="label-text-alt">Currency, deposit defaults, and overdraft behavior come from the selected product.</span>
+      <span class="label-text-alt">
+        <%= link_to "Create customer first", new_party_path(return_to: account_return_path), class: "link link-primary" %>
+      </span>
     </label>
   </div>
 

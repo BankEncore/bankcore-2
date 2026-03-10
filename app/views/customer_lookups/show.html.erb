@@ -1,0 +1,131 @@
+<% content_for :title, "Customer Lookup - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back", root_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Customer Lookup</h1>
+      <p class="workspace-subtitle">Resolve a customer or account once, then continue in the correct workspace.</p>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Search</h2>
+        <p class="mt-1 text-sm text-base-content/65">Search by customer name, party number, account number, or account reference.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <%= form_with url: customer_lookup_path, method: :get, local: true, class: "grid gap-4 lg:grid-cols-[1fr_auto]" do %>
+        <div class="form-control w-full">
+          <label class="label" for="customer_lookup_q">
+            <span class="label-text text-sm font-medium">Search</span>
+          </label>
+          <input
+            type="search"
+            name="q"
+            id="customer_lookup_q"
+            value="<%= @query %>"
+            class="input input-bordered w-full"
+            placeholder="Search by customer name, party #, account #, or reference"
+            autofocus>
+        </div>
+        <div class="flex items-end gap-2">
+          <button type="submit" class="btn btn-primary">Search</button>
+          <% if @query.present? %>
+            <%= link_to "Clear", customer_lookup_path, class: "btn btn-ghost" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <% if @query.blank? %>
+    <section class="ui-panel">
+      <div class="ui-panel-body py-8 text-sm text-base-content/70">
+        Enter at least part of a customer name, party number, account number, or account reference to get started.
+      </div>
+    </section>
+  <% else %>
+    <div class="grid gap-6 xl:grid-cols-2">
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div>
+            <h2 class="text-lg font-semibold text-base-content">Customers</h2>
+            <p class="mt-1 text-sm text-base-content/65">Customer/party matches for this search.</p>
+          </div>
+        </div>
+        <div class="ui-panel-body">
+          <% if @party_results.any? %>
+            <table class="ui-ledger-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Branch</th>
+                  <th class="text-right">Linked Accounts</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @party_results.each do |party| %>
+                  <% payload = PartyContextPayloadBuilder.build(party) %>
+                  <tr>
+                    <td>
+                      <div class="font-medium text-base-content"><%= payload[:display_name] %></div>
+                      <div class="ui-mono text-xs text-base-content/60"><%= payload[:party_number] %> · <%= payload[:party_type] %></div>
+                    </td>
+                    <td><%= payload[:branch_code].presence || "—" %></td>
+                    <td class="ui-mono text-right"><%= payload[:linked_account_count] %></td>
+                    <td><%= link_to "Open", party_path(party), class: "btn btn-ghost btn-sm" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="text-sm text-base-content/60">No active customers matched this search.</p>
+          <% end %>
+        </div>
+      </section>
+
+      <section class="ui-panel">
+        <div class="ui-panel-header">
+          <div>
+            <h2 class="text-lg font-semibold text-base-content">Accounts</h2>
+            <p class="mt-1 text-sm text-base-content/65">Active account matches with current context.</p>
+          </div>
+        </div>
+        <div class="ui-panel-body">
+          <% if @account_results.any? %>
+            <table class="ui-ledger-table">
+              <thead>
+                <tr>
+                  <th>Account</th>
+                  <th>Owner</th>
+                  <th class="text-right">Available</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @account_results.each do |account| %>
+                  <% payload = AccountContextPayloadBuilder.build(account) %>
+                  <tr>
+                    <td>
+                      <div class="ui-mono"><%= payload[:account_number] %></div>
+                      <div class="text-xs text-base-content/60"><%= payload[:account_reference] %> · <%= payload[:product_name] %></div>
+                    </td>
+                    <td><%= payload[:primary_owner_name].presence || "—" %></td>
+                    <td class="ui-mono text-right"><%= payload[:available_balance_display] %></td>
+                    <td><%= link_to "Open", account_path(account), class: "btn btn-ghost btn-sm" %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% else %>
+            <p class="text-sm text-base-content/60">No active accounts matched this search.</p>
+          <% end %>
+        </div>
+      </section>
+    </div>
+  <% end %>
+</div>

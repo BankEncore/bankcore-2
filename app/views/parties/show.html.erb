@@ -1,64 +1,155 @@
-<% content_for :title, "Party #{@party.party_number} - BankCORE" %>
+<% content_for :title, "Customer #{@party.party_number} - BankCORE" %>
 
 <div class="w-full">
-  <%= link_to "← Back to Parties", parties_path, class: "link link-primary mb-4 inline-block" %>
-
-  <div class="card bg-base-200 shadow-sm mb-6">
-    <div class="card-body">
-      <h1 class="card-title text-xl">Party <%= @party.party_number %></h1>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-        <div>
-          <span class="text-base-content/60">Display Name</span>
-          <p class="font-medium"><%= @party.display_name %></p>
-        </div>
-        <div>
-          <span class="text-base-content/60">Type</span>
-          <p class="font-medium"><%= @party.party_type %></p>
-        </div>
-        <div>
-          <span class="text-base-content/60">Status</span>
-          <p>
-            <span class="badge badge-<%= @party.status == 'active' ? 'success' : 'neutral' %>">
-              <%= @party.status %>
-            </span>
-          </p>
-        </div>
-        <div>
-          <span class="text-base-content/60">Primary Branch</span>
-          <p class="font-medium"><%= @party.primary_branch ? "#{@party.primary_branch.branch_code} — #{@party.primary_branch.name}" : "—" %></p>
-        </div>
-      </div>
-      <div class="card-actions mt-4">
-        <%= link_to "Edit", edit_party_path(@party), class: "btn btn-outline btn-sm" %>
-      </div>
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Parties", parties_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">Customer Workspace</h1>
+      <p class="workspace-subtitle">Relationship summary for this customer, including linked accounts and recent activity.</p>
     </div>
   </div>
 
-  <div class="card bg-base-200 shadow-sm">
-    <div class="card-body">
-      <h2 class="card-title text-lg mb-4">Linked Accounts</h2>
+  <div class="grid gap-4 lg:grid-cols-4 mb-6">
+    <div class="ui-metric">
+      <div class="ui-metric-label">Customer</div>
+      <div class="ui-metric-value"><%= @party.display_name %></div>
+      <div class="mt-1 ui-mono text-xs text-base-content/60"><%= @party.party_number %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Status</div>
+      <div class="mt-2"><span class="<%= status_pill_class(@party.status) %>"><%= @party.status %></span></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Linked Accounts</div>
+      <div class="ui-metric-value ui-mono"><%= @linked_accounts.size %></div>
+    </div>
+    <div class="ui-metric">
+      <div class="ui-metric-label">Primary Branch</div>
+      <div class="ui-metric-value"><%= @party.primary_branch&.branch_code || "—" %></div>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Customer Summary</h2>
+        <p class="mt-1 text-sm text-base-content/65">Use this customer record as the starting point for account opening and linked-account activity.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <div class="ui-kv-grid">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Display Name</div>
+          <div class="ui-kv-value"><%= @party.display_name %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Party Number</div>
+          <div class="ui-kv-value ui-mono"><%= @party.party_number %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Type</div>
+          <div class="ui-kv-value"><%= @party.party_type %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Primary Branch</div>
+          <div class="ui-kv-value"><%= @party.primary_branch ? "#{@party.primary_branch.branch_code} — #{@party.primary_branch.name}" : "—" %></div>
+        </div>
+      </div>
+
+      <div class="ui-actionbar mt-5">
+        <%= link_to "Open New Account", new_account_path(party_id: @party.id), class: "btn btn-primary btn-sm" %>
+        <%= link_to "Edit Customer", edit_party_path(@party), class: "btn btn-outline btn-sm" %>
+        <%= link_to "Customer Lookup", customer_lookup_path(q: @party.party_number), class: "btn btn-ghost btn-sm" %>
+      </div>
+    </div>
+  </section>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Linked Accounts</h2>
+        <p class="mt-1 text-sm text-base-content/65">Financial accounts connected to this customer relationship.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
       <% if @account_owners.any? %>
-        <table class="table table-sm">
+        <table class="ui-ledger-table">
           <thead>
             <tr>
               <th>Account</th>
               <th>Role</th>
-              <th>Primary</th>
+              <th>Status</th>
+              <th class="text-right">Available</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             <% @account_owners.each do |ao| %>
+              <% account = ao.account %>
+              <% balance = account.account_balances.first %>
               <tr>
-                <td><%= link_to ao.account.account_number, account_path(ao.account), class: "link link-primary" %></td>
-                <td><%= ao.role_type.presence || "—" %></td>
-                <td><%= ao.is_primary ? "Yes" : "No" %></td>
+                <td>
+                  <div class="ui-mono"><%= account.account_number %></div>
+                  <div class="text-xs text-base-content/60"><%= account.account_reference %> · <%= account.account_product&.name || account.account_type %></div>
+                </td>
+                <td><%= ao.role_type.presence || "—" %><%= " · primary" if ao.is_primary? %></td>
+                <td><span class="<%= status_pill_class(account.status) %>"><%= account.status %></span></td>
+                <td class="ui-mono text-right"><%= number_to_currency((balance&.available_balance_cents || 0) / 100.0) %></td>
+                <td>
+                  <div class="flex justify-end gap-2">
+                    <%= link_to "Open", account_path(account), class: "btn btn-ghost btn-sm" %>
+                    <%= link_to "Post", new_transaction_path(account_id: account.id), class: "btn btn-outline btn-sm" %>
+                  </div>
+                </td>
               </tr>
             <% end %>
           </tbody>
         </table>
       <% else %>
-        <p class="text-base-content/60">No linked accounts.</p>
+        <p class="text-sm text-base-content/60">No linked accounts yet.</p>
       <% end %>
     </div>
-  </div>
+  </section>
+
+  <section class="ui-panel">
+    <div class="ui-panel-header">
+      <div>
+        <h2 class="text-lg font-semibold text-base-content">Recent Activity</h2>
+        <p class="mt-1 text-sm text-base-content/65">Recent posting activity across linked accounts.</p>
+      </div>
+    </div>
+    <div class="ui-panel-body">
+      <% if @recent_activity.any? %>
+        <table class="ui-ledger-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th class="text-right">Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_activity.each do |activity| %>
+              <tr>
+                <td class="ui-mono"><%= (activity.posted_at || activity.created_at)&.strftime("%Y-%m-%d") %></td>
+                <td class="ui-mono"><%= activity.account&.account_number %></td>
+                <td><%= activity.posting_batch&.transaction_code || "—" %></td>
+                <td><%= activity.description.presence || "—" %></td>
+                <td class="ui-mono text-right"><%= number_to_currency(activity.amount_cents / 100.0) %></td>
+                <td>
+                  <% transaction_id = activity.transaction_id || activity.posting_batch&.operational_transaction_id %>
+                  <%= link_to "View", transaction_path(transaction_id), class: "link link-primary text-sm" if transaction_id.present? %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-sm text-base-content/60">No recent activity across linked accounts.</p>
+      <% end %>
+    </div>
+  </section>
 </div>

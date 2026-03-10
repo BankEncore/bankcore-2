@@ -1,0 +1,37 @@
+<% selected_label = selected_party_payload&.fetch(:display_label, "") || "" %>
+<% search_input_id = "#{field_id}_lookup" %>
+<% placeholder_text = local_assigns[:placeholder] || "Search by customer name or party number" %>
+
+<div class="form-control w-full relative"
+     data-controller="party-picker"
+     data-party-picker-url-value="<%= party_lookups_path %>"
+     data-action="party-picker:reset->party-picker#reset"
+     <% if selected_party_payload.present? %>data-party-picker-initial-party-value="<%= json_escape(selected_party_payload.to_json) %>"<% end %>>
+  <label class="label" for="<%= search_input_id %>">
+    <span class="label-text"><%= label %></span>
+  </label>
+
+  <input type="hidden"
+         name="<%= field_name %>"
+         id="<%= field_id %>"
+         value="<%= selected_party_payload&.fetch(:id, nil) || selected_id %>"
+         data-party-picker-target="hiddenInput">
+
+  <input type="search"
+         id="<%= search_input_id %>"
+         value="<%= selected_label %>"
+         class="input input-bordered w-full"
+         placeholder="<%= placeholder_text %>"
+         autocomplete="off"
+         spellcheck="false"
+         data-party-picker-target="queryInput"
+         data-action="input->party-picker#search focus->party-picker#showResults blur->party-picker#hideResults keydown->party-picker#handleKeydown">
+
+  <label class="label pt-1">
+    <span class="label-text-alt">Search by customer name or party number.</span>
+  </label>
+
+  <div class="absolute inset-x-0 top-full z-20 mt-1 hidden rounded-lg border border-base-300 bg-base-100 shadow-xl"
+       data-party-picker-target="results">
+  </div>
+</div>
