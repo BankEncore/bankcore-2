@@ -10,6 +10,7 @@ class TransactionReference < ApplicationRecord
   REFERENCE_TYPE_ACH_COMPANY_NAME = "ach_company_name"
   REFERENCE_TYPE_ACH_IDENTIFICATION_NUMBER = "ach_identification_number"
   REFERENCE_TYPE_CHECK_NUMBER = "check_number"
+  REFERENCE_TYPE_INSTRUMENT_NUMBER = "instrument_number"
   REFERENCE_TYPE_AUTHORIZATION_REFERENCE = "authorization_reference"
   REFERENCE_TYPE_AUTHORIZATION_SOURCE = "authorization_source"
 

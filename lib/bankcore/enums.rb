@@ -115,5 +115,23 @@ module Bankcore
     HOLD_STATUS_ACTIVE = "active"
     HOLD_STATUS_RELEASED = "released"
     HOLD_STATUSES = [ HOLD_STATUS_ACTIVE, HOLD_STATUS_RELEASED ].freeze
+
+    # Bank draft lifecycle
+    BANK_DRAFT_STATUS_ISSUED = "issued"
+    BANK_DRAFT_STATUS_VOIDED = "voided"
+    BANK_DRAFT_STATUS_CLEARED = "cleared"
+    BANK_DRAFT_STATUSES = [
+      BANK_DRAFT_STATUS_ISSUED,
+      BANK_DRAFT_STATUS_VOIDED,
+      BANK_DRAFT_STATUS_CLEARED
+    ].freeze
+
+    # Bank draft instrument types
+    BANK_DRAFT_TYPE_CASHIERS_CHECK = "cashiers_check"
+    BANK_DRAFT_TYPE_MONEY_ORDER = "money_order"
+    BANK_DRAFT_INSTRUMENT_TYPES = [
+      BANK_DRAFT_TYPE_CASHIERS_CHECK,
+      BANK_DRAFT_TYPE_MONEY_ORDER
+    ].freeze
   end
 end

@@ -40,7 +40,11 @@
 
       <% if reversible %>
         <div class="flex items-center gap-2">
-          <%= link_to "Preview Reversal", reverse_preview_transaction_path(@transaction), class: "btn btn-error btn-outline btn-sm" %>
+          <% if @transaction.transaction_type == "DRAFT_ISSUE" && @bank_draft&.status == BankDraft::STATUS_ISSUED %>
+            <%= link_to "Void Draft", bank_draft_path(@bank_draft), class: "btn btn-error btn-outline btn-sm" %>
+          <% else %>
+            <%= link_to "Preview Reversal", reverse_preview_transaction_path(@transaction), class: "btn btn-error btn-outline btn-sm" %>
+          <% end %>
         </div>
       <% end %>
     </div>

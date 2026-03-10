@@ -1,0 +1,106 @@
+<% content_for :title, "Bank Draft #{@bank_draft.instrument_type.titleize} ##{@bank_draft.instrument_number} - BankCORE" %>
+
+<div class="w-full">
+  <div class="workspace-header">
+    <div>
+      <%= link_to "← Back to Bank Drafts", bank_drafts_path, class: "link link-primary mb-2 inline-block text-sm" %>
+      <h1 class="workspace-title">
+        <%= @bank_draft.instrument_type.titleize %> #<%= @bank_draft.instrument_number %>
+      </h1>
+      <p class="workspace-subtitle">Amount: <%= number_to_currency(@bank_draft.amount_cents / 100.0) %> · Pay to: <%= @bank_draft.payee_name %></p>
+    </div>
+    <div class="flex items-center gap-3">
+      <% if @bank_draft.status == BankDraft::STATUS_ISSUED %>
+        <% if @bank_draft.posting_batch.present? %>
+          <%= form_with url: void_bank_draft_path(@bank_draft), method: :post, local: true, class: "flex items-center gap-2" do |f| %>
+            <%= text_field_tag :void_reason, nil, placeholder: "Void reason (required)", class: "input input-bordered input-sm w-48", required: true %>
+            <%= f.submit "Void Draft", class: "btn btn-error btn-outline btn-sm", data: { turbo_confirm: "Void this bank draft? This cannot be undone." } %>
+          <% end %>
+        <% end %>
+        <%= form_with url: clear_bank_draft_path(@bank_draft), method: :post, local: true, class: "flex items-center gap-2" do |f| %>
+          <%= text_field_tag :clearing_reference, nil, placeholder: "Clearing reference (optional)", class: "input input-bordered input-sm w-48" %>
+          <%= f.submit "Mark Cleared", class: "btn btn-success btn-outline btn-sm", data: { turbo_confirm: "Mark this bank draft as cleared?" } %>
+        <% end %>
+      <% end %>
+      <span class="<%= status_pill_class(@bank_draft.status) %>"><%= @bank_draft.status %></span>
+    </div>
+  </div>
+
+  <section class="ui-panel mb-6">
+    <div class="ui-panel-header">
+      <h2 class="text-lg font-semibold text-base-content">Draft Details</h2>
+    </div>
+    <div class="ui-panel-body">
+      <div class="ui-kv-grid">
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Instrument Type</div>
+          <div class="ui-kv-value"><%= @bank_draft.instrument_type.titleize %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Instrument Number</div>
+          <div class="ui-kv-value ui-mono"><%= @bank_draft.instrument_number %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Amount</div>
+          <div class="ui-kv-value ui-mono"><%= number_to_currency(@bank_draft.amount_cents / 100.0) %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Pay to the Order of</div>
+          <div class="ui-kv-value"><%= @bank_draft.payee_name %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Remitter</div>
+          <div class="ui-kv-value">
+            <% if @bank_draft.remitter_party %>
+              <%= link_to @bank_draft.remitter_party.display_name, party_path(@bank_draft.remitter_party), class: "link link-primary" %>
+            <% else %>
+              —
+            <% end %>
+          </div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Account</div>
+          <div class="ui-kv-value">
+            <% if @bank_draft.account %>
+              <%= link_to @bank_draft.account.account_number, account_path(@bank_draft.account), class: "link link-primary" %>
+            <% else %>
+              —
+            <% end %>
+          </div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Branch</div>
+          <div class="ui-kv-value"><%= @bank_draft.branch&.branch_code %> — <%= @bank_draft.branch&.name %></div>
+        </div>
+        <div class="ui-kv-row">
+          <div class="ui-kv-label">Issue Date</div>
+          <div class="ui-kv-value ui-mono"><%= @bank_draft.issue_date&.strftime("%Y-%m-%d") %></div>
+        </div>
+        <% if @bank_draft.memo.present? %>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Memo</div>
+            <div class="ui-kv-value"><%= @bank_draft.memo %></div>
+          </div>
+        <% end %>
+        <% if @bank_draft.expires_at.present? %>
+          <div class="ui-kv-row">
+            <div class="ui-kv-label">Expires</div>
+            <div class="ui-kv-value ui-mono"><%= @bank_draft.expires_at.strftime("%Y-%m-%d") %></div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </section>
+
+  <% if @transaction.present? %>
+    <section class="ui-panel mb-6">
+      <div class="ui-panel-header">
+        <h2 class="text-lg font-semibold text-base-content">Issuance Transaction</h2>
+      </div>
+      <div class="ui-panel-body">
+        <%= link_to "View Transaction ##{@transaction.id}", transaction_path(@transaction), class: "link link-primary" %>
+        <span class="text-base-content/60 ml-2">Reference: <%= @transaction.reference_number.presence || "—" %></span>
+      </div>
+    </section>
+  <% end %>
+</div>

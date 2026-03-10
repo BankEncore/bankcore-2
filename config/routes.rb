@@ -20,6 +20,13 @@ Rails.application.routes.draw do
   end
   resources :account_lookups, only: %i[index], path: "account-lookups", defaults: { format: :json }
 
+  resources :bank_drafts, only: %i[index show new create], path: "bank-drafts" do
+    member do
+      post :void
+      post :clear
+    end
+  end
+
   resources :accounts, only: %i[index show new create] do
     resources :account_holds, only: %i[new create], shallow: true
     resources :account_owners, only: %i[new create], shallow: true

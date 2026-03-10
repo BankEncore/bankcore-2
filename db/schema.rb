@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_10_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_10_000004) do
   create_table "account_balances", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
     t.bigint "account_id", null: false
     t.datetime "as_of_at"
@@ -122,6 +122,53 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_10_000002) do
     t.datetime "updated_at", null: false
     t.index ["event_type", "occurred_at"], name: "index_audit_events_on_event_type_and_occurred_at"
     t.index ["target_type", "target_id"], name: "index_audit_events_on_target_type_and_target_id"
+  end
+
+  create_table "bank_draft_sequences", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "branch_id", null: false
+    t.datetime "created_at", null: false
+    t.string "instrument_type", null: false
+    t.integer "last_number", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["branch_id", "instrument_type"], name: "index_bank_draft_sequences_on_branch_and_type", unique: true
+    t.index ["branch_id"], name: "index_bank_draft_sequences_on_branch_id"
+  end
+
+  create_table "bank_drafts", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
+    t.bigint "account_id"
+    t.integer "amount_cents", null: false
+    t.bigint "branch_id", null: false
+    t.datetime "cleared_at"
+    t.bigint "cleared_by_id"
+    t.string "clearing_reference"
+    t.datetime "created_at", null: false
+    t.string "currency_code", default: "USD", null: false
+    t.date "expires_at"
+    t.string "instrument_number", null: false
+    t.string "instrument_type", null: false
+    t.date "issue_date", null: false
+    t.bigint "issued_by_id"
+    t.text "memo"
+    t.bigint "operational_transaction_id"
+    t.string "payee_name", null: false
+    t.bigint "posting_batch_id"
+    t.bigint "remitter_party_id", null: false
+    t.string "status", null: false
+    t.datetime "updated_at", null: false
+    t.string "void_reason"
+    t.datetime "voided_at"
+    t.bigint "voided_by_id"
+    t.index ["account_id"], name: "index_bank_drafts_on_account_id"
+    t.index ["branch_id"], name: "index_bank_drafts_on_branch_id"
+    t.index ["cleared_by_id"], name: "index_bank_drafts_on_cleared_by_id"
+    t.index ["instrument_type", "instrument_number"], name: "index_bank_drafts_on_type_and_number", unique: true
+    t.index ["issue_date"], name: "index_bank_drafts_on_issue_date"
+    t.index ["issued_by_id"], name: "index_bank_drafts_on_issued_by_id"
+    t.index ["operational_transaction_id"], name: "index_bank_drafts_on_operational_transaction_id"
+    t.index ["posting_batch_id"], name: "index_bank_drafts_on_posting_batch_id"
+    t.index ["remitter_party_id"], name: "index_bank_drafts_on_remitter_party_id"
+    t.index ["status"], name: "index_bank_drafts_on_status"
+    t.index ["voided_by_id"], name: "index_bank_drafts_on_voided_by_id"
   end
 
   create_table "branches", charset: "utf8mb4", collation: "utf8mb4_general_ci", force: :cascade do |t|
@@ -500,6 +547,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_10_000002) do
   add_foreign_key "account_transactions", "transactions"
   add_foreign_key "accounts", "account_products"
   add_foreign_key "accounts", "branches"
+  add_foreign_key "bank_draft_sequences", "branches"
+  add_foreign_key "bank_drafts", "accounts"
+  add_foreign_key "bank_drafts", "branches"
+  add_foreign_key "bank_drafts", "parties", column: "remitter_party_id"
+  add_foreign_key "bank_drafts", "posting_batches"
+  add_foreign_key "bank_drafts", "transactions", column: "operational_transaction_id"
+  add_foreign_key "bank_drafts", "users", column: "cleared_by_id"
+  add_foreign_key "bank_drafts", "users", column: "issued_by_id"
+  add_foreign_key "bank_drafts", "users", column: "voided_by_id"
   add_foreign_key "check_items", "accounts"
   add_foreign_key "check_items", "posting_batches"
   add_foreign_key "check_items", "transactions", column: "operational_transaction_id"
