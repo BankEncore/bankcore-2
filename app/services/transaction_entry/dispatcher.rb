@@ -36,6 +36,8 @@ module TransactionEntry
         FeePostingService.assess!(**current_policy.fee_service_attributes)
       when :ach
         AchEntryService.post!(**current_policy.ach_service_attributes)
+      when :check
+        CheckEntryService.post!(**current_policy.check_service_attributes)
       else
         raise UnsupportedTransactionError, "#{@request.transaction_code} must use its dedicated workflow"
       end

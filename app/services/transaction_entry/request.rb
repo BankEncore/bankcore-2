@@ -9,6 +9,7 @@ module TransactionEntry
       FEE_POST
       ACH_CREDIT
       ACH_DEBIT
+      CHK_POST
     ].freeze
 
     attr_reader :transaction_code, :account_id, :source_account_id, :destination_account_id,
@@ -17,6 +18,8 @@ module TransactionEntry
       :original_fee_assessment_id, :interest_rule_id, :accrual_date, :posting_cycle,
       :ach_trace_number, :ach_effective_date, :ach_batch_reference,
       :ach_company_name, :ach_identification_number,
+      :check_number,
+      :confirmation_number,
       :authorization_reference, :authorization_source, :override_request_id,
       :reversal_target_transaction_id, :gl_account_id
 
@@ -25,11 +28,13 @@ module TransactionEntry
       raw_ref = normalize_string(raw_params[:reference_number])
       ach_trace = normalize_string(raw_params[:ach_trace_number])
       ach_date = normalize_date(raw_params[:ach_effective_date])
+      check_num = normalize_string(raw_params[:check_number])
       reference_number = default_reference_if_blank(
         transaction_code: transaction_code,
         reference_number: raw_ref,
         ach_trace_number: ach_trace,
-        ach_effective_date: ach_date
+        ach_effective_date: ach_date,
+        check_number: check_num
       )
 
       raw_memo = normalize_string(raw_params[:memo])
@@ -43,6 +48,11 @@ module TransactionEntry
         memo: memo,
         ach_company_name: normalize_string(raw_params[:ach_company_name]),
         ach_trace_number: normalize_string(raw_params[:ach_trace_number])
+      )
+      memo = default_check_memo_if_blank(
+        transaction_code: transaction_code,
+        memo: memo,
+        check_number: normalize_string(raw_params[:check_number])
       )
 
       raw_batch = normalize_string(raw_params[:ach_batch_reference])
@@ -76,6 +86,8 @@ module TransactionEntry
         ach_batch_reference: ach_batch_reference,
         ach_company_name: normalize_string(raw_params[:ach_company_name]),
         ach_identification_number: normalize_string(raw_params[:ach_identification_number]),
+        check_number: normalize_string(raw_params[:check_number]),
+        confirmation_number: normalize_string(raw_params[:confirmation_number]),
         authorization_reference: normalize_string(raw_params[:authorization_reference]),
         authorization_source: normalize_string(raw_params[:authorization_source]),
         override_request_id: normalize_integer(raw_params[:override_request_id]),
@@ -85,16 +97,25 @@ module TransactionEntry
     end
 
     ACH_CODES = %w[ACH_CREDIT ACH_DEBIT].freeze
+    CHECK_CODES = %w[CHK_POST].freeze
 
-    def self.default_reference_if_blank(transaction_code:, reference_number:, ach_trace_number: nil, ach_effective_date: nil)
+    def self.default_reference_if_blank(transaction_code:, reference_number:, ach_trace_number: nil, ach_effective_date: nil, check_number: nil)
       return reference_number if reference_number.present?
       return nil unless transaction_code.present? && MANUAL_ENTRY_CODES.include?(transaction_code)
 
       if ACH_CODES.include?(transaction_code) && ach_trace_number.present? && ach_effective_date.present?
         generate_ach_default_reference(ach_trace_number, ach_effective_date)
+      elsif CHECK_CODES.include?(transaction_code)
+        generate_chk_default_reference(check_number)
       else
         generate_default_reference(transaction_code)
       end
+    end
+
+    def self.generate_chk_default_reference(check_number)
+      ts = Time.current.strftime("%y%m%d%H%M%S")
+      check_num = check_number.to_s.strip.presence
+      check_num.present? ? "CHK-#{check_num}-#{ts}" : "CHK-#{ts}"
     end
 
     def self.generate_default_reference(transaction_code)
@@ -136,6 +157,16 @@ module TransactionEntry
       return nil unless ACH_CODES.include?(transaction_code)
 
       "ACH#{Time.current.strftime("%y%m%d%H%M%S")}"
+    end
+
+    def self.default_check_memo_if_blank(transaction_code:, memo:, check_number:)
+      return memo if memo.present?
+      return nil unless CHECK_CODES.include?(transaction_code)
+
+      check_num = check_number.to_s.strip.presence
+      return nil unless check_num.present?
+
+      "Check ##{check_num}"
     end
 
     def self.normalize_string(value)
@@ -182,6 +213,8 @@ module TransactionEntry
         :interest_post
       when "ACH_CREDIT", "ACH_DEBIT"
         :ach
+      when "CHK_POST"
+        :check
       when /\A.*_REVERSAL\z/
         :reversal
       else
@@ -216,9 +249,11 @@ module TransactionEntry
         ach_batch_reference: ach_batch_reference,
         ach_company_name: ach_company_name,
         ach_identification_number: ach_identification_number,
+        check_number: check_number,
+        confirmation_number: confirmation_number,
+        override_request_id: override_request_id,
         authorization_reference: authorization_reference,
         authorization_source: authorization_source,
-        override_request_id: override_request_id,
         reversal_target_transaction_id: reversal_target_transaction_id
       }.compact
     end

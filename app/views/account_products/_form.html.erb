@@ -58,6 +58,13 @@
         <span class="label-text">Allow overdraft by default</span>
       </label>
     </div>
+
+    <div class="form-control w-full">
+      <label class="label cursor-pointer justify-start gap-3" for="account_product_check_writing_eligible">
+        <%= f.check_box :check_writing_eligible, class: "checkbox checkbox-primary" %>
+        <span class="label-text">Check writing eligible</span>
+      </label>
+    </div>
   </div>
 
   <div class="grid gap-4 lg:grid-cols-3">

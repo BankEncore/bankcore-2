@@ -27,6 +27,12 @@ class AccountProductTest < ActiveSupport::TestCase
     assert_not duplicate.valid?
   end
 
+  test "check_writing_eligible reflects product configuration" do
+    assert account_products(:dda).check_writing_eligible?
+    assert account_products(:now).check_writing_eligible?
+    assert_not account_products(:savings).check_writing_eligible?
+  end
+
   test "derives deposit defaults from product code" do
     assert_equal "dda", account_products(:dda).default_deposit_type
     assert_not account_products(:dda).default_interest_bearing?

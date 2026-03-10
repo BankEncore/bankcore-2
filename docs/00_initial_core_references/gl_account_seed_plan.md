@@ -141,6 +141,11 @@ This is enough to make the back-office accounting core financially real.
 **Seed in MVP:** Optional / later  
 **Why:** Seed only if CDs are actually in MVP product scope.
 
+### 2150 — Check Clearing
+**Type:** Liability  
+**Seed in MVP:** Yes  
+**Why:** Essential for check posting (CHK_POST); aligns with 2170 ACH pattern for clearing liability treatment.
+
 ### 2170 — ACH Settlement Clearing
 **Type:** Liability  
 **Seed in MVP:** Yes  

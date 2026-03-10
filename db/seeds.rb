@@ -22,6 +22,7 @@ gl_accounts_data = [
   { gl_number: "2110", name: "Noninterest-Bearing Demand Deposits (DDA)", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2120", name: "Interest-Bearing Demand Deposits (NOW)", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2130", name: "Savings / Money Market Accounts", category: "liability", normal_balance: "credit", allow_direct_posting: true },
+  { gl_number: "2150", name: "Check Clearing", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2170", name: "ACH Settlement Clearing", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2190", name: "Suspense / Unidentified Deposits", category: "liability", normal_balance: "credit", allow_direct_posting: true },
   { gl_number: "2510", name: "Accrued Interest Payable – Deposits", category: "liability", normal_balance: "credit", allow_direct_posting: true },
@@ -60,6 +61,7 @@ account_products_data = [
     currency_code: "USD",
     statement_cycle: "monthly",
     allow_overdraft: true,
+    check_writing_eligible: true,
     liability_gl_number: "2110"
   },
   {
@@ -69,6 +71,7 @@ account_products_data = [
     currency_code: "USD",
     statement_cycle: "monthly",
     allow_overdraft: true,
+    check_writing_eligible: true,
     interest_expense_gl_number: "5120",
     liability_gl_number: "2120"
   },
@@ -105,6 +108,7 @@ account_products_data.each do |attrs|
     currency_code: attrs[:currency_code],
     statement_cycle: attrs[:statement_cycle],
     allow_overdraft: attrs[:allow_overdraft],
+    check_writing_eligible: attrs.fetch(:check_writing_eligible, false),
     status: Bankcore::Enums::STATUS_ACTIVE,
     liability_gl_account: liability_gl,
     interest_expense_gl_account: interest_expense_gl
@@ -201,7 +205,9 @@ transaction_codes_data = [
   { code: "INT_POST", description: "Interest posting", reversal_code: "INT_POST_REVERSAL" },
   { code: "INT_POST_REVERSAL", description: "Interest posting reversal", reversal_code: nil },
   { code: "ACH_CREDIT", description: "Incoming ACH", reversal_code: "ACH_DEBIT" },
-  { code: "ACH_DEBIT", description: "Outgoing ACH", reversal_code: "ACH_CREDIT" }
+  { code: "ACH_DEBIT", description: "Outgoing ACH", reversal_code: "ACH_CREDIT" },
+  { code: "CHK_POST", description: "Check posting", reversal_code: "CHK_POST_REVERSAL" },
+  { code: "CHK_POST_REVERSAL", description: "Check posting reversal", reversal_code: nil }
 ]
 
 transaction_codes_data.each do |attrs|
@@ -220,6 +226,7 @@ if defined?(PostingTemplate)
   gl_5130 = GlAccount.find_by!(gl_number: "5130")
   gl_2510 = GlAccount.find_by!(gl_number: "2510")
   gl_1120 = GlAccount.find_by!(gl_number: "1120")
+  gl_2150 = GlAccount.find_by!(gl_number: "2150")
   gl_2170 = GlAccount.find_by!(gl_number: "2170")
 
   # ADJ_CREDIT: Debit 5190, Credit customer_account
@@ -363,6 +370,25 @@ if defined?(PostingTemplate)
     l.description = "Credit customer account"
   end
 
+  # CHK_POST: Debit customer_account, Credit 2150 Check Clearing
+  chk_post_code = TransactionCode.find_by!(code: "CHK_POST")
+  chk_post_tpl = PostingTemplate.find_or_create_by!(transaction_code_id: chk_post_code.id) do |t|
+    t.name = "Check Post"
+    t.description = "Debit account, Credit check clearing"
+    t.active = true
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: chk_post_tpl.id, position: 0) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
+    l.description = "Debit customer account"
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: chk_post_tpl.id, position: 1) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
+    l.gl_account_id = gl_2150.id
+    l.description = "Credit check clearing"
+  end
+
   # ACH_DEBIT: Debit customer_account, Credit 2170 ACH Clearing
   ach_debit_code = TransactionCode.find_by!(code: "ACH_DEBIT")
   ach_debit_tpl = PostingTemplate.find_or_create_by!(transaction_code_id: ach_debit_code.id) do |t|
@@ -439,6 +465,25 @@ if defined?(PostingTemplate)
     l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
     l.description = "Debit customer account"
   end
+
+  # CHK_POST_REVERSAL: Credit customer_account, Debit 2150 (inverse of CHK_POST)
+  chk_rev_code = TransactionCode.find_by!(code: "CHK_POST_REVERSAL")
+  chk_rev_tpl = PostingTemplate.find_or_create_by!(transaction_code_id: chk_rev_code.id) do |t|
+    t.name = "Check Post Reversal"
+    t.description = "Credit account, Debit check clearing"
+    t.active = true
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: chk_rev_tpl.id, position: 0) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_CREDIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_CUSTOMER
+    l.description = "Credit customer account"
+  end
+  PostingTemplateLeg.find_or_create_by!(posting_template_id: chk_rev_tpl.id, position: 1) do |l|
+    l.leg_type = Bankcore::Enums::LEG_TYPE_DEBIT
+    l.account_source = Bankcore::Enums::ACCOUNT_SOURCE_FIXED_GL
+    l.gl_account_id = gl_2150.id
+    l.description = "Debit check clearing"
+  end
 end
 
 # 7. Sample Party and Account (for manual transaction entry UI)
@@ -511,10 +556,18 @@ if defined?(FeeType)
     ft.gl_account_id = gl_4510.id
     ft.status = Bankcore::Enums::STATUS_ACTIVE
   end
+  gl_4540 = GlAccount.find_by!(gl_number: "4540")
+  FeeType.find_or_create_by!(code: "OD") do |ft|
+    ft.name = "Overdraft Fee"
+    ft.default_amount_cents = 3500 # $35.00
+    ft.gl_account_id = gl_4540.id
+    ft.status = Bankcore::Enums::STATUS_ACTIVE
+  end
 
   if defined?(FeeRule)
     maintenance_fee = FeeType.find_by!(code: "MAINTENANCE")
     service_charge_fee = FeeType.find_by!(code: "SERVICE_CHARGE")
+    od_fee = FeeType.find_by!(code: "OD")
 
     [
       {
@@ -530,6 +583,22 @@ if defined?(FeeType)
         amount_cents: 700,
         gl_account: gl_4560,
         effective_on: Date.current.beginning_of_month
+      },
+      {
+        fee_type: od_fee,
+        account_product: AccountProduct.find_by!(product_code: "dda"),
+        amount_cents: 3500,
+        gl_account: gl_4540,
+        effective_on: Date.current.beginning_of_month,
+        conditions_json: { "trigger" => "overdraft" }.to_json
+      },
+      {
+        fee_type: od_fee,
+        account_product: AccountProduct.find_by!(product_code: "now"),
+        amount_cents: 3500,
+        gl_account: gl_4540,
+        effective_on: Date.current.beginning_of_month,
+        conditions_json: { "trigger" => "overdraft" }.to_json
       }
     ].each do |attrs|
       fee_rule = FeeRule.find_or_initialize_by(
@@ -541,7 +610,8 @@ if defined?(FeeType)
         method: FeeRule::METHOD_FIXED_AMOUNT,
         amount_cents: attrs[:amount_cents],
         gl_account: attrs[:gl_account],
-        effective_on: attrs[:effective_on]
+        effective_on: attrs[:effective_on],
+        conditions_json: attrs[:conditions_json]
       )
       fee_rule.save!
     end

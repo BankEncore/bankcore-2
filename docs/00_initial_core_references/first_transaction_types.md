@@ -314,7 +314,37 @@ Credit:
 
 ---
 
-# 12. Reversal Rules
+# 12. Check Posting (CHK_POST)
+
+## Code
+`CHK_POST`
+
+## Description
+Post a check drawn against an eligible DDA/NOW account.
+
+## Inputs
+
+- account_id
+- amount
+- check_number
+
+## Posting
+
+Debit:
+
+- customer deposit liability (account)
+
+Credit:
+
+- 2150 Check Clearing
+
+## Eligibility
+
+Account must be check-writing eligible (product-level or account-level override).
+
+---
+
+# 13. Reversal Rules
 
 All transaction types must support **reversal**.
 

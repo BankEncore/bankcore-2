@@ -6,6 +6,7 @@ dda:
   currency_code: USD
   statement_cycle: monthly
   allow_overdraft: true
+  check_writing_eligible: true
   status: active
   liability_gl_account: six
   created_at: <%= ts %>
@@ -18,6 +19,7 @@ now:
   currency_code: USD
   statement_cycle: monthly
   allow_overdraft: true
+  check_writing_eligible: true
   interest_expense_gl_account: nine
   status: active
   liability_gl_account: seven

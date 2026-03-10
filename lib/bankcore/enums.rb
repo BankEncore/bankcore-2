@@ -95,10 +95,12 @@ module Bankcore
 
     # Override request types
     OVERRIDE_TYPE_REVERSAL = "reversal"
+    OVERRIDE_TYPE_CHECK_OVERDRAFT = "check_overdraft"
     OVERRIDE_TYPE_HIGH_VALUE_ADJUSTMENT = "high_value_adjustment"
     OVERRIDE_TYPE_BACKDATED_ACTIVITY = "backdated_activity"
     OVERRIDE_TYPES = [
       OVERRIDE_TYPE_REVERSAL,
+      OVERRIDE_TYPE_CHECK_OVERDRAFT,
       OVERRIDE_TYPE_HIGH_VALUE_ADJUSTMENT,
       OVERRIDE_TYPE_BACKDATED_ACTIVITY
     ].freeze

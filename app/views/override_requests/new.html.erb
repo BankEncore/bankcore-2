@@ -44,7 +44,12 @@
       <%= form_with url: override_requests_path, method: :post, local: true, class: "space-y-5" do |f| %>
         <%= hidden_field_tag :request_type, params[:request_type] || "reversal" %>
         <%= hidden_field_tag :operational_transaction_id, @transaction&.id %>
-        <%= hidden_field_tag :branch_id, @transaction&.branch_id %>
+        <%= hidden_field_tag :branch_id, params[:branch_id] || @transaction&.branch_id %>
+        <% if @check_overdraft_context %>
+          <%= hidden_field_tag :account_id, @check_overdraft_context[:account_id] %>
+          <%= hidden_field_tag :amount_cents, @check_overdraft_context[:amount_cents] %>
+          <%= hidden_field_tag :check_number, @check_overdraft_context[:check_number] %>
+        <% end %>
 
         <section class="ui-form-section">
           <div class="grid gap-4 lg:grid-cols-2">
@@ -54,8 +59,22 @@
             </div>
             <div class="ui-kv-row">
               <div class="ui-kv-label">Linked Transaction</div>
-              <div class="ui-kv-value ui-mono"><%= @transaction ? "##{@transaction.id}" : "—" %></div>
+              <div class="ui-kv-value ui-mono"><%= @transaction ? "##{@transaction.id}" : (@check_overdraft_context ? "Check overdraft (pre-transaction)" : "—") %></div>
             </div>
+            <% if @check_overdraft_context %>
+              <div class="ui-kv-row">
+                <div class="ui-kv-label">Account</div>
+                <div class="ui-kv-value ui-mono"><%= Account.find_by(id: @check_overdraft_context[:account_id])&.account_number || "##{@check_overdraft_context[:account_id]}" %></div>
+              </div>
+              <div class="ui-kv-row">
+                <div class="ui-kv-label">Check Number</div>
+                <div class="ui-kv-value ui-mono"><%= @check_overdraft_context[:check_number] %></div>
+              </div>
+              <div class="ui-kv-row">
+                <div class="ui-kv-label">Amount</div>
+                <div class="ui-kv-value ui-mono"><%= number_to_currency(@check_overdraft_context[:amount_cents] / 100.0) %></div>
+              </div>
+            <% end %>
           </div>
 
           <div class="form-control w-full">

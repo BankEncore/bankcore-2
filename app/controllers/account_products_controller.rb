@@ -62,6 +62,7 @@ class AccountProductsController < ApplicationController
       :currency_code,
       :statement_cycle,
       :allow_overdraft,
+      :check_writing_eligible,
       :liability_gl_account_id,
       :asset_gl_account_id,
       :interest_expense_gl_account_id,
