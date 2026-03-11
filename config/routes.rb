@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "transactions#index"
 
+  resource :customer_lookup, only: %i[show], path: "customer-lookup"
   resources :transactions, only: %i[index show new create] do
     member do
       get :reverse_preview
@@ -19,6 +20,7 @@ Rails.application.routes.draw do
     end
   end
   resources :account_lookups, only: %i[index], path: "account-lookups", defaults: { format: :json }
+  resources :party_lookups, only: %i[index], path: "party-lookups", defaults: { format: :json }
 
   resources :bank_drafts, only: %i[index show new create], path: "bank-drafts" do
     member do

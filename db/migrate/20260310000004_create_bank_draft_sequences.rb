@@ -10,7 +10,7 @@ class CreateBankDraftSequences < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :bank_draft_sequences, [:branch_id, :instrument_type],
+    add_index :bank_draft_sequences, [ :branch_id, :instrument_type ],
       unique: true,
       name: "index_bank_draft_sequences_on_branch_and_type"
   end

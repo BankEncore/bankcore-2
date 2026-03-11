@@ -40,6 +40,14 @@ module ApplicationHelper
     "ui-status-pill ui-status-pill-#{variant}"
   end
 
+  def safe_return_to_for_link(return_to)
+    path = return_to.to_s.strip
+    return nil if path.blank?
+    return nil unless path.start_with?("/") && !path.include?("//")
+
+    path
+  end
+
   def leg_type_pill_class(leg_type)
     variant = leg_type.to_s == Bankcore::Enums::LEG_TYPE_DEBIT ? "error" : "success"
     "ui-status-pill ui-status-pill-#{variant}"
