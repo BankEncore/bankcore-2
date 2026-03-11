@@ -11,7 +11,7 @@ class ApplicationHelperTest < ActionView::TestCase
 
   test "current navigation resolves section and link from nested report paths" do
     with_nav_context("/trial-balance/1") do
-      assert_equal "Financial Review", app_current_nav_section[:label]
+      assert_equal "Back Office Review", app_current_nav_section[:label]
       assert_equal "Trial Balance", app_current_nav_link.label
     end
   end

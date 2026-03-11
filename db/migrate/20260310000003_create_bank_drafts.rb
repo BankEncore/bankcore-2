@@ -30,7 +30,7 @@ class CreateBankDrafts < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :bank_drafts, [:instrument_type, :instrument_number],
+    add_index :bank_drafts, [ :instrument_type, :instrument_number ],
       unique: true,
       name: "index_bank_drafts_on_type_and_number"
     add_index :bank_drafts, :status

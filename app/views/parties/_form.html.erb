@@ -51,6 +51,6 @@
 
   <div class="flex gap-2 pt-4">
     <%= f.submit class: "btn btn-primary" %>
-    <%= link_to "Cancel", (params[:return_to].presence || (@party.persisted? ? party_path(@party) : parties_path)), class: "btn btn-ghost" %>
+    <%= link_to "Cancel", (safe_return_to_for_link(params[:return_to]) || (@party.persisted? ? party_path(@party) : parties_path)), class: "btn btn-ghost" %>
   </div>
 <% end %>
